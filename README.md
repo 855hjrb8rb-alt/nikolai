@@ -83,7 +83,7 @@ Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de acce
 | **Núcleo IA** | Activar/pausar la voz, modo conversación o palabra clave, clave de Anthropic. |
 | **Chat** | Chat escrito con formato y fórmulas; NIKOLAI puede leer sus respuestas en voz alta. Dictado por voz. |
 | **Tareas** | Resolver paso a paso, explicar, resumir, redactar, corregir, **cuestionarios interactivos** y **tarjetas de estudio**. Nivel primaria → universidad. **Foto del ejercicio**. |
-| **Bolsa y Cripto** | Cripto en vivo (Binance, cada segundo), acciones e índices, **todas las acciones** (screener), mapa del mercado, gráficos y noticias del mercado (TradingView). |
+| **Bolsa y Cripto** | Terminal estilo Wall Street: estado de NYSE/Nasdaq, BMV, Londres y Tokio con cuenta atrás y **campana de apertura**, cinta de cotizaciones, S&P 500 · Nasdaq · Dow · VIX, las que más suben/bajan, mapa del mercado, todas las acciones, análisis de una acción (gráfico, análisis técnico, perfil y finanzas), **mi lista**, calendario económico, miedo y codicia, cripto en vivo y **análisis con IA** con datos actuales. |
 | **Música** | Spotify: listas listas para usar sin cuenta (concentración, lo-fi, éxitos, Top 50 México…), pegar cualquier enlace, y **conectar tu cuenta** para buscar, ver qué suena y controlar la reproducción (Premium). Por voz: «pon música para estudiar». |
 | **Noticias** | Resumen de las noticias de hoy por tema (principales, mi ciudad, mundo, economía, tecnología, deportes…) con fuentes. |
 | **Clima** | Clima actual, 24 h y 7 días (Open-Meteo). |

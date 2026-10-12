@@ -93,7 +93,7 @@ function sparkSvg(points, up) {
 }
 
 // ---------- Widgets de TradingView ----------
-function tvWidget(el, name, config) {
+export function tvWidget(el, name, config) {
   el.innerHTML = `<div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div></div>`;
   const s = document.createElement("script");
   s.src = `https://s3.tradingview.com/external-embedding/embed-widget-${name}.js`;
@@ -102,12 +102,33 @@ function tvWidget(el, name, config) {
   el.firstChild.appendChild(s);
 }
 
-const TABS = ["crypto", "stocks", "screener", "heatmap", "chart", "news"];
+import {
+  EXCHANGES, exchangeStatus, fmtCountdown, wallClock, fearGreed, loadFearGreed, watchlist, addWatch, removeWatch, normalizeSymbol,
+} from "./wallstreet.js";
+import { renderInto, speakable } from "./md.js";
+
+const TABS = ["wallst", "stocks", "movers", "heatmap", "screener", "chart", "watch", "calendar", "crypto", "news", "ai"];
+const QUICK = ["NASDAQ:AAPL", "NASDAQ:NVDA", "NASDAQ:MSFT", "NASDAQ:AMZN", "NASDAQ:TSLA", "NYSE:JPM", "BMV:AMXB", "BINANCE:BTCUSDT"];
+export const aiState = { text: "", busy: false, symbol: "" };
+
+/** Barra de estado de las bolsas: abierta/cerrada y cuenta atrás. */
+function exchangesHtml(t, esc) {
+  return `<div class="ex-grid">${EXCHANGES.map((ex) => {
+    const st = exchangeStatus(ex);
+    const clock = wallClock(ex.tz);
+    const hh = String(Math.floor(clock.min / 60)).padStart(2, "0"), mm = String(Math.floor(clock.min % 60)).padStart(2, "0");
+    return `<div class="ex ${st.state}">
+      <div class="ex-top mono"><b>${esc(ex.name)}</b><span class="ex-state">● ${esc(t("ex_" + st.state).toUpperCase())}</span></div>
+      <div class="ex-clock mono">${hh}:${mm}</div>
+      <div class="ex-sub mono">${esc(ex.city)} · ${esc(t(st.next === "close" ? "ex_closesIn" : "ex_opensIn"))} ${fmtCountdown(st.minutes)}</div>
+    </div>`;
+  }).join("")}</div>`;
+}
 
 /** Pinta el módulo de mercados. ctx = { t, esc, tile } */
 export function renderMarkets(body, ctx, state) {
   const { t, esc, tile } = ctx;
-  state.tab ??= "crypto";
+  state.tab ??= "wallst";
   body.innerHTML = `
     <div class="tabs">${TABS.map((k) => tile(esc(t("mk_" + k)), "", state.tab === k ? "on" : "")).join("")}</div>
     <div class="mk-view" id="mkView"></div>`;
@@ -154,7 +175,136 @@ export function renderMarkets(body, ctx, state) {
     return;
   }
 
+  if (state.tab === "wallst") {
+    const fg = fearGreed.value;
+    view.innerHTML = `
+      <div class="ws-tape" id="wsTape"></div>
+      <div id="wsEx">${exchangesHtml(t, esc)}</div>
+      <div class="ws-indices">${["FOREXCOM:SPXUSD|S&P 500", "FOREXCOM:NSXUSD|Nasdaq 100", "FOREXCOM:DJI|Dow Jones", "TVC:VIX|VIX"].map((x, i) => `<div class="ws-mini" id="wsMini${i}"></div>`).join("")}</div>
+      <div class="ws-row">
+        <div class="readout fg">
+          <div class="k">${esc(t("fearGreed").toUpperCase())}</div>
+          <div class="fg-bar"><i style="left:${fg ?? 50}%"></i></div>
+          <div class="v">${fg ?? "—"} <small class="mono">${esc(fearGreed.label ? t("fg_" + fearGreed.label.replace(/\s+/g, "")) : "")}</small></div>
+        </div>
+        <div class="tiles ws-actions">
+          ${tile(`${ctx.icon("send")}<br>${esc(t("ws_brief"))}`, "", "action")}
+          ${tile(esc(ctx.bell.enabled ? t("ws_bellOn") : t("ws_bellOff")), esc(t("ws_bell").toUpperCase()), ctx.bell.enabled ? "on" : "")}
+        </div>
+      </div>`;
+    tvWidget(view.querySelector("#wsTape"), "ticker-tape", {
+      symbols: [
+        { proName: "FOREXCOM:SPXUSD", title: "S&P 500" }, { proName: "FOREXCOM:NSXUSD", title: "Nasdaq 100" }, { proName: "FOREXCOM:DJI", title: "Dow" },
+        { proName: "NASDAQ:AAPL" }, { proName: "NASDAQ:NVDA" }, { proName: "NASDAQ:MSFT" }, { proName: "NASDAQ:AMZN" }, { proName: "NASDAQ:GOOGL" },
+        { proName: "NASDAQ:META" }, { proName: "NASDAQ:TSLA" }, { proName: "NYSE:JPM" }, { proName: "TVC:GOLD", title: "Oro" },
+        { proName: "TVC:USOIL", title: "Petróleo" }, { proName: "FX_IDC:USDMXN", title: "USD/MXN" }, { proName: "BINANCE:BTCUSDT", title: "Bitcoin" },
+      ],
+      showSymbolLogo: true, displayMode: "adaptive", height: 46,
+    });
+    ["FOREXCOM:SPXUSD", "FOREXCOM:NSXUSD", "FOREXCOM:DJI", "TVC:VIX"].forEach((sym, i) =>
+      tvWidget(view.querySelector(`#wsMini${i}`), "mini-symbol-overview", { symbol: sym, dateRange: "1D", trendLineColor: "rgba(255, 204, 92, 1)", underLineColor: "rgba(255, 204, 92, .15)", chartOnly: false, noTimeScale: false }));
+    const [brief, bell] = view.querySelectorAll(".ws-actions .tile");
+    brief.addEventListener("click", () => { state.tab = "ai"; aiState.symbol = ""; renderMarkets(body, ctx, state); runAnalysis(body, ctx, state, ""); });
+    bell.addEventListener("click", () => { ctx.bell.toggle(); renderMarkets(body, ctx, state); });
+    // Relojes en vivo sin recargar los widgets.
+    const timer = setInterval(() => {
+      const el = view.querySelector("#wsEx");
+      if (!el) { clearInterval(timer); return; }
+      el.innerHTML = exchangesHtml(t, esc);
+    }, 15_000);
+    loadFearGreed().then(() => { if (view.isConnected && fearGreed.value !== fg) renderMarkets(body, ctx, state); });
+    return;
+  }
+
+  if (state.tab === "watch") {
+    view.innerHTML = `
+      <div class="form-row two">
+        <input class="field mono" id="wlIn" placeholder="${esc(t("wl_add"))}" autocomplete="off" spellcheck="false">
+        ${tile(esc(t("wl_addBtn")), "", "action")}
+      </div>
+      <div class="wl-chips">${watchlist.map((s) => `<span class="wl-chip mono">${esc(s)}<button data-target data-rm="${esc(s)}" aria-label="${esc(t("remove"))}">✕</button></span>`).join("")}</div>
+      <div class="mk-widget" id="wlQuotes"></div>`;
+    const input = view.querySelector("#wlIn");
+    const add = () => { if (normalizeSymbol(input.value)) { addWatch(input.value); renderMarkets(body, ctx, state); } };
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") add(); });
+    view.querySelector(".form-row .tile").addEventListener("click", add);
+    view.querySelectorAll("[data-rm]").forEach((b) => b.addEventListener("click", () => { removeWatch(b.dataset.rm); renderMarkets(body, ctx, state); }));
+    if (watchlist.length) {
+      tvWidget(view.querySelector("#wlQuotes"), "market-quotes", {
+        symbolsGroups: [{ name: t("wl_title"), symbols: watchlist.map((s) => ({ name: s, displayName: s.split(":").pop() })) }],
+        showSymbolLogo: true,
+      });
+    }
+    return;
+  }
+
+  if (state.tab === "chart") {
+    const sym = state.symbol || "NASDAQ:AAPL";
+    view.innerHTML = `
+      <div class="form-row two">
+        <input class="field mono" id="symIn" placeholder="${esc(t("sym_search"))}" value="${esc(sym)}" autocomplete="off" spellcheck="false">
+        ${tile(esc(t("search")), "", "action")}
+      </div>
+      <div class="tabs">${QUICK.map((s) => tile(esc(s.split(":")[1]), "", s === sym ? "on" : "")).join("")}</div>
+      <div class="ws-symbol" id="symInfo"></div>
+      <div class="ws-split">
+        <div class="mk-widget" id="symChart"></div>
+        <div class="ws-side">
+          <div class="mk-widget small" id="symTA"></div>
+          <div class="tiles">${tile(`${ctx.icon("send")}<br>${esc(t("sym_ai"))}`, "", "action")}${tile(esc(watchlist.includes(sym) ? t("wl_in") : t("wl_addBtn")), esc(t("wl_title").toUpperCase()), watchlist.includes(sym) ? "on" : "")}</div>
+        </div>
+      </div>
+      <div class="ws-split">
+        <div class="mk-widget small" id="symProfile"></div>
+        <div class="mk-widget small" id="symFin"></div>
+      </div>`;
+    const go = (s) => { state.symbol = normalizeSymbol(s) || sym; renderMarkets(body, ctx, state); };
+    const input = view.querySelector("#symIn");
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") go(input.value); });
+    view.querySelector(".form-row .tile").addEventListener("click", () => go(input.value));
+    view.querySelectorAll(".tabs .tile").forEach((el, i) => el.addEventListener("click", () => go(QUICK[i])));
+    const [ai, fav] = view.querySelectorAll(".ws-side .tile");
+    ai.addEventListener("click", () => { state.tab = "ai"; aiState.symbol = sym; renderMarkets(body, ctx, state); runAnalysis(body, ctx, state, sym); });
+    fav.addEventListener("click", () => { watchlist.includes(sym) ? removeWatch(sym) : addWatch(sym); renderMarkets(body, ctx, state); });
+    tvWidget(view.querySelector("#symInfo"), "symbol-info", { symbol: sym, height: 180 });
+    tvWidget(view.querySelector("#symChart"), "advanced-chart", { symbol: sym, interval: "D", timezone: "America/New_York", style: "1", allow_symbol_change: true, autosize: true, studies: ["Volume@tv-basicstudies"] });
+    tvWidget(view.querySelector("#symTA"), "technical-analysis", { symbol: sym, interval: "1D", showIntervalTabs: true, displayMode: "single" });
+    tvWidget(view.querySelector("#symProfile"), "symbol-profile", { symbol: sym });
+    tvWidget(view.querySelector("#symFin"), "financials", { symbol: sym, displayMode: "regular" });
+    return;
+  }
+
+  if (state.tab === "ai") {
+    view.innerHTML = `
+      <div class="form-row two">
+        <input class="field mono" id="aiSym" placeholder="${esc(t("ai_symbolHint"))}" value="${esc(aiState.symbol)}" autocomplete="off" spellcheck="false">
+        ${tile(`${esc(aiState.busy ? t("thinking") : t("ai_run"))}`, "", "action" + (aiState.busy ? " live" : ""))}
+      </div>
+      <div class="tiles">${tile(esc(t("ws_brief")), "", "")}${tile(`${ctx.icon("speaker")}<br>${esc(t("readAloud"))}`, "", "")}</div>
+      <div class="hw-out" id="aiOut"></div>
+      <p class="muted">${esc(t("ai_disclaimer"))}</p>`;
+    const out = view.querySelector("#aiOut");
+    if (aiState.text) renderInto(out, aiState.text);
+    else out.innerHTML = `<p class="muted">${esc(t("ai_hint"))}</p>`;
+    const input = view.querySelector("#aiSym");
+    const run = () => { aiState.symbol = normalizeSymbol(input.value); runAnalysis(body, ctx, state, aiState.symbol); };
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+    view.querySelector(".form-row .tile").addEventListener("click", run);
+    const [brief, read] = view.querySelectorAll(".tiles .tile");
+    brief.addEventListener("click", () => { aiState.symbol = ""; runAnalysis(body, ctx, state, ""); });
+    read.addEventListener("click", () => aiState.text && ctx.speak(speakable(aiState.text)));
+    return;
+  }
+
   view.classList.add("mk-widget");
+  if (state.tab === "movers") {
+    tvWidget(view, "hotlists", { exchange: "US", dateRange: "1D", showChart: true, showSymbolLogo: true, showFloatingTooltip: true, plotLineColorGrowing: "rgba(125, 255, 178, 1)", plotLineColorFalling: "rgba(255, 122, 144, 1)" });
+    return;
+  }
+  if (state.tab === "calendar") {
+    tvWidget(view, "events", { importanceFilter: "0,1", countryFilter: "us,mx,eu,gb,cn,jp" });
+    return;
+  }
   if (state.tab === "stocks") {
     tvWidget(view, "market-overview", {
       dateRange: "1D", showChart: true, showSymbolLogo: true, showFloatingTooltip: true,
@@ -170,22 +320,33 @@ export function renderMarkets(body, ctx, state) {
     tvWidget(view, "screener", { defaultColumn: "overview", defaultScreen: "most_capitalized", market: state.region || "america", showToolbar: true });
   } else if (state.tab === "heatmap") {
     tvWidget(view, "stock-heatmap", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", hasTopBar: true, isZoomEnabled: true, hasSymbolTooltip: true });
-  } else if (state.tab === "chart") {
-    const sym = state.symbol || "NASDAQ:AAPL";
-    view.classList.remove("mk-widget");
-    view.innerHTML = `
-      <div class="tiles">${["NASDAQ:AAPL", "NASDAQ:NVDA", "NASDAQ:TSLA", "BMV:AMXB", "BINANCE:BTCUSDT", "BINANCE:ETHUSDT", "FX_IDC:USDMXN"]
-        .map((s) => tile(esc(s.split(":")[1]), "", s === sym ? "on" : "")).join("")}</div>
-      <div class="mk-widget" id="mkChart"></div>`;
-    view.querySelectorAll(".tile").forEach((el) => el.addEventListener("click", () => {
-      state.symbol = ["NASDAQ:AAPL", "NASDAQ:NVDA", "NASDAQ:TSLA", "BMV:AMXB", "BINANCE:BTCUSDT", "BINANCE:ETHUSDT", "FX_IDC:USDMXN"]
-        .find((s) => s.split(":")[1] === el.textContent.trim());
-      renderMarkets(body, ctx, state);
-    }));
-    tvWidget(view.querySelector("#mkChart"), "advanced-chart", {
-      symbol: sym, interval: "D", timezone: "Etc/UTC", style: "1", allow_symbol_change: true, hide_side_toolbar: false, autosize: true,
-    });
   } else if (state.tab === "news") {
     tvWidget(view, "timeline", { feedMode: "all_symbols", displayMode: "regular" });
+  }
+}
+
+/** Pide a NIKOLAI un resumen de Wall Street (sin símbolo) o el análisis de una acción. */
+async function runAnalysis(body, ctx, state, symbol) {
+  if (aiState.busy) return;
+  aiState.busy = true;
+  aiState.text = "";
+  if (state.tab === "ai") renderMarkets(body, ctx, state);
+  let full = "";
+  try {
+    const err = await ctx.stream(
+      { messages: [{ role: "user", content: symbol ? ctx.t("ai_promptSymbol").replace("{s}", symbol) : ctx.t("ai_promptBrief") }], mode: "market", channel: "text", symbol },
+      { onText: (d) => {
+        full += d;
+        aiState.text = full;
+        const out = body.querySelector("#aiOut");
+        if (out) renderInto(out, full);
+      } },
+    );
+    aiState.text = full || ctx.errorText(err);
+  } catch {
+    aiState.text = ctx.t("errGeneric");
+  } finally {
+    aiState.busy = false;
+    if (body.isConnected && state.tab === "ai") renderMarkets(body, ctx, state);
   }
 }

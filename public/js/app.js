@@ -14,6 +14,7 @@ import {
   spotify, renderMusic, handleRedirect, isConnected as spotifyConnected, refreshNow, control as spotifyControl,
   search as spotifySearch, playItem, setEmbed, presetFor, PRESETS, playInEmbed, hidePlayer, player as miniPlayer,
 } from "./spotify.js";
+import { watchOpeningBell, ringBell, exchangeStatus, EXCHANGES } from "./wallstreet.js";
 import { memory, renderMemory, addMemory, forgetMatching, memoriesForBrain } from "./memory.js";
 import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
 import {
@@ -33,7 +34,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    clap: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, clap: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -120,7 +121,7 @@ function cardBody(id) {
     case "homework": return `<p class="desc" style="flex:1">${esc(t("hwCardDesc"))}</p><div class="stats">${stat("tasksDone", "hwDone")}${stat("level", "hwLevel", "accent")}</div>`;
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
-    case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("change24h", "btcChange", "accent")}</div>`;
+    case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
     case "news": return `<p class="desc" data-bind="newsInfo" style="flex:1"></p><div class="stats">${stat("topics", "newsTopics")}${stat("source", "newsSource", "accent")}</div>`;
     case "weather": return `<div class="big-code" data-bind="wxTemp">—</div><div class="stats">${stat("sky", "wxDesc")}${stat("humidity", "wxHum", "accent")}</div>`;
     case "tools": return `<div class="big-code mono" data-bind="timerLeft">25:00</div><div class="stats">${stat("timer", "timerState")}${stat("calculator", "calcReady", "accent")}</div>`;
@@ -228,6 +229,7 @@ function values() {
     bdayDays: bday === 0 ? "🎂" : bday == null ? "—" : `${bday}`,
     bdayDate: profile.birthday ? profile.birthday.split("-").reverse().join("/") : "—",
     profileName: profile.name || "—",
+    nyseState: t("ex_" + exchangeStatus(EXCHANGES[0]).state),
     memCount: memory.items.length,
     memState: memory.enabled ? t("on") : t("off"),
     memLast: memory.items[0] ? new Date(memory.items[0].at).toLocaleDateString(getLang(), { day: "numeric", month: "short" }) : "—",
@@ -452,7 +454,10 @@ const PANEL = {
   },
 
   markets(body) {
-    renderMarkets(body, moduleCtx(), marketState);
+    renderMarkets(body, {
+      ...moduleCtx(),
+      bell: { enabled: settings.bell, toggle: () => { settings.bell = !settings.bell; saveSettings(); if (settings.bell) ringBell(); } },
+    }, marketState);
   },
 
   memory(body) {
@@ -1364,6 +1369,13 @@ function renderDock() {
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
+
+// Campana de apertura de Wall Street (9:30 de Nueva York).
+watchOpeningBell(() => {
+  if (!settings.bell || sleeping) return;
+  ringBell();
+  setTimeout(() => speakOnce(t("ws_bellSay")), 1800);
+});
 
 // Temporizador: tarjeta en vivo y aviso por voz al terminar.
 timer.onTick = () => document.querySelectorAll('[data-bind="timerLeft"]').forEach((el) => { el.textContent = fmtTime(timer.left); });

@@ -252,7 +252,7 @@ export function parseRequest(body) {
   if (!messages.length || messages[messages.length - 1].role !== "user") return null;
   const profile = body.profile && typeof body.profile === "object" ? body.profile : {};
   const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
-  const mode = ["translate", "homework", "news", "describe"].includes(body.mode) ? body.mode : "chat";
+  const mode = ["translate", "homework", "news", "describe", "market"].includes(body.mode) ? body.mode : "chat";
   return {
     messages,
     mode,
@@ -266,6 +266,7 @@ export function parseRequest(body) {
     memories: Array.isArray(body.memories)
       ? body.memories.filter((m) => typeof m === "string").slice(0, 80).map((m) => m.slice(0, 400))
       : [],
+    symbol: str(body.symbol, 40),
     translateTo: mode === "translate" && LANGUAGES[body.target] ? LANGUAGES[body.target] : null,
     task: HOMEWORK[body.task] ? body.task : "solve",
     level: LEVELS[body.level] ? body.level : "secondary",
@@ -306,6 +307,22 @@ function plan(request, webSearch, effort) {
     return {
       system: `Describe la foto en una o dos frases para poder recordarla después: quién o qué aparece, dónde y qué ocurre. Responde en ${LANGUAGES[lang] || "español"}, sin introducciones.`,
       tools: [], effort: "low",
+    };
+  }
+  if (mode === "market") {
+    return {
+      system: [
+        "Eres NIKOLAI, analista de mercados al estilo de una mesa de Wall Street: precisa, clara y sin exagerar.",
+        "Usa la búsqueda web para obtener datos actuales (precios, variación del día, noticias, resultados trimestrales, datos macro). Indica la fecha y hora de los datos que uses.",
+        `Escribe en ${LANGUAGES[lang] || "español"} con Markdown.`,
+        request.symbol
+          ? `Analiza ${request.symbol}: precio y variación de hoy, qué mueve la acción (noticias y catalizadores), datos clave (capitalización, P/E, máximos y mínimos de 52 semanas, próximos resultados), lectura técnica breve (tendencia, soportes y resistencias), el consenso de analistas si lo hay, riesgos y qué vigilar. Usa una tabla pequeña para los datos clave.`
+          : "Haz el resumen de Wall Street de hoy: cómo van S&P 500, Nasdaq, Dow Jones y el VIX (tabla), los sectores y acciones que más se mueven y por qué, datos macro o de la Fed relevantes, bonos, dólar, petróleo y oro, y qué vigilar en la próxima sesión.",
+        "Termina con una línea en cursiva: «Información educativa, no es asesoría financiera.»",
+        `Fecha y hora local del usuario: ${request.now}.`,
+      ].join("\n"),
+      tools: webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }] : [],
+      effort: "medium",
     };
   }
   if (mode === "news") {
