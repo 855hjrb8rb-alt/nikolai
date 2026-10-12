@@ -4,7 +4,7 @@
 import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
 import {
   Listener, Speaker, MicMeter, voicesFor, voiceGender, voiceQuality, stripWakeWord, speechSupported,
-  isMobile, isIOS, inAppBrowser, isBrave,
+  isMobile, isIOS, inAppBrowser, isBrave, ClapDetector,
 } from "./voice.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -12,7 +12,7 @@ import { renderInto, speakable } from "./md.js";
 import { renderHomework, study } from "./study.js";
 import {
   spotify, renderMusic, handleRedirect, isConnected as spotifyConnected, refreshNow, control as spotifyControl,
-  search as spotifySearch, playItem, setEmbed, presetFor, PRESETS,
+  search as spotifySearch, playItem, setEmbed, presetFor, PRESETS, playInEmbed, hidePlayer, player as miniPlayer,
 } from "./spotify.js";
 import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
 import {
@@ -32,6 +32,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
+    clap: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -448,7 +449,7 @@ const PANEL = {
   },
 
   music(body) {
-    renderMusic(body, { ...moduleCtx(), onChange: updateCards });
+    renderMusic(body, { ...moduleCtx(), onChange: updateCards, clap: clapCtx() });
     if (spotifyConnected()) refreshNow().then(() => { if (openId === "music" && !body.querySelector(".now-row") && spotify.now) refreshPanel(); updateCards(); });
   },
 
@@ -703,6 +704,10 @@ function applyVoice() {
 
 function setState(s, label) {
   state = s;
+  if (isMobile && settings.clap) {
+    if (s === "listening") claps.stop();
+    else if (!claps.running && typeof startClaps === "function") setTimeout(() => state !== "listening" && startClaps(), 300);
+  }
   document.body.classList.remove("v-listening", "v-thinking", "v-speaking", "v-off");
   document.body.classList.add("v-" + s);
   ui.vbState.textContent = (label || (s === "off" ? (voiceOn ? t("paused") : t("micOff")) : t(s))).toUpperCase();
@@ -891,10 +896,14 @@ const ACTIONS = {
       try {
         const found = preset ? [{ type: "playlist", id: preset.id, uri: `spotify:playlist:${preset.id}` }] : await spotifySearch(query);
         const item = found.find((x) => x.type === "track") || found[0];
-        if (item) { setEmbed(item.type, item.id); await playItem(item); }
-      } catch { /* sin Premium o sin dispositivo: queda en el reproductor incrustado */ }
-    } else setEmbed("playlist", (preset || PRESETS[0]).id);
-    openPanel("music");
+        if (item) {
+          try { await playItem(item); } catch { await playInEmbed(item.type, item.id, item.title || query); }
+          return;
+        }
+      } catch { /* sin Premium o sin dispositivo: se usa el reproductor flotante */ }
+    }
+    const p = preset || PRESETS[0];
+    playInEmbed("playlist", p.id, t("sp_" + p.key));
   },
   music_control: ({ action }) => {
     spotifyControl(action).catch(() => openPanel("music")).finally(updateCards);
@@ -1283,6 +1292,54 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
 // Temporizador: tarjeta en vivo y aviso por voz al terminar.
 timer.onTick = () => document.querySelectorAll('[data-bind="timerLeft"]').forEach((el) => { el.textContent = fmtTime(timer.left); });
 timer.onDone = () => { speakOnce(t("timerDone")); updateCards(); if (openId === "tools") refreshPanel(); };
+
+// =====================================================================
+// Doble aplauso → canción (por defecto «Should I Stay or Should I Go»)
+// =====================================================================
+const claps = new ClapDetector({
+  onClap: () => { ui.heard.innerHTML = "<b>👏</b>"; },
+  onDouble: () => playClapSong(),
+});
+// No escuchar aplausos mientras NIKOLAI habla (su propia voz podría parecer un golpe).
+claps.muted = () => speaker.speaking;
+
+function playClapSong() {
+  const song = settings.clapSong;
+  ui.heard.innerHTML = "<b>👏👏</b>";
+  ui.reply.textContent = `♫ ${song.title}`;
+  document.body.classList.add("clap-flash");
+  setTimeout(() => document.body.classList.remove("clap-flash"), 900);
+  const item = { type: song.type, id: song.id, uri: `spotify:${song.type}:${song.id}`, title: song.title };
+  if (spotifyConnected()) playItem(item).catch(() => playInEmbed(song.type, song.id, song.title));
+  else playInEmbed(song.type, song.id, song.title);
+}
+
+let userGestured = false;
+async function startClaps() {
+  if (!settings.clap || !userGestured) return;
+  if (claps.running) { claps.ctx?.resume(); return; }
+  // En el celular, el micrófono no se puede compartir con el reconocimiento de voz.
+  if (isMobile && state === "listening") return;
+  try { await claps.start(); } catch { /* sin permiso de micrófono */ }
+}
+
+function clapCtx() {
+  return {
+    enabled: settings.clap,
+    songTitle: settings.clapSong.title,
+    toggle: () => { settings.clap = !settings.clap; saveSettings(); settings.clap ? startClaps() : claps.stop(); },
+    fire: playClapSong,
+    setSong: (type, id) => {
+      settings.clapSong = { type, id, title: `${t("sp_type_" + type)} · ${id.slice(0, 6)}…` };
+      saveSettings();
+    },
+  };
+}
+
+miniPlayer.onChange = () => updateCards();
+$("#mpClose").addEventListener("click", hidePlayer);
+// El audio del navegador solo arranca tras una interacción: el detector empieza con el primer toque.
+["pointerdown", "keydown"].forEach((ev) => addEventListener(ev, () => { userGestured = true; startClaps(); }, { once: true }));
 
 // =====================================================================
 // Arranque

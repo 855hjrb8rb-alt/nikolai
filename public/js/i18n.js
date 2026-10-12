@@ -18,6 +18,9 @@ export const LANGS = {
 
 const T = {
   es: {
+    clapTitle: "Doble aplauso", clapOn: "Activar aplausos", clapOff: "Desactivar aplausos", clapTest: "Probar canción",
+    clapUseLink: "Usar el enlace pegado", clapPasteFirst: "Pega abajo un enlace de Spotify y vuelve a pulsar «Usar el enlace pegado».",
+    clapNote: "Da dos aplausos seguidos y NIKOLAI pone la canción. Necesita permiso de micrófono; toca la pantalla una vez para activarlo.",
     music: "Música", musicDesc: "Spotify: listas para estudiar, éxitos y tu cuenta.", musicCardDesc: "Toca para poner música con Spotify.",
     sp_account: "Cuenta", sp_device: "Dispositivo",
     sp_focus: "Concentración", sp_lofi: "Lo-fi", sp_piano: "Piano tranquilo", sp_hits: "Éxitos del momento", sp_mexico: "Top 50 México",
@@ -142,10 +145,14 @@ const T = {
       ["Palma abierta 1 s", "Abrir el módulo central."],
       ["Puño", "Cerrar el panel o interrumpir la voz."],
       ["Gesto V", "Activar o pausar el micrófono."],
+      ["👏👏 Dos aplausos", "Pone tu canción (por defecto «Should I Stay or Should I Go»)."],
     ],
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    clapTitle: "Double clap", clapOn: "Enable claps", clapOff: "Disable claps", clapTest: "Test song",
+    clapUseLink: "Use pasted link", clapPasteFirst: "Paste a Spotify link below and tap “Use pasted link” again.",
+    clapNote: "Clap twice and NIKOLAI plays the song. Needs microphone permission; tap the screen once to enable it.",
     music: "Music", musicDesc: "Spotify: study playlists, hits and your account.", musicCardDesc: "Tap to play music with Spotify.",
     sp_account: "Account", sp_device: "Device",
     sp_focus: "Deep Focus", sp_lofi: "Lo-fi", sp_piano: "Peaceful piano", sp_hits: "Today's top hits", sp_mexico: "Top 50 Mexico",
@@ -270,6 +277,7 @@ const T = {
       ["Open palm 1 s", "Open the centre module."],
       ["Fist", "Close the panel or interrupt speech."],
       ["V sign", "Turn the microphone on or off."],
+      ["👏👏 Two claps", "Plays your song (by default “Should I Stay or Should I Go”)."],
     ],
     voiceHelp: "Say, for example: “open the translator”, “speak Spanish”, “note: buy bread”, “read my notes”, “what's the weather in London?”.",
   },

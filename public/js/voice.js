@@ -243,3 +243,101 @@ export class MicMeter {
     return sum / (38 * 255);
   }
 }
+
+// ---------- Detector de aplausos ----------
+/**
+ * Reconoce aplausos a partir del volumen de cada fragmento de audio (~20 ms):
+ * un aplauso es un golpe fuerte y repentino que se apaga enseguida; la voz y la
+ * música se sostienen más tiempo y no cuentan. Dos aplausos seguidos = "double".
+ */
+export class ClapCounter {
+  constructor({ sensitivity = 1 } = {}) {
+    this.sensitivity = sensitivity; // >1 más sensible, <1 menos
+    this.bg = 0.01;                 // ruido de fondo (se adapta)
+    this.pending = null;            // golpe en espera de confirmar que se apaga rápido
+    this.lastOnset = -1e9;
+    this.lastClap = -1e9;
+    this.cooldownUntil = 0;
+  }
+
+  /** peak y rms del fragmento (0..1), t en ms. Devuelve "clap", "double" o null. */
+  process(peak, rms, t) {
+    let event = null;
+    if (this.pending && t - this.pending.t >= 70) {
+      // ¿Se apagó rápido? Entonces era un aplauso.
+      if (rms < this.pending.rms * 0.45) event = this.#clap(this.pending.t);
+      this.pending = null;
+    }
+    const s = this.sensitivity;
+    const onset = rms > 0.06 / s && rms > this.bg * 5 && peak > 0.25 / s && t - this.lastOnset > 140;
+    if (!this.pending && onset && t >= this.cooldownUntil) {
+      this.pending = { t, rms };
+      this.lastOnset = t;
+    } else if (!this.pending) {
+      this.bg = this.bg * 0.97 + rms * 0.03;
+    }
+    return event;
+  }
+
+  #clap(t) {
+    const gap = t - this.lastClap;
+    if (gap >= 150 && gap <= 900) {
+      this.lastClap = -1e9;
+      this.cooldownUntil = t + 2500;
+      return "double";
+    }
+    this.lastClap = t;
+    return "clap";
+  }
+}
+
+export class ClapDetector {
+  constructor({ onClap, onDouble }) {
+    this.onClap = onClap;
+    this.onDouble = onDouble;
+    this.counter = new ClapCounter();
+    this.stream = null;
+    this.ctx = null;
+    this.timer = null;
+    this.muted = () => false; // p. ej. mientras NIKOLAI habla
+  }
+
+  get running() {
+    return Boolean(this.stream);
+  }
+
+  async start() {
+    if (this.stream) return;
+    // Sin cancelación de eco ni supresión de ruido: borrarían el golpe del aplauso.
+    this.stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+    });
+    this.ctx ??= new (window.AudioContext || window.webkitAudioContext)();
+    await this.ctx.resume();
+    const src = this.ctx.createMediaStreamSource(this.stream);
+    const analyser = this.ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    src.connect(analyser);
+    const buf = new Float32Array(analyser.fftSize);
+    this.timer = setInterval(() => {
+      analyser.getFloatTimeDomainData(buf);
+      let peak = 0, sum = 0;
+      for (let i = 0; i < buf.length; i++) {
+        const v = Math.abs(buf[i]);
+        if (v > peak) peak = v;
+        sum += v * v;
+      }
+      if (this.muted()) return;
+      const ev = this.counter.process(peak, Math.sqrt(sum / buf.length), performance.now());
+      if (ev === "clap") this.onClap?.();
+      else if (ev === "double") this.onDouble?.();
+    }, 20);
+  }
+
+  stop() {
+    clearInterval(this.timer);
+    this.timer = null;
+    this.stream?.getTracks().forEach((t) => t.stop());
+    this.stream = null;
+  }
+}

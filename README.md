@@ -69,6 +69,7 @@ Para cortarle, cierra el puño ✊ o toca la barra. En el módulo **Núcleo IA**
 | ✋ Palma abierta 1 s | Abre el módulo central |
 | ✊ Puño | Interrumpe la voz / cierra el módulo |
 | ✌️ Gesto V | Activa o pausa el micrófono |
+| 👏👏 Dos aplausos | Pone tu canción: por defecto «Should I Stay or Should I Go» de The Clash (se cambia en Música) |
 
 La detección de la mano corre **100 % en tu navegador** (MediaPipe Hand Landmarker); el vídeo nunca sale de tu equipo.
 

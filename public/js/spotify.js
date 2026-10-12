@@ -184,10 +184,74 @@ export async function playItem(item) {
   setTimeout(refreshNow, 800);
 }
 
-/** Muestra un elemento en el reproductor incrustado (funciona sin cuenta). */
+/** Elige qué mostrar en el reproductor flotante (funciona sin cuenta). */
 export function setEmbed(type, id) {
   spotify.embed = { type, id };
   store.set("embed", spotify.embed);
+}
+
+// ---------- Reproductor flotante (Spotify iFrame API) ----------
+// Vive fuera de los módulos, así la música sigue al cerrar el panel.
+let apiPromise = null, controller = null, controllerReady = null;
+export const player = { visible: false, playing: false, title: "", onChange: null };
+
+function loadIframeApi() {
+  apiPromise ??= new Promise((resolve, reject) => {
+    window.onSpotifyIframeApiReady = (api) => resolve(api);
+    const s = document.createElement("script");
+    s.src = "https://open.spotify.com/embed/iframe-api/v1";
+    s.async = true;
+    s.onerror = reject;
+    document.body.appendChild(s);
+  });
+  return apiPromise;
+}
+
+async function getController(uri) {
+  if (controller) return controller;
+  controllerReady ??= loadIframeApi().then((api) => new Promise((resolve) => {
+    const host = document.querySelector("#spHost");
+    api.createController(host, { uri, width: "100%", height: 152 }, (c) => {
+      c.addListener("playback_update", (e) => {
+        const playing = !e.data.isPaused;
+        if (playing !== player.playing) { player.playing = playing; player.onChange?.(); }
+      });
+      controller = c;
+      resolve(c);
+    });
+  }));
+  return controllerReady;
+}
+
+/** Pone algo en el reproductor flotante y lo hace sonar. */
+export async function playInEmbed(type, id, title = "") {
+  setEmbed(type, id);
+  const uri = `spotify:${type}:${id}`;
+  player.visible = true;
+  player.title = title;
+  document.querySelector("#miniPlayer")?.removeAttribute("hidden");
+  player.onChange?.();
+  try {
+    const c = await getController(uri);
+    c.loadUri(uri);
+    c.play();
+  } catch {
+    // Plan B: reproductor incrustado normal (hay que pulsar ▶) y se reintenta la API la próxima vez.
+    apiPromise = null;
+    controllerReady = null;
+    const host = document.querySelector("#spHost");
+    if (host) {
+      host.innerHTML = `<iframe src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0" width="100%" height="152"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Spotify"></iframe>`;
+    }
+  }
+}
+
+export function hidePlayer() {
+  controller?.pause();
+  player.visible = false;
+  document.querySelector("#miniPlayer")?.setAttribute("hidden", "");
+  player.onChange?.();
 }
 
 /** Convierte un enlace de Spotify (open.spotify.com/... o spotify:...) en {type, id}. */
@@ -209,11 +273,19 @@ export function renderMusic(body, ctx) {
   const { t, esc, tile, icon } = ctx;
   const connected = isConnected();
   const n = spotify.now;
-  const embedUrl = `https://open.spotify.com/embed/${spotify.embed.type}/${spotify.embed.id}?utm_source=generator&theme=0`;
   body.innerHTML = `
     <div class="music-grid">
       <section class="music-left">
-        <iframe class="sp-embed" src="${embedUrl}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Spotify"></iframe>
+        <div class="readout clap-box">
+          <div class="k">${esc(t("clapTitle").toUpperCase())} · ${esc(ctx.clap.enabled ? t("on") : t("off"))}</div>
+          <div class="v small">👏👏 → ${esc(ctx.clap.songTitle)}</div>
+          <div class="tiles">
+            ${tile(esc(ctx.clap.enabled ? t("clapOff") : t("clapOn")), "", ctx.clap.enabled ? "on" : "")}
+            ${tile(esc(t("clapTest")), "", "")}
+            ${tile(esc(t("clapUseLink")), "", "")}
+          </div>
+          <p class="muted">${esc(t("clapNote"))}</p>
+        </div>
         <div class="tiles presets">${PRESETS.map((p) => tile(esc(t("sp_" + p.key)), "", spotify.embed.id === p.id ? "on" : "")).join("")}</div>
         <div class="form-row two">
           <input class="field" id="spLink" placeholder="${esc(t("sp_paste"))}">
@@ -258,19 +330,28 @@ export function renderMusic(body, ctx) {
     <p class="muted" id="spMsg"></p>`;
 
   const msg = body.querySelector("#spMsg");
+  const [clapToggle, clapTest, clapLink] = body.querySelectorAll(".clap-box .tile");
+  clapToggle.addEventListener("click", () => { ctx.clap.toggle(); renderMusic(body, ctx); });
+  clapTest.addEventListener("click", () => ctx.clap.fire());
+  clapLink.addEventListener("click", () => {
+    const p = parseLink(body.querySelector("#spLink").value);
+    if (!p) { msg.textContent = t("clapPasteFirst"); return; }
+    ctx.clap.setSong(p.type, p.id);
+    renderMusic(body, ctx);
+  });
   const fail = (e) => {
     msg.textContent = e.code === "premium" ? t("sp_errPremium") : e.code === "device" ? t("sp_errDevice") : e.code === "auth" ? t("sp_errAuth") : `${t("sp_error")} (${e.message})`;
   };
 
   body.querySelectorAll(".presets .tile").forEach((el, i) => el.addEventListener("click", () => {
-    setEmbed("playlist", PRESETS[i].id);
+    playInEmbed("playlist", PRESETS[i].id, t("sp_" + PRESETS[i].key));
     renderMusic(body, ctx);
   }));
   const linkIn = body.querySelector("#spLink");
   const openLink = () => {
     const p = parseLink(linkIn.value);
     if (!p) { msg.textContent = t("sp_badLink"); return; }
-    setEmbed(p.type, p.id);
+    playInEmbed(p.type, p.id);
     renderMusic(body, ctx);
   };
   linkIn.addEventListener("keydown", (e) => { if (e.key === "Enter") openLink(); });
@@ -300,8 +381,8 @@ export function renderMusic(body, ctx) {
       || `<p class="muted">—</p>`;
     results.querySelectorAll(".sp-item").forEach((el) => el.addEventListener("click", () => {
       const it = items[Number(el.dataset.i)];
-      setEmbed(it.type, it.id);
-      playItem(it).then(() => later(body, ctx)).catch((e) => { renderMusic(body, ctx); fail(e); });
+      // Con Premium suena en tu Spotify; si no se puede, en el reproductor flotante.
+      playItem(it).then(() => later(body, ctx)).catch(() => playInEmbed(it.type, it.id, it.title));
     }));
   };
   const q = body.querySelector("#spQuery");

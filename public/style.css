@@ -487,3 +487,20 @@ body.birthday .brand b { color: var(--gold); }
 .steps { margin: 8px 0; padding-left: 1.3em; line-height: 1.6; }
 .sel { user-select: all; word-break: break-all; color: var(--gold); }
 @media (max-width: 900px) { .music-grid { grid-template-columns: 1fr; } .sp-embed { height: 232px; } }
+
+/* Reproductor flotante y doble aplauso */
+.mini-player {
+  position: fixed; right: 14px; bottom: 112px; z-index: 18; width: min(340px, calc(100vw - 28px));
+  border: 1px solid var(--gold-dim); border-radius: 14px; overflow: hidden;
+  background: rgba(10, 12, 50, .75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 40px rgba(255, 204, 92, .15);
+}
+.mp-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 6px 12px; font-size: 10px; letter-spacing: .16em; color: var(--gold); }
+.mp-close { width: 32px; height: 32px; border: 1px solid var(--line-faint); border-radius: 8px; background: transparent; color: var(--ice); cursor: pointer; }
+.mini-player iframe { display: block; border: 0; }
+.clap-box .tiles { grid-template-columns: repeat(3, 1fr); margin-top: 8px; }
+.clap-box .tile { min-height: 50px; }
+.clap-box .tile .t-main { font-size: 14px; }
+body.clap-flash .floor-ring { border-color: var(--gold); box-shadow: 0 0 60px var(--gold); transition: none; }
+body.clap-flash .beam { opacity: .9; }
+@media (max-width: 900px) { .mini-player { bottom: 150px; } }
