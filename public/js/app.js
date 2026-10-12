@@ -2,11 +2,18 @@
 // continuo (escuchar → pensar → hablar → escuchar) y cursor controlado con el dedo.
 
 import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
-import { Listener, Speaker, MicMeter, voicesFor, voiceGender, voiceQuality, stripWakeWord, speechSupported } from "./voice.js";
+import {
+  Listener, Speaker, MicMeter, voicesFor, voiceGender, voiceQuality, stripWakeWord, speechSupported,
+  isMobile, isIOS, inAppBrowser, isBrave,
+} from "./voice.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
 import { renderInto, speakable } from "./md.js";
 import { renderHomework, study } from "./study.js";
+import {
+  spotify, renderMusic, handleRedirect, isConnected as spotifyConnected, refreshNow, control as spotifyControl,
+  search as spotifySearch, playItem, setEmbed, presetFor, PRESETS,
+} from "./spotify.js";
 import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
 import {
   profile, daysToBirthday, renderProfile, renderSos, dial, shareLocation, renderWeather, weather, loadWeather, wmo,
@@ -24,7 +31,7 @@ const store = {
 const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
-    showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary",
+    showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
   },
   store.get("settings", {}),
 );
@@ -59,14 +66,15 @@ const ICON = {
   siren: '<path d="M7 18v-6a5 5 0 0 1 10 0v6M5 18h14v3H5zM12 2v2M4.2 5.2l1.4 1.4M19.8 5.2l-1.4 1.4"/>',
   install: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
   expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 
 const MODULES = [
-  "core", "chat", "homework", "markets", "news", "weather", "tools", "sos",
+  "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "language", "profile", "system", "settings", "help",
 ];
-const WIDE = new Set(["chat", "homework", "markets", "news", "tools"]);
+const WIDE = new Set(["chat", "homework", "music", "markets", "news", "tools"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -106,6 +114,7 @@ function cardBody(id) {
     case "help": return `<p class="desc" style="flex:1">${esc(t("voiceHelp"))}</p><div class="stats">${stat("gestures", "gestureCount")}${stat("language", "langCount2", "accent")}</div>`;
     case "chat": return `<p class="desc" data-bind="lastChat" style="flex:1"></p><div class="stats">${stat("messages", "chatCount")}${stat("readAloud", "chatSpeak", "accent")}</div>`;
     case "homework": return `<p class="desc" style="flex:1">${esc(t("hwCardDesc"))}</p><div class="stats">${stat("tasksDone", "hwDone")}${stat("level", "hwLevel", "accent")}</div>`;
+    case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("change24h", "btcChange", "accent")}</div>`;
     case "news": return `<p class="desc" data-bind="newsInfo" style="flex:1"></p><div class="stats">${stat("topics", "newsTopics")}${stat("source", "newsSource", "accent")}</div>`;
     case "weather": return `<div class="big-code" data-bind="wxTemp">—</div><div class="stats">${stat("sky", "wxDesc")}${stat("humidity", "wxHum", "accent")}</div>`;
@@ -214,6 +223,9 @@ function values() {
     bdayDays: bday === 0 ? "🎂" : bday == null ? "—" : `${bday}`,
     bdayDate: profile.birthday ? profile.birthday.split("-").reverse().join("/") : "—",
     profileName: profile.name || "—",
+    musicNow: spotify.now ? `${spotify.now.playing ? "▶" : "⏸"} ${spotify.now.title} — ${spotify.now.artist}` : t("musicCardDesc"),
+    musicAccount: spotifyConnected() ? "Spotify ✓" : "—",
+    musicDevice: spotify.now?.device || "—",
   };
 }
 
@@ -226,6 +238,7 @@ function updateCards() {
       const live = id === "core" || id === "chat" || id === "homework" || id === "news" ? brain.apiKey
         : id === "settings" ? Boolean(gestures?.running)
         : id === "markets" ? Boolean(market.live.BTCUSDT)
+        : id === "music" ? true
         : id === "weather" ? Boolean(weather.data)
         : id === "tools" ? true
         : true;
@@ -434,6 +447,11 @@ const PANEL = {
     renderMarkets(body, moduleCtx(), marketState);
   },
 
+  music(body) {
+    renderMusic(body, { ...moduleCtx(), onChange: updateCards });
+    if (spotifyConnected()) refreshNow().then(() => { if (openId === "music" && !body.querySelector(".now-row") && spotify.now) refreshPanel(); updateCards(); });
+  },
+
   news(body) {
     renderNews(body, moduleCtx());
   },
@@ -497,30 +515,80 @@ const PANEL = {
   },
 
   system(body) {
+    const ok = (v) => (v ? "✓" : "✕");
+    const checks = [
+      [t("diagSecure"), window.isSecureContext],
+      [t("diagBrowser"), !inAppBrowser],
+      [t("diagSpeech"), speechSupported],
+      [t("diagMic"), Boolean(navigator.mediaDevices?.getUserMedia)],
+      [t("diagTts"), "speechSynthesis" in window],
+      [t("diagCamera"), Boolean(gestures?.running)],
+    ];
+    body.innerHTML = `
+      <div class="grid-stats" id="sysLive"></div>
+      <div class="readout"><div class="k">${esc(t("diagTitle").toUpperCase())}</div>
+        <div class="diag">${checks.map(([k, v]) => `<div class="diag-row ${v ? "good" : "bad"}"><span>${ok(v)}</span>${esc(k)}</div>`).join("")}</div>
+        ${inAppBrowser ? `<p class="notice-err">${esc(t("camErrInApp"))}</p>` : ""}
+        ${lastMicError ? `<p class="notice-err">${esc(lastMicError)}</p>` : ""}
+        ${lastCamError ? `<p class="notice-err">${esc(lastCamError)}</p>` : ""}
+      </div>
+      <div class="tiles">
+        ${tile(`${icon("mic")}<br>${esc(t("testMic"))}`, "", "action")}
+        ${tile(`${icon("camera")}<br>${esc(t("testCam"))}`, "", "action")}
+        ${tile(`${icon("speaker")}<br>${esc(t("test"))}`, "", "action")}
+      </div>
+      <p class="muted" id="diagOut">${esc(t("diagHint"))}</p>
+      <div class="readout"><div class="k">${esc(t("micLevel"))}</div><div class="meter"><i id="sysMeter"></i></div></div>
+      ${brain.model ? `<p class="muted mono">MODEL · ${esc(brain.model)}</p>` : ""}`;
+    const live = body.querySelector("#sysLive");
+    const out = body.querySelector("#diagOut");
     const render = () => {
       const v = values();
-      body.innerHTML = `<div class="grid-stats">
+      live.innerHTML = `
         ${readout(t("brain"), brain.apiKey ? `${t("ready")}` : brain.ok ? t("noKey") : t("offline"))}
         ${readout(t("camera"), gestures?.running ? `${v.fps} ${t("fps")}` : "OFF")}
         ${readout(t("hand"), gestures?.handVisible ? t("detected") : t("none"))}
         ${readout(t("network"), navigator.onLine ? t("online") : t("offline"))}
         ${readout(t("battery"), v.battery)}
-        ${readout(t("latency"), stats.lastLatency == null ? "—" : `${stats.lastLatency} ms`)}
-      </div>
-      <div class="readout"><div class="k">${esc(t("micLevel"))}</div><div class="meter"><i style="width:${Math.round(mic.level() * 300)}%"></i></div></div>
-      ${brain.model ? `<p class="muted mono">MODEL · ${esc(brain.model)}</p>` : ""}`;
+        ${readout(t("latency"), stats.lastLatency == null ? "—" : `${stats.lastLatency} ms`)}`;
+      const meter = body.querySelector("#sysMeter");
+      if (meter) meter.style.width = `${Math.min(100, Math.round((meterLevel() || 0) * 300))}%`;
     };
     render();
-    panelTimer = setInterval(render, 500);
+    panelTimer = setInterval(render, 250);
+    const [micT, camT, ttsT] = body.querySelectorAll(".tiles .tile");
+    micT.addEventListener("click", () => {
+      out.textContent = t("diagSpeakNow");
+      dictateInto((said) => { out.textContent = `✓ ${t("diagHeard")}: «${said}»`; });
+    });
+    camT.addEventListener("click", async () => {
+      out.textContent = t("loading");
+      await startCamera();
+      out.textContent = gestures?.running ? `✓ ${t("diagCamOk")}` : lastCamError;
+    });
+    ttsT.addEventListener("click", () => speakOnce(t("voiceSample")));
   },
 
   settings(body) {
     const toggle = (key, label) => tile(esc(label), settings[key] ? t("on") : t("off"), settings[key] ? "on" : "");
     body.innerHTML = `
-      <div class="tiles wide">${toggle("poke", t("poke"))}${toggle("pinch", t("pinch"))}${toggle("dwell", t("dwell"))}${toggle("showCam", t("showCam"))}</div>
+      <div class="tiles wide">
+        ${tile(`${icon("camera")}<br>${esc(gestures?.running ? t("camOff") : t("camOn"))}`, "", "action" + (gestures?.running ? " live" : ""))}
+        ${tile(esc(t("camFront")), esc(t("camera").toUpperCase()), settings.facing === "user" ? "on" : "")}
+        ${tile(esc(t("camRear")), esc(t("camera").toUpperCase()), settings.facing !== "user" ? "on" : "")}
+      </div>
+      ${lastCamError ? `<p class="notice-err">${esc(lastCamError)}</p>` : ""}
+      <div class="tiles wide toggles">${toggle("poke", t("poke"))}${toggle("pinch", t("pinch"))}${toggle("dwell", t("dwell"))}${toggle("showCam", t("showCam"))}</div>
       ${stepper(t("smoothing"), settings.smoothing.toFixed(2))}`;
+    const [camBtn, front, rear] = body.querySelectorAll(".tiles:first-child .tile");
+    camBtn.addEventListener("click", () => {
+      if (gestures?.running) { gestures.stop(); gestures = null; ui.sensor.classList.add("off"); ui.camStart.hidden = false; refreshPanel(); }
+      else startCamera();
+    });
+    front.addEventListener("click", () => { settings.facing = "user"; saveSettings(); startCamera(); });
+    rear.addEventListener("click", () => { settings.facing = "environment"; saveSettings(); startCamera(); });
     const keys = ["poke", "pinch", "dwell", "showCam"];
-    body.querySelectorAll(".tiles .tile").forEach((el, i) => el.addEventListener("click", () => {
+    body.querySelectorAll(".tiles.toggles .tile").forEach((el, i) => el.addEventListener("click", () => {
       settings[keys[i]] = !settings[keys[i]];
       saveSettings();
       applyGestureSettings();
@@ -649,9 +717,52 @@ function updateHint() {
     : "";
 }
 
+let micChecked = false;
+let speechActive = false; // el reconocimiento detecta voz (para animar la onda en el celular)
+
+/**
+ * Pide permiso de micrófono. En el celular NO se deja abierto: Android no deja
+ * que el reconocimiento de voz use el micrófono si otra parte de la página lo tiene.
+ */
 async function ensureMic() {
-  if (mic.analyser) return;
-  try { await mic.start(); } catch { /* el visualizador queda plano */ }
+  if (mic.analyser || micChecked) return true;
+  if (!navigator.mediaDevices?.getUserMedia) return false;
+  if (isMobile) {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach((tr) => tr.stop());
+      micChecked = true;
+      return true;
+    } catch (err) {
+      showMicError(err.name === "NotAllowedError" ? "not-allowed" : "audio-capture");
+      return false;
+    }
+  }
+  try { await mic.start(); return true; } catch (err) {
+    if (err.name === "NotAllowedError") { showMicError("not-allowed"); return false; }
+    return true; // sin medidor, pero el reconocimiento puede funcionar
+  }
+}
+
+/** Explica por qué no se oye al usuario y cómo arreglarlo. */
+function showMicError(code) {
+  const key = {
+    "not-allowed": "micErrDenied", "service-not-allowed": "micErrDenied", "audio-capture": "micErrBusy",
+    network: isBrave ? "micErrBrave" : "micErrNetwork", "language-not-supported": "micErrLang",
+  }[code] || "micErrGeneric";
+  lastMicError = t(key);
+  ui.reply.textContent = lastMicError;
+  if (code === "not-allowed" || code === "service-not-allowed" || code === "audio-capture" || code === "network") {
+    voiceOn = false;
+    voiceTask = null;
+    setState("off");
+  }
+}
+let lastMicError = "";
+/** Nivel del micrófono para el medidor (en el celular solo hay señal mientras se detecta voz). */
+function meterLevel() {
+  if (mic.analyser) return mic.level();
+  return state === "listening" && speechActive ? 0.25 + Math.random() * 0.1 : 0;
 }
 
 function toggleVoice() {
@@ -709,19 +820,16 @@ function listenNow() {
   listener.lang = LANGS[getLang()].speech;
   setState("listening");
   const ok = listener.listen({
-    onInterim: (text) => { ui.heard.innerHTML = `<b>›</b> ${esc(text)}`; },
+    onInterim: (text) => { speechActive = true; ui.heard.innerHTML = `<b>›</b> ${esc(text)}`; },
+    onSound: (on) => { speechActive = on; },
     onFinal: handleFinal,
     onEnd: (got) => {
       if (got || state !== "listening") return;
       restartTimer = setTimeout(listenNow, 150); // silencio: seguir escuchando
     },
     onError: (err) => {
-      if (err === "not-allowed" || err === "service-not-allowed" || err === "audio-capture") {
-        voiceOn = false;
-        voiceTask = null;
-        ui.reply.textContent = t("micDenied");
-        setState("off");
-      }
+      if (err === "no-speech" || err === "aborted") return; // silencio: se vuelve a escuchar
+      showMicError(err);
     },
   });
   if (!ok) setState("off");
@@ -777,6 +885,20 @@ const ACTIONS = {
   open_panel: ({ panel }) => (panel === "none" ? closePanel() : openPanel(panel)),
   save_note: ({ text }) => { addNote(text); if (openId === "notes") refreshPanel(); },
   start_timer: ({ minutes }) => { startTimer(Math.round(minutes * 60)); updateCards(); if (openId === "tools") refreshPanel(); },
+  play_music: async ({ query }) => {
+    const preset = presetFor(query);
+    if (spotifyConnected()) {
+      try {
+        const found = preset ? [{ type: "playlist", id: preset.id, uri: `spotify:playlist:${preset.id}` }] : await spotifySearch(query);
+        const item = found.find((x) => x.type === "track") || found[0];
+        if (item) { setEmbed(item.type, item.id); await playItem(item); }
+      } catch { /* sin Premium o sin dispositivo: queda en el reproductor incrustado */ }
+    } else setEmbed("playlist", (preset || PRESETS[0]).id);
+    openPanel("music");
+  },
+  music_control: ({ action }) => {
+    spotifyControl(action).catch(() => openPanel("music")).finally(updateCards);
+  },
   emergency: ({ target }) => {
     openPanel("sos");
     if (target === "services") dial(profile.emergencyNumber);
@@ -903,7 +1025,11 @@ function drawWave(now) {
   const bands = state === "listening" ? mic.bands() : null;
   for (let i = 0; i < bars; i++) {
     let v;
-    if (state === "listening") v = bands ? bands[2 + i] / 255 : 0.15 + 0.1 * Math.sin(now / 200 + i);
+    if (state === "listening") {
+      v = bands ? bands[2 + i] / 255
+        : speechActive ? 0.3 + 0.6 * Math.abs(Math.sin(now / 90 + i * 0.7) * Math.sin(now / 230 + i * 0.3))
+        : 0.12 + 0.08 * Math.sin(now / 200 + i);
+    }
     else if (state === "speaking") v = 0.25 + 0.55 * Math.abs(Math.sin(now / 140 + i * 0.55) * Math.sin(now / 410 + i * 0.21));
     else if (state === "thinking") v = 0.12 + 0.5 * Math.max(0, Math.sin(now / 160 - i * 0.35)) ** 6;
     else v = 0.05;
@@ -1044,21 +1170,40 @@ function applyGestureSettings() {
   gestures.pinchEnabled = settings.pinch;
 }
 
+let lastCamError = "";
+
 async function startCamera() {
   ui.camStart.hidden = true;
+  gestures?.stop();
   try {
     gestures = new GestureController({ video: $("#video"), canvas: $("#handCanvas"), onEvent: onGesture });
     applyGestureSettings();
-    await gestures.start();
+    await gestures.start({ facingMode: settings.facing });
     ui.sensor.classList.remove("off");
+    ui.sensor.classList.toggle("rear", settings.facing !== "user");
+    lastCamError = "";
   } catch (err) {
     console.error(err);
     gestures = null;
     ui.sensor.classList.add("off");
     ui.camStart.hidden = false;
-    ui.reply.textContent = `${t("camDenied")} (${err.name || err.message})`;
+    lastCamError = cameraErrorText(err);
+    ui.reply.textContent = lastCamError;
   }
   updateCards();
+  if (openId === "settings" || openId === "system") refreshPanel();
+}
+
+function cameraErrorText(err) {
+  if (inAppBrowser) return t("camErrInApp");
+  if (!window.isSecureContext) return t("camErrHttps");
+  if (err.stage === "unsupported") return t("camErrUnsupported");
+  if (err.stage === "model") return t("camErrModel");
+  return {
+    NotAllowedError: t("camErrDenied"), SecurityError: t("camErrDenied"),
+    NotFoundError: t("camErrNotFound"), OverconstrainedError: t("camErrNotFound"),
+    NotReadableError: t("camErrBusy"), AbortError: t("camErrBusy"),
+  }[err.name] || `${t("camDenied")} (${err.name || err.message})`;
 }
 
 // =====================================================================
@@ -1145,7 +1290,7 @@ timer.onDone = () => { speakOnce(t("timerDone")); updateCards(); if (openId === 
 setLang(store.get("lang", detectBrowserLang()));
 applyLanguage(getLang());
 setState("off");
-ui.reply.textContent = greetingText();
+ui.reply.textContent = inAppBrowser ? t("camErrInApp") : !speechSupported ? t("noSpeech") : greetingText();
 document.body.classList.toggle("birthday", daysToBirthday() === 0);
 renderDock();
 connectLive();
@@ -1172,6 +1317,10 @@ Brain.detect().then((h) => {
   renderSides();
   updateCards();
 });
+
+// Vuelta del inicio de sesión de Spotify.
+handleRedirect().then((ok) => { if (ok || spotify.error) openPanel("music"); if (ok) refreshNow().then(updateCards); }).catch(() => {});
+setInterval(() => { if (spotifyConnected()) refreshNow().then(() => updateCards()); }, 15000);
 
 ui.sensor.classList.add("off");
 startCamera();

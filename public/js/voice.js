@@ -5,6 +5,13 @@
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 export const speechSupported = Boolean(Recognition);
 
+const UA = navigator.userAgent || "";
+export const isMobile = /Android|iPhone|iPad|iPod/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA));
+export const isIOS = /iPhone|iPad|iPod/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA));
+/** Navegadores dentro de otras apps (WhatsApp, Instagram, Facebook…) suelen bloquear micrófono y cámara. */
+export const inAppBrowser = /FBAN|FBAV|Instagram|Line\/|WhatsApp|Snapchat|TikTok|musical_ly|; wv\)|GSA\//i.test(UA);
+export const isBrave = Boolean(navigator.brave);
+
 const WAKE_WORDS = ["nikolai", "nicolai", "nikolay", "nicolás", "nicolas", "jarvis", "ニコライ", "尼古拉", "николай"];
 
 /** Busca la palabra clave y devuelve lo que viene después, o null si no está. */
@@ -23,7 +30,7 @@ export class Listener {
   }
 
   /** Escucha una frase. Llama a onInterim mientras hablas y a onFinal con el texto. */
-  listen({ onInterim, onFinal, onEnd, onError }) {
+  listen({ onInterim, onFinal, onEnd, onError, onSound }) {
     this.stop();
     if (!Recognition) return false;
     const rec = new Recognition();
@@ -31,7 +38,9 @@ export class Listener {
     rec.continuous = false;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
-    let finalText = "";
+    let finalText = "", lastInterim = "";
+    rec.onspeechstart = () => onSound?.(true);
+    rec.onspeechend = () => onSound?.(false);
     rec.onresult = (e) => {
       let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -39,12 +48,14 @@ export class Listener {
         if (r.isFinal) finalText += r[0].transcript;
         else interim += r[0].transcript;
       }
-      onInterim?.((finalText + interim).trim());
+      lastInterim = (finalText + interim).trim();
+      onInterim?.(lastInterim);
     };
     rec.onerror = (e) => onError?.(e.error);
     rec.onend = () => {
       if (this.rec === rec) this.rec = null;
-      const text = finalText.trim();
+      // Algunos Android terminan sin marcar el resultado como final: usamos lo último oído.
+      const text = finalText.trim() || lastInterim;
       if (text) onFinal?.(text);
       onEnd?.(Boolean(text));
     };

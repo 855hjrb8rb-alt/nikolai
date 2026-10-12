@@ -12,7 +12,7 @@ export const LANGUAGES = {
   it: "italiano", ja: "日本語", zh: "中文", ko: "한국어", ru: "русский", ar: "العربية", hi: "हिन्दी",
 };
 export const PANELS = [
-  "core", "chat", "homework", "markets", "news", "weather", "tools", "sos", "voice", "translator",
+  "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos", "voice", "translator",
   "notes", "language", "profile", "system", "settings", "help", "none",
 ];
 
@@ -34,7 +34,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), language (idioma), profile (perfil del usuario), system (telemetría), settings (gestos), help (ayuda). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), language (idioma), profile (perfil del usuario), system (telemetría), settings (gestos), help (ayuda). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -69,6 +69,30 @@ export const UI_TOOLS = [
     eager_input_streaming: true,
   },
   {
+    name: "play_music",
+    description: "Pone música en Spotify. query es lo que pidió el usuario: una canción, artista, álbum, lista o un estado de ánimo/actividad (por ejemplo \"música para estudiar\", \"reggaeton\", \"Bad Bunny\").",
+    input_schema: {
+      type: "object",
+      properties: { query: { type: "string" } },
+      required: ["query"],
+      additionalProperties: false,
+    },
+    strict: true,
+    eager_input_streaming: true,
+  },
+  {
+    name: "music_control",
+    description: "Controla la música que suena en Spotify: reproducir, pausar, siguiente o anterior.",
+    input_schema: {
+      type: "object",
+      properties: { action: { type: "string", enum: ["play", "pause", "next", "previous"] } },
+      required: ["action"],
+      additionalProperties: false,
+    },
+    strict: true,
+    eager_input_streaming: true,
+  },
+  {
     name: "emergency",
     description: "Abre el módulo de emergencias y prepara la llamada. target \"services\" marca al número de emergencias (911); \"contact\" marca al contacto de emergencia del usuario; \"share_location\" prepara un SMS con su ubicación para el contacto. Úsala de inmediato si el usuario pide ayuda urgente, dice que está en peligro o pide llamar a emergencias.",
     input_schema: {
@@ -88,6 +112,8 @@ function validToolInput(name, input) {
   if (name === "open_panel") return PANELS.includes(input.panel);
   if (name === "save_note") return typeof input.text === "string" && input.text.trim().length > 0;
   if (name === "start_timer") return typeof input.minutes === "number" && input.minutes >= 0.5 && input.minutes <= 240;
+  if (name === "play_music") return typeof input.query === "string" && input.query.trim().length > 0;
+  if (name === "music_control") return ["play", "pause", "next", "previous"].includes(input.action);
   if (name === "emergency") return ["services", "contact", "share_location"].includes(input.target);
   return false;
 }
@@ -113,7 +139,7 @@ function systemPrompt({ lang, now, notes, profile, channel }, webSearch) {
       ? "Todo lo que escribes se pronuncia en voz alta: habla de forma natural y breve (1-3 frases salvo que te pidan detalle). Nada de markdown, listas, viñetas, emojis, URLs ni símbolos; escribe los números y unidades como se dicen."
       : "Puedes usar Markdown ligero (negritas, listas, tablas pequeñas) y LaTeX entre $...$ o $$...$$ para fórmulas. Sé claro y ve al grano.",
     voice ? "El reconocimiento de voz puede transcribir mal alguna palabra: interpreta la intención más probable." : "",
-    "Usa tus herramientas para cambiar el idioma, abrir módulos, guardar notas, poner temporizadores o activar emergencias cuando el usuario lo pida. Tras usarlas, confirma en pocas palabras.",
+    "Usa tus herramientas para cambiar el idioma, abrir módulos, guardar notas, poner temporizadores, poner o controlar música o activar emergencias cuando el usuario lo pida. Tras usarlas, confirma en pocas palabras.",
     "Si el usuario dice que está en peligro o necesita ayuda urgente, usa la herramienta emergency de inmediato y dale instrucciones breves y calmadas.",
     profileLine(profile),
     notes.length ? `Notas guardadas del usuario (más recientes primero):\n${notes.map((n) => "- " + n).join("\n")}` : "El usuario no tiene notas guardadas.",

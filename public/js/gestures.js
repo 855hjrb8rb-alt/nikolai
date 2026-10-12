@@ -60,27 +60,60 @@ export class GestureController {
     this.lastTap = 0;
   }
 
-  async start() {
-    const { FilesetResolver, HandLandmarker, wasm } = await loadVision();
-    const vision = await FilesetResolver.forVisionTasks(wasm);
-    this.landmarker = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
-      runningMode: "VIDEO",
-      numHands: 1,
-      minHandDetectionConfidence: 0.6,
-      minHandPresenceConfidence: 0.6,
-      minTrackingConfidence: 0.5,
-    });
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-      audio: false,
-    });
+  /**
+   * Enciende la cámara y el detector de manos. Si falla, el error lleva `stage`:
+   * "unsupported", "camera" (permiso, sin cámara, ocupada) o "model" (descarga o GPU).
+   */
+  async start({ facingMode = "user" } = {}) {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw Object.assign(new Error("getUserMedia no disponible"), { stage: "unsupported" });
+    }
+    // Primero la cámara: así el permiso se pide enseguida.
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode },
+        audio: false,
+      });
+    } catch (err) {
+      throw Object.assign(err, { stage: "camera" });
+    }
+    this.mirror = facingMode === "user";
     this.video.srcObject = stream;
-    await this.video.play();
+    this.video.muted = true;
+    this.video.setAttribute("playsinline", "");
+    await this.video.play().catch(() => {});
+
+    try {
+      const { FilesetResolver, HandLandmarker, wasm } = await loadVision();
+      const vision = await FilesetResolver.forVisionTasks(wasm);
+      const options = (delegate) => ({
+        baseOptions: { modelAssetPath: MODEL_URL, delegate },
+        runningMode: "VIDEO",
+        numHands: 1,
+        minHandDetectionConfidence: 0.6,
+        minHandPresenceConfidence: 0.6,
+        minTrackingConfidence: 0.5,
+      });
+      // La GPU es más rápida, pero falla en algunos teléfonos: plan B con CPU.
+      try {
+        this.landmarker = await HandLandmarker.createFromOptions(vision, options("GPU"));
+      } catch {
+        this.landmarker = await HandLandmarker.createFromOptions(vision, options("CPU"));
+      }
+    } catch (err) {
+      stream.getTracks().forEach((t) => t.stop());
+      throw Object.assign(err instanceof Error ? err : new Error(String(err)), { stage: "model" });
+    }
     this.canvas.width = this.video.videoWidth;
     this.canvas.height = this.video.videoHeight;
     this.running = true;
     this.#loop();
+  }
+
+  // La cámara frontal se ve en espejo; la trasera no.
+  #mx(x) {
+    return this.mirror === false ? x : 1 - x;
   }
 
   stop() {
@@ -136,7 +169,7 @@ export class GestureController {
 
     // Cursor: punta del índice, en espejo, con un margen para llegar a los bordes.
     const margin = 0.15;
-    const nx = (1 - lm[INDEX_TIP].x - margin) / (1 - 2 * margin);
+    const nx = (this.#mx(lm[INDEX_TIP].x) - margin) / (1 - 2 * margin);
     const ny = (lm[INDEX_TIP].y - margin) / (1 - 2 * margin);
     const tx = Math.min(Math.max(nx, 0), 1) * innerWidth;
     const ty = Math.min(Math.max(ny, 0), 1) * innerHeight;
@@ -188,10 +221,10 @@ export class GestureController {
 
     // Deslizar la palma abierta de lado a lado.
     if (pose === "palm") {
-      this.palmTrail.push({ x: 1 - lm[WRIST].x, t: now });
+      this.palmTrail.push({ x: this.#mx(lm[WRIST].x), t: now });
       this.palmTrail = this.palmTrail.filter((p) => now - p.t < 300);
       const first = this.palmTrail[0];
-      const dx = (1 - lm[WRIST].x) - first.x;
+      const dx = this.#mx(lm[WRIST].x) - first.x;
       if (Math.abs(dx) > 0.22 && now - this.lastSwipe > 700) {
         this.lastSwipe = now;
         this.palmTrail = [];
@@ -226,7 +259,7 @@ export class GestureController {
     const { ctx, canvas } = this;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!lm) return;
-    const P = (p) => [(1 - p.x) * canvas.width, p.y * canvas.height];
+    const P = (p) => [this.#mx(p.x) * canvas.width, p.y * canvas.height];
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgba(0, 229, 255, 0.85)";
     ctx.shadowColor = "#00e5ff";

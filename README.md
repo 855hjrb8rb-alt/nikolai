@@ -82,6 +82,7 @@ Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de acce
 | **Chat** | Chat escrito con formato y fórmulas; NIKOLAI puede leer sus respuestas en voz alta. Dictado por voz. |
 | **Tareas** | Resolver paso a paso, explicar, resumir, redactar, corregir, **cuestionarios interactivos** y **tarjetas de estudio**. Nivel primaria → universidad. **Foto del ejercicio**. |
 | **Bolsa y Cripto** | Cripto en vivo (Binance, cada segundo), acciones e índices, **todas las acciones** (screener), mapa del mercado, gráficos y noticias del mercado (TradingView). |
+| **Música** | Spotify: listas listas para usar sin cuenta (concentración, lo-fi, éxitos, Top 50 México…), pegar cualquier enlace, y **conectar tu cuenta** para buscar, ver qué suena y controlar la reproducción (Premium). Por voz: «pon música para estudiar». |
 | **Noticias** | Resumen de las noticias de hoy por tema (principales, mi ciudad, mundo, economía, tecnología, deportes…) con fuentes. |
 | **Clima** | Clima actual, 24 h y 7 días (Open-Meteo). |
 | **Herramientas** | Calculadora científica y temporizador de estudio con aviso por voz. |
@@ -138,7 +139,16 @@ navegador                                   servidor (Node)            Anthropic
 - `public/js/i18n.js` — textos de la interfaz en 12 idiomas.
 - `public/js/app.js` — carrusel 3D de módulos, ciclo de voz continuo y cursor imantado.
 
+### Conectar tu Spotify
+
+1. Entra en https://developer.spotify.com/dashboard → **Create app** (cualquier nombre) y marca **Web API**.
+2. En **Redirect URIs** pega la dirección exacta de tu NIKOLAI (por ejemplo `https://855hjrb8rb-alt.github.io/nikolai/`).
+3. Copia el **Client ID** y pégalo en el módulo Música → Conectar.
+
 ## ❓ Problemas frecuentes
+
+- **Diagnóstico:** el módulo **Sistema** revisa navegador, micrófono, voz y cámara, y tiene botones para probarlos.
+- **Abriste el enlace desde WhatsApp/Instagram:** esas apps bloquean cámara y micrófono. Ábrelo en Chrome o Safari (menú ⋮ → Abrir en el navegador).
 
 - **No se ve la cámara:** la cámara solo funciona en `localhost` o en `https`. Revisa los permisos del navegador.
 - **El micrófono no funciona:** usa Chrome o Edge; Firefox no soporta el reconocimiento de voz.
