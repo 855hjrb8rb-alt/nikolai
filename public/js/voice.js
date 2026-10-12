@@ -1,122 +1,211 @@
-// Voz: reconocimiento (micrófono → texto) y síntesis (texto → voz)
-// usando la Web Speech API del navegador (mejor soporte en Chrome y Edge).
+// Voz: reconocimiento (micrófono → texto), síntesis por frases (texto → voz)
+// y medidor del micrófono para el visualizador. Usa la Web Speech API
+// (mejor soporte en Chrome y Edge).
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+export const speechSupported = Boolean(Recognition);
+
 const WAKE_WORDS = ["nikolai", "nicolai", "nikolay", "nicolás", "nicolas", "jarvis", "ニコライ", "尼古拉", "николай"];
 
-export class Voice {
-  constructor({ onResult, onState }) {
-    this.onResult = onResult;
-    this.onState = onState;
-    this.speechLang = "es-ES";
-    this.rate = 1;
-    this.speakEnabled = true;
-    this.wakeMode = false;
-    this.listening = false;
-    this.supported = Boolean(Recognition);
+/** Busca la palabra clave y devuelve lo que viene después, o null si no está. */
+export function stripWakeWord(text) {
+  const lower = text.toLowerCase();
+  const w = WAKE_WORDS.find((k) => lower.includes(k));
+  if (!w) return null;
+  return text.slice(lower.indexOf(w) + w.length).replace(/^[\s,.:;!?¡¿]+/, "");
+}
+
+// ---------- Reconocimiento ----------
+export class Listener {
+  constructor() {
+    this.lang = "es-ES";
     this.rec = null;
   }
 
-  setLanguage(speechLang) {
-    this.speechLang = speechLang;
-    if (this.rec) this.rec.lang = speechLang;
-  }
-
-  // Escucha una frase (modo pulsar para hablar).
-  listenOnce() {
-    if (!this.supported) return false;
+  /** Escucha una frase. Llama a onInterim mientras hablas y a onFinal con el texto. */
+  listen({ onInterim, onFinal, onEnd, onError }) {
     this.stop();
-    this.#start(false);
+    if (!Recognition) return false;
+    const rec = new Recognition();
+    rec.lang = this.lang;
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    let finalText = "";
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) finalText += r[0].transcript;
+        else interim += r[0].transcript;
+      }
+      onInterim?.((finalText + interim).trim());
+    };
+    rec.onerror = (e) => onError?.(e.error);
+    rec.onend = () => {
+      if (this.rec === rec) this.rec = null;
+      const text = finalText.trim();
+      if (text) onFinal?.(text);
+      onEnd?.(Boolean(text));
+    };
+    this.rec = rec;
+    try { rec.start(); } catch { return false; }
     return true;
   }
 
-  // Escucha continua: solo reacciona a frases que empiezan con la palabra clave.
-  setWakeMode(on) {
-    this.wakeMode = on && this.supported;
-    this.stop();
-    if (this.wakeMode) this.#start(true);
-  }
-
   stop() {
-    if (this.rec) {
-      this.rec.onend = null;
-      try { this.rec.abort(); } catch { /* ya detenido */ }
-      this.rec = null;
-    }
-    if (this.listening) {
-      this.listening = false;
-      this.onState("idle");
+    const rec = this.rec;
+    this.rec = null;
+    if (rec) {
+      rec.onend = null;
+      rec.onresult = null;
+      try { rec.abort(); } catch { /* ya detenido */ }
     }
   }
+}
 
-  #start(continuous) {
-    const rec = new Recognition();
-    rec.lang = this.speechLang;
-    rec.continuous = continuous;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-
-    rec.onstart = () => {
-      this.listening = true;
-      if (!continuous) this.onState("listening");
-    };
-    rec.onresult = (e) => {
-      const res = e.results[e.results.length - 1];
-      const text = res[0].transcript.trim();
-      if (!text) return;
-      if (!continuous) return this.onResult(text);
-      const lower = text.toLowerCase();
-      const wake = WAKE_WORDS.find((w) => lower.includes(w));
-      if (wake) {
-        const command = text.slice(lower.indexOf(wake) + wake.length).replace(/^[\s,.:;!?¡¿]+/, "");
-        this.onResult(command || null);
-      }
-    };
-    rec.onerror = (e) => {
-      if (e.error === "not-allowed") this.wakeMode = false;
-    };
-    rec.onend = () => {
-      this.listening = false;
-      this.rec = null;
-      // En modo palabra clave el navegador corta cada cierto tiempo: se reinicia.
-      if (!continuous) this.onState("idle");
-      if (this.wakeMode) setTimeout(() => this.wakeMode && !this.rec && this.#start(true), 300);
-    };
-    this.rec = rec;
-    try { rec.start(); } catch { /* ya estaba escuchando */ }
+// ---------- Síntesis por frases ----------
+// Habla cada frase en cuanto llega del streaming, sin esperar a la respuesta completa.
+export class Speaker {
+  constructor() {
+    this.voiceName = "";
+    this.lang = "es-ES";
+    this.rate = 1;
+    this.pitch = 0.9;
+    this.buffer = "";
+    this.pending = 0;
+    this.closed = true;
+    this.onStart = null;
+    this.onIdle = null;
+    this.gen = 0; // invalida callbacks de frases canceladas
   }
 
-  speak(text, onBoundary) {
-    if (!this.speakEnabled || !("speechSynthesis" in window) || !text) return;
-    const clean = text.replace(/[*_#`>|]/g, "").replace(/\[(.*?)\]\(.*?\)/g, "$1");
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = this.speechLang;
-    u.rate = this.rate;
-    const voice = pickVoice(this.speechLang);
-    if (voice) u.voice = voice;
-    u.onstart = () => onBoundary?.(true);
-    u.onend = () => onBoundary?.(false);
-    u.onerror = () => onBoundary?.(false);
-    speechSynthesis.speak(u);
+  /** Empieza una respuesta nueva. */
+  begin() {
+    this.cancel();
+    this.closed = false;
   }
 
-  cancelSpeech() {
+  push(delta) {
+    this.buffer += delta;
+    // Corta en el último fin de frase si ya hay texto suficiente.
+    const re = /[.!?。！？…\n](\s|$)/g;
+    let cut = -1, m;
+    while ((m = re.exec(this.buffer))) cut = m.index + 1;
+    if (cut > 0 && cut >= 24) {
+      this.#say(this.buffer.slice(0, cut));
+      this.buffer = this.buffer.slice(cut);
+    }
+  }
+
+  /** No llegará más texto: habla lo que queda. */
+  end() {
+    if (this.buffer.trim()) this.#say(this.buffer);
+    this.buffer = "";
+    this.closed = true;
+    if (this.pending === 0) this.onIdle?.();
+  }
+
+  /** Dice un texto completo de una vez. */
+  say(text, lang) {
+    this.begin();
+    this.#say(text, lang);
+    this.closed = true;
+    if (this.pending === 0) this.onIdle?.();
+  }
+
+  cancel() {
+    this.buffer = "";
+    this.pending = 0;
+    this.closed = true;
+    this.gen++;
     if ("speechSynthesis" in window) speechSynthesis.cancel();
   }
+
+  get speaking() {
+    return this.pending > 0;
+  }
+
+  #say(text, lang = this.lang) {
+    const clean = text.replace(/[*_#`>|]/g, "").replace(/\[(.*?)\]\(.*?\)/g, "$1").trim();
+    if (!clean || !("speechSynthesis" in window)) return;
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = lang;
+    u.rate = this.rate;
+    u.pitch = this.pitch;
+    const voice = pickVoice(lang, this.voiceName);
+    if (voice) u.voice = voice;
+    this.pending++;
+    const gen = this.gen;
+    u.onstart = () => gen === this.gen && this.onStart?.();
+    u.onend = u.onerror = () => {
+      if (gen !== this.gen) return;
+      this.pending = Math.max(0, this.pending - 1);
+      if (this.pending === 0 && this.closed) this.onIdle?.();
+    };
+    speechSynthesis.speak(u);
+  }
 }
 
-function pickVoice(lang) {
-  const voices = speechSynthesis.getVoices();
+/** Voces disponibles para un idioma, de mejor a peor calidad. */
+export function voicesFor(lang) {
+  if (!("speechSynthesis" in window)) return [];
   const base = lang.slice(0, 2);
-  const preferred = voices.filter((v) => v.lang.replace("_", "-").startsWith(base));
-  // Preferimos voces masculinas/"Google"/"natural" para un tono tipo JARVIS.
-  return (
-    preferred.find((v) => /natural|neural|google/i.test(v.name) && /male|daniel|jorge|pablo|george|thomas/i.test(v.name)) ||
-    preferred.find((v) => /natural|neural|google/i.test(v.name)) ||
-    preferred.find((v) => v.lang.replace("_", "-") === lang) ||
-    preferred[0] ||
-    null
-  );
+  return speechSynthesis
+    .getVoices()
+    .filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith(base))
+    .sort((a, b) => voiceScore(b, lang) - voiceScore(a, lang));
 }
 
-if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+function voiceScore(v, lang) {
+  let s = 0;
+  if (/natural|neural|online|premium|enhanced|wavenet/i.test(v.name)) s += 4; // voces de alta calidad
+  if (/google/i.test(v.name)) s += 2;
+  if (v.lang.replace("_", "-") === lang) s += 1;
+  if (/male|hombre|jorge|pablo|alvaro|álvaro|raul|daniel|george|guy|ryan|thomas|henri/i.test(v.name)) s += 1;
+  return s;
+}
+
+function pickVoice(lang, preferredName) {
+  const list = voicesFor(lang);
+  return list.find((v) => v.name === preferredName) || list[0] || null;
+}
+
+if ("speechSynthesis" in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.addEventListener?.("voiceschanged", () => speechSynthesis.getVoices());
+}
+
+// ---------- Medidor del micrófono ----------
+export class MicMeter {
+  constructor() {
+    this.analyser = null;
+    this.data = null;
+  }
+
+  async start() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ctx.createMediaStreamSource(stream);
+    this.analyser = ctx.createAnalyser();
+    this.analyser.fftSize = 128;
+    this.analyser.smoothingTimeConstant = 0.75;
+    src.connect(this.analyser);
+    this.data = new Uint8Array(this.analyser.frequencyBinCount);
+  }
+
+  /** Bandas de frecuencia normalizadas 0..1. */
+  bands() {
+    if (!this.analyser) return null;
+    this.analyser.getByteFrequencyData(this.data);
+    return this.data;
+  }
+
+  level() {
+    const d = this.bands();
+    if (!d) return 0;
+    let sum = 0;
+    for (let i = 2; i < 40; i++) sum += d[i];
+    return sum / (38 * 255);
+  }
+}

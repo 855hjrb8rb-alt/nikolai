@@ -25,7 +25,7 @@ const LANGUAGES = {
   es: "español", en: "English", fr: "français", pt: "português", de: "Deutsch",
   it: "italiano", ja: "日本語", zh: "中文", ko: "한국어", ru: "русский", ar: "العربية", hi: "हिन्दी",
 };
-const PANELS = ["chat", "voice", "languages", "translator", "notes", "system", "settings", "help"];
+const PANELS = ["core", "language", "translator", "notes", "system", "voice", "settings", "help", "none"];
 
 // Herramientas con las que Claude puede controlar la interfaz (las ejecuta el navegador).
 const UI_TOOLS = [
@@ -43,7 +43,7 @@ const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un panel del menú holográfico: chat, voice (voz), languages (idiomas), translator (traductor), notes (notas), system (estado del sistema), settings (ajustes), help (ayuda con gestos).",
+    description: "Abre un módulo del carrusel holográfico: core (núcleo IA y modo de escucha), language (idioma), translator (traductor por voz), notes (notas), system (telemetría del sistema), voice (elegir voz, velocidad y tono), settings (ajustes de gestos), help (protocolos: gestos y comandos). Usa \"none\" para cerrar el panel abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -75,13 +75,15 @@ function validToolInput(name, input) {
   return false;
 }
 
-function systemPrompt(lang, now) {
+function systemPrompt(lang, now, notes) {
   return [
     "Eres NIKOLAI, un asistente de inteligencia artificial al estilo de JARVIS: brillante, leal, elegante y con un toque de humor británico sutil.",
-    "Tu usuario te controla con gestos de la mano, con la voz y con el teclado desde una interfaz holográfica.",
+    "La interfaz es solo de voz y gestos: el usuario te habla y te escucha, no lee ni escribe. Toca las opciones del menú holográfico con el dedo.",
     `Idioma actual de la interfaz: ${LANGUAGES[lang] || lang}. Responde siempre en el idioma en el que te hable el usuario; si no está claro, usa el idioma de la interfaz.`,
-    "Tus respuestas se leen en voz alta: sé conciso (2-4 frases salvo que te pidan detalle), evita tablas y markdown pesado.",
-    "Puedes usar tus herramientas para cambiar el idioma, abrir paneles del menú o guardar notas cuando el usuario lo pida.",
+    "Todo lo que escribes se pronuncia en voz alta: habla de forma natural y breve (1-3 frases salvo que te pidan detalle). Nada de markdown, listas, viñetas, emojis, URLs ni símbolos; escribe los números y unidades como se dicen.",
+    "El reconocimiento de voz puede transcribir mal alguna palabra: interpreta la intención más probable.",
+    "Usa tus herramientas para cambiar el idioma, abrir o cerrar paneles y guardar notas cuando el usuario lo pida. Tras usarlas, confirma en pocas palabras.",
+    notes.length ? `Notas guardadas del usuario (más recientes primero):\n${notes.map((n) => "- " + n).join("\n")}` : "El usuario no tiene notas guardadas.",
     WEB_SEARCH ? "Si necesitas información actual (noticias, clima, precios, resultados), usa la búsqueda web." : "",
     `Fecha y hora local del usuario: ${now}.`,
   ].filter(Boolean).join("\n");
@@ -108,6 +110,10 @@ async function handleChat(req, res) {
   }
   const lang = typeof body.lang === "string" ? body.lang : "es";
   const now = typeof body.now === "string" ? body.now.slice(0, 80) : new Date().toString();
+  const notes = Array.isArray(body.notes)
+    ? body.notes.filter((n) => typeof n === "string").slice(0, 30).map((n) => n.slice(0, 500))
+    : [];
+  const translateTo = body.mode === "translate" && LANGUAGES[body.target] ? LANGUAGES[body.target] : null;
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -118,8 +124,12 @@ async function handleChat(req, res) {
   let aborted = false;
   res.on("close", () => { aborted = true; });
 
-  const tools = [...UI_TOOLS];
-  if (WEB_SEARCH) tools.push({ type: "web_search_20260209", name: "web_search", max_uses: 3 });
+  // En modo traductor no hay herramientas: solo se devuelve la traducción.
+  const tools = translateTo ? [] : [...UI_TOOLS];
+  if (WEB_SEARCH && !translateTo) tools.push({ type: "web_search_20260209", name: "web_search", max_uses: 3 });
+  const system = translateTo
+    ? `Eres un intérprete profesional. Traduce al ${translateTo} el texto que dicte el usuario, de forma natural y fiel. Responde solo con la traducción, sin comillas, notas ni explicaciones: se pronunciará en voz alta.`
+    : systemPrompt(lang, now, notes);
 
   try {
     for (let round = 0; round < MAX_ROUNDS && !aborted; round++) {
@@ -127,8 +137,8 @@ async function handleChat(req, res) {
         model: MODEL,
         max_tokens: 16000,
         output_config: { effort: EFFORT },
-        system: systemPrompt(lang, now),
-        tools,
+        system,
+        ...(tools.length ? { tools } : {}),
         messages,
         // Si un filtro de seguridad rechaza la petición, la API reintenta con otro modelo.
         betas: ["server-side-fallback-2026-07-01"],

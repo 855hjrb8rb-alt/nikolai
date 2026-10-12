@@ -41,6 +41,10 @@ export class GestureController {
     this.palmTrail = [];
     this.lastSwipe = 0;
     this.lastVideoTime = -1;
+    this.pokeEnabled = true;
+    this.pinchEnabled = true;
+    this.trail = []; // historial corto para detectar el toque en el aire
+    this.lastTap = 0;
   }
 
   async start() {
@@ -103,6 +107,7 @@ export class GestureController {
       }
       this.#setPose("none", now);
       this.palmTrail = [];
+      this.trail = [];
       return;
     }
     if (!this.handVisible) {
@@ -126,8 +131,25 @@ export class GestureController {
     this.cursor.y += (ty - this.cursor.y) * k;
     this.onEvent({ type: "move", x: this.cursor.x, y: this.cursor.y });
 
+    // Toque en el aire: al empujar el dedo hacia la cámara la mano "crece" de golpe
+    // en la imagen. Se usa la posición de antes del empujón para no desviar el toque.
+    this.trail.push({ t: now, size, x: this.cursor.x, y: this.cursor.y });
+    this.trail = this.trail.filter((p) => now - p.t < 320);
+    if (this.pokeEnabled && extended[0] && !this.pinching && now - this.lastTap > 650) {
+      const base = this.trail.reduce((a, b) => (b.size < a.size ? b : a), this.trail[0]);
+      const grow = size / base.size;
+      const tipForward = (lm[INDEX_MCP].z - lm[INDEX_TIP].z) / size; // el índice apunta hacia la cámara
+      if (grow > 1.13 || (grow > 1.07 && tipForward > 0.6)) {
+        this.lastTap = now;
+        this.trail = [];
+        this.onEvent({ type: "tap", x: base.x, y: base.y });
+      }
+    }
+
     // Pellizco con histéresis para que no parpadee.
-    if (!this.pinching && pinchRatio < 0.35) {
+    if (!this.pinchEnabled) {
+      if (this.pinching) this.#endPinch();
+    } else if (!this.pinching && pinchRatio < 0.35) {
       this.pinching = true;
       this.onEvent({ type: "pinch", x: this.cursor.x, y: this.cursor.y });
     } else if (this.pinching && pinchRatio > 0.55) {

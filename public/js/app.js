@@ -1,470 +1,734 @@
-// NIKOLAI — lógica principal de la interfaz: menú holográfico, paneles,
-// conversación con la IA, voz y conexión con el control por gestos.
+// NIKOLAI — interfaz de solo voz y manos: carrusel 3D de módulos, ciclo de voz
+// continuo (escuchar → pensar → hablar → escuchar) y cursor controlado con el dedo.
 
 import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
-import { Voice } from "./voice.js";
+import { Listener, Speaker, MicMeter, voicesFor, stripWakeWord, speechSupported } from "./voice.js";
 import { GestureController } from "./gestures.js";
 
-const $ = (sel, root = document) => root.querySelector(sel);
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-// ---------- Estado persistente ----------
+// ---------- Preferencias (este navegador) ----------
 const store = {
-  get(key, fallback) {
-    try { return JSON.parse(localStorage.getItem("nikolai." + key)) ?? fallback; } catch { return fallback; }
-  },
-  set(key, value) {
-    try { localStorage.setItem("nikolai." + key, JSON.stringify(value)); } catch { /* modo privado */ }
-  },
+  get(k, d) { try { return JSON.parse(localStorage.getItem("nikolai." + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("nikolai." + k, JSON.stringify(v)); } catch { /* bloqueado */ } },
 };
-
 const settings = Object.assign(
-  { speak: true, rate: 1, smoothing: 0.35, dwell: true, showCam: true, wake: false },
+  { mode: "conversation", voiceName: "", rate: 1, pitch: 0.9, poke: true, pinch: true, dwell: true, showCam: true, smoothing: 0.4, target: "en" },
   store.get("settings", {}),
 );
+const saveSettings = () => store.set("settings", settings);
 let notes = store.get("notes", []);
-const history = []; // [{role, content}]
 
-const MENU = [
-  { id: "chat", ico: "💬" },
-  { id: "voice", ico: "🎙️" },
-  { id: "languages", ico: "🌐" },
-  { id: "translator", ico: "🔁" },
-  { id: "notes", ico: "📝" },
-  { id: "system", ico: "📊" },
-  { id: "settings", ico: "⚙️" },
-  { id: "help", ico: "✋" },
-];
+// ---------- Iconos de línea ----------
+const ICON = {
+  core: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+  voice: '<path d="M3 12h1.5M6 8v8M9 5v14M12 9v6M15 6v12M18 9v6M21 12h-1.5"/>',
+  language: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18M4.5 7.5h15M4.5 16.5h15"/>',
+  translator: '<path d="M3 5h9M7.5 3v2M5 5c.5 3.5 3 6 6.5 7.5M10 5c-.8 3.6-3 6.4-6.5 8"/><path d="M12.5 21l4.25-10L21 21M14 17.5h5.5"/>',
+  notes: '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 14.5h7M9 18h4"/>',
+  system: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4.5-5"/><circle cx="12" cy="17" r="1.3"/><path d="M6.5 13.5l1 .6M12 9v1.2M17.5 13.5l-1 .6"/>',
+  settings: '<path d="M12 21v-6.5"/><path d="M9 9.5V4.8a1.4 1.4 0 0 1 2.8 0v5.7M11.8 10V3.6a1.4 1.4 0 0 1 2.8 0V10M14.6 10.2V5.5a1.4 1.4 0 0 1 2.8 0v7.3a6.2 6.2 0 0 1-6.2 6.2h-.6a6 6 0 0 1-5-2.7L3.3 12.4a1.4 1.4 0 0 1 2.3-1.6L9 13.5"/>',
+  help: '<path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><path d="M12 7l4.3 2.5v5L12 17l-4.3-2.5v-5z"/><circle cx="12" cy="12" r="1.2"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+  speaker: '<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13"/>',
+};
+const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 
+const MODULES = ["core", "voice", "language", "translator", "notes", "system", "settings", "help"];
+const titleOf = (id) => t(id === "settings" ? "gestures" : id);
+const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
+
+// ---------- Telemetría real ----------
+const series = { mic: [], fps: [], hand: [], latency: [] };
+const pushSeries = (k, v, max = 60) => { series[k].push(v); if (series[k].length > max) series[k].shift(); };
+const stats = { responses: 0, lastLatency: null, translations: 0, lastTranslation: "" };
+let brain = { ok: false, apiKey: false, model: "" };
+let battery = null;
+navigator.getBattery?.().then((b) => { battery = b; }).catch(() => {});
+
+// ---------- Elementos ----------
 const ui = {
-  stage: $(".stage"),
-  radial: $("#radial"),
-  core: $("#core"),
-  panel: $("#panel"),
-  panelTitle: $("#panelTitle"),
-  panelBody: $("#panelBody"),
-  caption: $("#caption"),
-  status: $("#statusText"),
-  gesture: $("#gestureText"),
-  langChip: $("#langChip"),
-  clock: $("#clock"),
-  cursor: $("#cursor"),
-  camBox: $("#camBox"),
-  camStart: $("#camStart"),
+  stage: $("#stage"), carousel: $("#carousel"), panel: $("#panel"), panelTag: $("#panelTag"), panelTitle: $("#panelTitle"),
+  panelBody: $("#panelBody"), heard: $("#heard"), reply: $("#reply"), voiceBar: $("#voiceBar"), vbState: $("#vbState"),
+  vbHint: $("#vbHint"), wave: $("#vbWave"), nav: $("#navLabel"), langState: $("#langState"), clock: $("#clock"),
+  sideLeft: $("#sideLeft"), sideRight: $("#sideRight"), cursor: $("#cursor"), sensor: $("#sensor"), camStart: $("#camStart"),
 };
 
-let menuOpen = true;
-let rotation = 0; // en pasos de menú (el elemento enfocado queda arriba)
-let currentPanel = null;
-let panelTimer = null;
-let brain = { ok: false, apiKey: false };
-let busy = false;
-let userInteracted = false;
+// =====================================================================
+// Carrusel 3D
+// =====================================================================
+let focus = 0;
+let openId = null;
 
-// ---------- Voz ----------
-const voice = new Voice({
-  onResult: (text) => {
-    if (text) sendMessage(text);
-    else say(t("listening"), { silent: false });
-  },
-  onState: (s) => setStatus(s === "listening" ? "listening" : "idle"),
-});
-
-// ---------- Idioma ----------
-function applyLanguage(code, { announce = false } = {}) {
-  setLang(code);
-  store.set("lang", code);
-  voice.setLanguage(LANGS[code].speech);
-  ui.langChip.textContent = `${LANGS[code].flag} ${code.toUpperCase()}`;
-  buildRadial();
-  ui.camStart.textContent = t("startCam");
-  if (currentPanel) openPanel(currentPanel);
-  setStatus("idle");
-  if (announce) say(t("greeting"));
+function cardBody(id) {
+  const spark = (key, label) => `<div class="tele-label mono">${esc(t("telemetry").toUpperCase())} · ${label}</div><canvas class="spark" data-series="${key}"></canvas>`;
+  const stat = (k, bind, accent = "") => `<div class="stat"><div class="k mono">${esc(t(k).toUpperCase())}</div><div class="v ${accent}" data-bind="${bind}">—</div></div>`;
+  switch (id) {
+    case "core": return spark("latency", "MS") + `<div class="stats">${stat("responses", "responses")}${stat("latency", "latency", "accent")}</div>`;
+    case "voice": return spark("mic", "MIC") + `<div class="stats">${stat("speed", "rate")}${stat("active", "voiceShort", "accent")}</div>`;
+    case "language": return `<div class="big-code" data-bind="langCode">ES</div><div class="stats">${stat("active", "langName")}${stat("available", "langCount", "accent")}</div>`;
+    case "translator": return `<p class="desc" data-bind="lastTranslation" style="flex:1"></p><div class="stats">${stat("translations", "translations")}${stat("target", "targetCode", "accent")}</div>`;
+    case "notes": return `<p class="desc" data-bind="lastNote" style="flex:1"></p><div class="stats">${stat("notes", "notesCount")}${stat("last", "lastNoteTime", "accent")}</div>`;
+    case "system": return spark("fps", "FPS") + `<div class="stats">${stat("camera", "fps")}${stat("battery", "battery", "accent")}</div>`;
+    case "settings": return spark("hand", t("hand").toUpperCase()) + `<div class="stats">${stat("hand", "handState")}${stat("smoothing", "smoothing", "accent")}</div>`;
+    case "help": return `<p class="desc" style="flex:1">${esc(t("voiceHelp"))}</p><div class="stats">${stat("gestures", "gestureCount")}${stat("language", "langCount2", "accent")}</div>`;
+  }
+  return "";
 }
 
-// ---------- Menú radial ----------
-function buildRadial() {
-  ui.radial.innerHTML = "";
-  MENU.forEach((item, i) => {
-    const el = document.createElement("button");
-    el.className = "radial-item";
-    el.dataset.gesture = "";
-    el.dataset.index = i;
-    el.innerHTML = `<span class="ico">${item.ico}</span><span>${t(item.id)}</span>`;
-    el.addEventListener("click", () => openPanel(item.id));
-    ui.radial.appendChild(el);
+function buildCarousel() {
+  ui.carousel.innerHTML = "";
+  MODULES.forEach((id, i) => {
+    const card = document.createElement("article");
+    card.className = "card";
+    card.dataset.target = "";
+    card.dataset.id = id;
+    card.dataset.index = i;
+    card.innerHTML = `
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="card-head mono"><span class="card-id">${tagOf(id)}</span><span class="online" data-bind="status-${id}">● ONLINE</span></div>
+      <div class="card-rule"></div>
+      <div class="glyph">${icon(id)}</div>
+      <h3>${esc(titleOf(id))}</h3>
+      <p class="desc">${esc(t(id === "settings" ? "gesturesDesc" : id + "Desc"))}</p>
+      ${cardBody(id)}`;
+    card.addEventListener("click", () => {
+      if (Number(card.dataset.index) === focus) openPanel(id);
+      else setFocus(Number(card.dataset.index));
+    });
+    ui.carousel.appendChild(card);
   });
-  layoutRadial();
+  layoutCarousel();
+  updateCards();
 }
 
-function layoutRadial() {
-  const n = MENU.length;
-  const focus = ((-rotation % n) + n) % n;
-  [...ui.radial.children].forEach((el, i) => {
-    const angle = ((i + rotation) / n) * Math.PI * 2 - Math.PI / 2;
-    const r = 39; // % del contenedor
-    el.style.transform = `translate(${Math.cos(angle) * r * 4.55}%, ${Math.sin(angle) * r * 4.55}%)`;
-    el.classList.toggle("focus", i === focus);
+function layoutCarousel() {
+  const n = MODULES.length;
+  // En pantallas estrechas el anillo se abre para que los laterales no tapen el central.
+  const narrow = innerWidth < 760;
+  const R = Math.round(narrow ? innerWidth * 1.15 : Math.min(780, Math.max(420, innerWidth * 0.5)));
+  document.documentElement.style.setProperty("--R", `${R}px`);
+  document.documentElement.style.setProperty("--depth", narrow ? "120px" : "250px");
+  [...ui.carousel.children].forEach((card, i) => {
+    let o = (((i - focus) % n) + n) % n;
+    if (o > n / 2) o -= n;
+    card.style.setProperty("--a", `${o * -40}deg`);
+    card.classList.toggle("focus", o === 0);
+    card.classList.toggle("far", Math.abs(o) === 2);
+    card.classList.toggle("gone", Math.abs(o) > 2);
   });
+  ui.nav.innerHTML = `<b>${tagOf(MODULES[focus])}</b> · ${esc(titleOf(MODULES[focus]).toUpperCase())} · ${esc(t("tapNav"))}`;
 }
 
-function rotateMenu(dir) {
-  if (!menuOpen) toggleMenu(true);
-  rotation += dir;
-  layoutRadial();
+function setFocus(i) {
+  const n = MODULES.length;
+  focus = ((i % n) + n) % n;
+  layoutCarousel();
 }
 
-function focusedItem() {
-  const n = MENU.length;
-  return MENU[((-rotation % n) + n) % n];
+function values() {
+  const voice = voicesFor(LANGS[getLang()].speech).find((v) => v.name === settings.voiceName) || voicesFor(LANGS[getLang()].speech)[0];
+  const last = notes[0];
+  return {
+    responses: stats.responses,
+    latency: stats.lastLatency == null ? "—" : `${stats.lastLatency}`,
+    rate: `${settings.rate.toFixed(1)}×`,
+    voiceShort: voice ? voice.name.replace(/^(Microsoft|Google|Apple)\s*/i, "").split(/[\s(-]/)[0] : "—",
+    langCode: LANGS[getLang()].short,
+    langName: LANGS[getLang()].name,
+    langCount: Object.keys(LANGS).length,
+    langCount2: Object.keys(LANGS).length,
+    translations: stats.translations,
+    targetCode: LANGS[settings.target].short,
+    lastTranslation: stats.lastTranslation,
+    notesCount: notes.length,
+    lastNote: last ? `“${last.text}”` : t("noNotes"),
+    lastNoteTime: last ? new Date(last.at).toLocaleTimeString(getLang(), { hour: "2-digit", minute: "2-digit" }) : "—",
+    fps: gestures?.running ? `${gestures.fps}` : "OFF",
+    battery: battery ? `${Math.round(battery.level * 100)}%` : "—",
+    handState: gestures?.handVisible ? "✓" : "—",
+    smoothing: settings.smoothing.toFixed(2),
+    gestureCount: t("helpItems").length,
+  };
 }
 
-function toggleMenu(force) {
-  menuOpen = force ?? !menuOpen;
-  ui.radial.classList.toggle("closed", !menuOpen);
+function updateCards() {
+  const v = values();
+  document.querySelectorAll("[data-bind]").forEach((el) => {
+    const k = el.dataset.bind;
+    if (k.startsWith("status-")) {
+      const id = k.slice(7);
+      const live = id === "core" ? brain.apiKey : id === "settings" || id === "system" ? Boolean(gestures?.running) : true;
+      el.textContent = live ? "● ONLINE" : "○ STANDBY";
+      el.classList.toggle("idle", !live);
+    } else if (k in v) el.textContent = v[k];
+  });
+  document.querySelectorAll("canvas.spark").forEach(drawSpark);
 }
 
-// ---------- Paneles ----------
+function drawSpark(cv) {
+  const data = series[cv.dataset.series] || [];
+  const dpr = devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = "rgba(176,200,255,.12)";
+  ctx.lineWidth = 1;
+  for (let y = h / 4; y < h; y += h / 4) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  if (data.length < 2) return;
+  const max = Math.max(...data, 1e-6), min = Math.min(...data, 0);
+  const X = (i) => (i / (data.length - 1)) * w;
+  const Y = (v) => h - 4 - ((v - min) / (max - min || 1)) * (h - 10);
+  const focused = cv.closest(".card")?.classList.contains("focus");
+  const color = focused ? "255,204,92" : "155,140,255";
+  ctx.beginPath();
+  data.forEach((v, i) => (i ? ctx.lineTo(X(i), Y(v)) : ctx.moveTo(X(i), Y(v))));
+  ctx.strokeStyle = `rgba(${color},1)`;
+  ctx.lineWidth = 1.6;
+  ctx.shadowColor = `rgba(${color},.8)`;
+  ctx.shadowBlur = 6;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, `rgba(${color},.28)`);
+  g.addColorStop(1, `rgba(${color},0)`);
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+// =====================================================================
+// Módulos abiertos (todo se maneja con el dedo o la voz)
+// =====================================================================
 function openPanel(id) {
+  if (!MODULES.includes(id)) return;
   clearInterval(panelTimer);
-  currentPanel = id;
-  ui.panel.classList.remove("hidden");
-  ui.stage.classList.add("with-panel");
-  ui.panelTitle.textContent = t(id);
+  openId = id;
+  setFocus(MODULES.indexOf(id));
+  ui.panel.hidden = false;
+  ui.stage.classList.add("dimmed");
+  ui.panelTag.textContent = tagOf(id);
+  ui.panelTitle.textContent = titleOf(id);
   ui.panelBody.innerHTML = "";
-  RENDER[id]?.(ui.panelBody);
+  PANEL[id](ui.panelBody);
 }
-
+let panelTimer = null;
 function closePanel() {
   clearInterval(panelTimer);
-  currentPanel = null;
-  ui.panel.classList.add("hidden");
-  ui.stage.classList.remove("with-panel");
+  openId = null;
+  ui.panel.hidden = true;
+  ui.stage.classList.remove("dimmed");
 }
+const refreshPanel = () => openId && openPanel(openId);
 
-const RENDER = {
-  chat(body) {
-    body.appendChild($("#tpl-chat").content.cloneNode(true));
-    const log = $("#chatLog", body);
-    for (const m of history) addBubble(m.role, m.content, log);
-    $("#chatInput", body).placeholder = t("placeholder");
-    $("#sendBtn", body).textContent = t("send");
-    $("#clearChat", body).textContent = t("clear");
-    $("#chatForm", body).addEventListener("submit", (e) => {
-      e.preventDefault();
-      const input = $("#chatInput", body);
-      const text = input.value.trim();
-      if (text) sendMessage(text);
-      input.value = "";
-    });
-    $("#micBtn", body).addEventListener("click", startListening);
-    $("#clearChat", body).addEventListener("click", () => {
-      history.length = 0;
-      log.innerHTML = "";
-    });
-    log.scrollTop = log.scrollHeight;
+function tile(main, sub = "", cls = "") {
+  return `<button class="tile ${cls}" data-target><span class="t-main">${main}</span>${sub ? `<span class="t-sub">${sub}</span>` : ""}</button>`;
+}
+function stepper(label, value) {
+  return `<div class="stepper"><button class="tile" data-target data-step="-1">−</button><div class="val"><b>${value}</b><span>${esc(label)}</span></div><button class="tile" data-target data-step="1">+</button></div>`;
+}
+function bindStepper(root, onStep) {
+  root.querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => onStep(Number(b.dataset.step))));
+}
+const readout = (k, v, small = false) => `<div class="readout"><div class="k">${esc(k)}</div><div class="v ${small ? "small" : ""}">${esc(v)}</div></div>`;
+
+const PANEL = {
+  core(body) {
+    body.innerHTML = `
+      <div class="tiles wide">
+        ${tile(`${icon("mic")}<br>${esc(voiceOn ? t("pauseVoice") : t("startVoice"))}`, "", "action" + (voiceOn ? " live" : ""))}
+        ${tile(esc(t("modeConversation")), t("mode").toUpperCase(), settings.mode === "conversation" ? "on" : "")}
+        ${tile(esc(t("modeWake")), t("mode").toUpperCase(), settings.mode === "wake" ? "on" : "")}
+      </div>
+      ${readout(t("heardLabel"), lastHeard || "—", true)}
+      ${readout("NIKOLAI", lastReply || t("greeting"))}
+      <p class="muted">${esc(t("voiceHelp"))}</p>`;
+    const [toggle, conv, wake] = body.querySelectorAll(".tile");
+    toggle.onclick = () => { toggleVoice(); refreshPanel(); };
+    conv.onclick = () => { settings.mode = "conversation"; saveSettings(); updateHint(); refreshPanel(); };
+    wake.onclick = () => { settings.mode = "wake"; saveSettings(); updateHint(); refreshPanel(); };
   },
 
   voice(body) {
+    const voices = voicesFor(LANGS[getLang()].speech).slice(0, 8);
+    const current = voices.find((v) => v.name === settings.voiceName) || voices[0];
     body.innerHTML = `
-      <button class="btn" id="vListen" data-gesture>🎙️ ${t("listen")}</button>
-      <label class="row">${t("wakeToggle")} <input type="checkbox" id="vWake" data-gesture ${settings.wake ? "checked" : ""}></label>
-      <label class="row">${t("speakReplies")} <input type="checkbox" id="vSpeak" data-gesture ${settings.speak ? "checked" : ""}></label>
-      <label class="row">${t("speechRate")} <input type="range" id="vRate" min="0.6" max="1.6" step="0.1" value="${settings.rate}"></label>
-      ${voice.supported ? "" : `<p class="muted">⚠️ Este navegador no soporta reconocimiento de voz. Usa Chrome o Edge.</p>`}`;
-    $("#vListen", body).onclick = startListening;
-    $("#vWake", body).onchange = (e) => setWake(e.target.checked);
-    $("#vSpeak", body).onchange = (e) => updateSettings({ speak: e.target.checked });
-    $("#vRate", body).oninput = (e) => updateSettings({ rate: Number(e.target.value) });
+      <div class="tiles wide">${voices.map((v) => tile(esc(v.name.replace(/^(Microsoft|Google|Apple)\s*/i, "")), esc(v.lang), v === current ? "on" : "")).join("") || `<p class="muted">—</p>`}</div>
+      ${stepper(t("rate"), settings.rate.toFixed(1) + "×")}
+      ${stepper(t("pitch"), settings.pitch.toFixed(1))}
+      <div class="tiles">${tile(`${icon("speaker")}<br>${esc(t("test"))}`, "", "action")}</div>`;
+    const tiles = body.querySelectorAll(".tiles.wide .tile");
+    tiles.forEach((el, i) => el.addEventListener("click", () => {
+      settings.voiceName = voices[i].name;
+      saveSettings();
+      applyVoice();
+      refreshPanel();
+      speakOnce(t("greeting"));
+    }));
+    const [rateStep, pitchStep] = body.querySelectorAll(".stepper");
+    bindStepper(rateStep, (d) => { settings.rate = clamp(settings.rate + d * 0.1, 0.6, 1.8); saveSettings(); applyVoice(); refreshPanel(); });
+    bindStepper(pitchStep, (d) => { settings.pitch = clamp(settings.pitch + d * 0.1, 0.5, 1.6); saveSettings(); applyVoice(); refreshPanel(); });
+    body.querySelector(".tile.action").onclick = () => speakOnce(t("greeting"));
   },
 
-  languages(body) {
-    const grid = document.createElement("div");
-    grid.className = "lang-grid";
-    for (const [code, info] of Object.entries(LANGS)) {
-      const b = document.createElement("button");
-      b.className = "btn" + (code === getLang() ? " active" : "");
-      b.dataset.gesture = "";
-      b.innerHTML = `<span>${info.flag}</span><span>${info.name}</span>`;
-      b.onclick = () => applyLanguage(code, { announce: true });
-      grid.appendChild(b);
-    }
-    body.appendChild(grid);
+  language(body) {
+    body.innerHTML = `<div class="tiles">${Object.entries(LANGS).map(([c, l]) => tile(esc(l.name), l.short, c === getLang() ? "on" : "")).join("")}</div>`;
+    body.querySelectorAll(".tile").forEach((el, i) => el.addEventListener("click", () => {
+      applyLanguage(Object.keys(LANGS)[i]);
+      speakOnce(t("greeting"));
+    }));
   },
 
   translator(body) {
-    const options = Object.entries(LANGS)
-      .map(([c, i]) => `<option value="${c}" ${c === (getLang() === "en" ? "es" : "en") ? "selected" : ""}>${i.flag} ${i.name}</option>`)
-      .join("");
+    const listeningHere = voiceTask?.kind === "translate";
     body.innerHTML = `
-      <textarea id="trIn" placeholder="${t("translateHint")}" data-gesture></textarea>
-      <label class="row">${t("targetLang")} <select id="trLang" data-gesture style="width:55%">${options}</select></label>
-      <div style="display:flex;gap:8px">
-        <button class="btn" id="trGo" data-gesture>🔁 ${t("translate")}</button>
-        <button class="btn icon" id="trMic" data-gesture>🎙️</button>
-      </div>
-      <div class="msg assistant" id="trOut" style="max-width:100%;min-height:60px"></div>
-      <button class="btn ghost small" id="trSpeak" data-gesture>🔊</button>`;
-    const out = $("#trOut", body);
-    $("#trMic", body).onclick = () => {
-      const prev = voice.onResult;
-      voice.onResult = (text) => { voice.onResult = prev; if (text) $("#trIn", body).value = text; };
-      voice.listenOnce();
-    };
-    $("#trGo", body).onclick = async () => {
-      const text = $("#trIn", body).value.trim();
-      if (!text) return;
-      const target = $("#trLang", body).value;
-      out.textContent = "…";
-      const result = await askBrain(
-        [{ role: "user", content: `Traduce el siguiente texto a ${LANGS[target].name}. Responde únicamente con la traducción, sin comillas ni comentarios.\n\n${text}` }],
-        { onText: (full) => { out.textContent = full; } },
-      );
-      out.textContent = result.text || out.textContent;
-      out.dataset.lang = target;
-    };
-    $("#trSpeak", body).onclick = () => {
-      const target = out.dataset.lang;
-      if (!target || !out.textContent) return;
-      const prev = voice.speechLang;
-      voice.setLanguage(LANGS[target].speech);
-      voice.speak(out.textContent, speakingAnim);
-      voice.setLanguage(prev);
-    };
+      <div class="tiles">${tile(`${icon("mic")}<br>${esc(t("speakNow"))}`, "", "action" + (listeningHere ? " live" : ""))}${tile(`${icon("speaker")}<br>${esc(t("repeat"))}`, "", "action")}</div>
+      ${readout(t("heardLabel"), lastTranslation.source || "—", true)}
+      ${readout(`${t("targetLang").toUpperCase()} · ${LANGS[settings.target].name}`, lastTranslation.text || "—")}
+      <div class="tiles">${Object.entries(LANGS).map(([c, l]) => tile(l.short, esc(l.name), c === settings.target ? "on" : "")).join("")}</div>`;
+    const [talk, again, ...langs] = body.querySelectorAll(".tile");
+    talk.onclick = () => startTask({ kind: "translate" });
+    again.onclick = () => lastTranslation.text && speakOnce(lastTranslation.text, LANGS[lastTranslation.target].speech);
+    langs.forEach((el, i) => el.addEventListener("click", () => {
+      settings.target = Object.keys(LANGS)[i];
+      saveSettings();
+      refreshPanel();
+      updateCards();
+    }));
   },
 
   notes(body) {
+    const dictating = voiceTask?.kind === "note";
     body.innerHTML = `
-      <div style="display:flex;gap:8px">
-        <input id="noteIn" placeholder="${t("noteHint")}" data-gesture>
-        <button class="btn" id="noteAdd" data-gesture>${t("addNote")}</button>
-      </div>
-      <div id="noteList" style="display:flex;flex-direction:column;gap:8px"></div>`;
-    const list = $("#noteList", body);
-    const render = () => {
-      list.innerHTML = notes.length ? "" : `<p class="muted">${t("noNotes")}</p>`;
-      notes.forEach((n, i) => {
-        const row = document.createElement("div");
-        row.className = "note";
-        row.innerHTML = `<div><div></div><small>${new Date(n.at).toLocaleString(getLang())}</small></div>`;
-        row.firstChild.firstChild.textContent = n.text;
-        const del = document.createElement("button");
-        del.className = "btn icon small";
-        del.dataset.gesture = "";
-        del.textContent = "🗑";
-        del.onclick = () => { notes.splice(i, 1); store.set("notes", notes); render(); };
-        row.appendChild(del);
-        list.appendChild(row);
-      });
-    };
-    $("#noteAdd", body).onclick = () => {
-      const input = $("#noteIn", body);
-      if (input.value.trim()) addNote(input.value.trim());
-      input.value = "";
-      render();
-    };
-    render();
+      <div class="tiles">${tile(`${icon("mic")}<br>${esc(t("dictate"))}`, "", "action" + (dictating ? " live" : ""))}${tile(`${icon("speaker")}<br>${esc(t("readAll"))}`, "", "action")}</div>
+      ${notes.length ? notes.map((n) => `<div class="note-row">${readout(new Date(n.at).toLocaleString(getLang()), n.text)}<button class="tile" data-target aria-label="Borrar">${icon("trash")}</button></div>`).join("") : `<p class="muted">${esc(t("noNotes"))}</p>`}`;
+    const [dictate, read] = body.querySelectorAll(".tiles .tile");
+    dictate.onclick = () => startTask({ kind: "note" });
+    read.onclick = () => speakOnce(notes.length ? notes.map((n) => n.text).join(". ") : t("noNotes"));
+    body.querySelectorAll(".note-row .tile").forEach((el, i) => el.addEventListener("click", () => {
+      notes.splice(i, 1);
+      store.set("notes", notes);
+      refreshPanel();
+      updateCards();
+    }));
   },
 
   system(body) {
-    const render = async () => {
-      const now = new Date();
-      let battery = "—";
-      try {
-        const b = await navigator.getBattery?.();
-        if (b) battery = `${Math.round(b.level * 100)}%${b.charging ? " ⚡" : ""}`;
-      } catch { /* sin API de batería */ }
-      const stats = [
-        [t("time"), now.toLocaleTimeString(getLang())],
-        [t("date"), now.toLocaleDateString(getLang(), { weekday: "short", day: "numeric", month: "short" })],
-        [t("camera"), gestures?.running ? `${gestures.fps} ${t("fps")}` : "OFF"],
-        [t("hand"), gestures?.handVisible ? t("detected") : t("none")],
-        [t("battery"), battery],
-        [t("network"), navigator.onLine ? t("online") : t("offline")],
-        [t("brain"), brain.ok ? (brain.apiKey ? `${t("ready")} · ${brain.model}` : t("noKey")) : t("offline")],
-        [t("languages"), Object.keys(LANGS).length],
-      ];
-      body.innerHTML = `<div class="stat-grid">${stats.map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("")}</div>`;
+    const render = () => {
+      const v = values();
+      body.innerHTML = `<div class="grid-stats">
+        ${readout(t("brain"), brain.apiKey ? `${t("ready")}` : brain.ok ? t("noKey") : t("offline"))}
+        ${readout(t("camera"), gestures?.running ? `${v.fps} ${t("fps")}` : "OFF")}
+        ${readout(t("hand"), gestures?.handVisible ? t("detected") : t("none"))}
+        ${readout(t("network"), navigator.onLine ? t("online") : t("offline"))}
+        ${readout(t("battery"), v.battery)}
+        ${readout(t("latency"), stats.lastLatency == null ? "—" : `${stats.lastLatency} ms`)}
+      </div>
+      <div class="readout"><div class="k">${esc(t("micLevel"))}</div><div class="meter"><i style="width:${Math.round(mic.level() * 300)}%"></i></div></div>
+      ${brain.model ? `<p class="muted mono">MODEL · ${esc(brain.model)}</p>` : ""}`;
     };
     render();
-    panelTimer = setInterval(render, 1000);
+    panelTimer = setInterval(render, 500);
   },
 
   settings(body) {
+    const toggle = (key, label) => tile(esc(label), settings[key] ? t("on") : t("off"), settings[key] ? "on" : "");
     body.innerHTML = `
-      <label class="row">${t("speakReplies")} <input type="checkbox" id="sSpeak" data-gesture ${settings.speak ? "checked" : ""}></label>
-      <label class="row">${t("dwell")} <input type="checkbox" id="sDwell" data-gesture ${settings.dwell ? "checked" : ""}></label>
-      <label class="row">${t("showCam")} <input type="checkbox" id="sCam" data-gesture ${settings.showCam ? "checked" : ""}></label>
-      <label class="row">${t("sensitivity")} <input type="range" id="sSmooth" min="0" max="0.85" step="0.05" value="${settings.smoothing}"></label>
-      <label class="row">${t("speechRate")} <input type="range" id="sRate" min="0.6" max="1.6" step="0.1" value="${settings.rate}"></label>`;
-    $("#sSpeak", body).onchange = (e) => updateSettings({ speak: e.target.checked });
-    $("#sDwell", body).onchange = (e) => updateSettings({ dwell: e.target.checked });
-    $("#sCam", body).onchange = (e) => updateSettings({ showCam: e.target.checked });
-    $("#sSmooth", body).oninput = (e) => updateSettings({ smoothing: Number(e.target.value) });
-    $("#sRate", body).oninput = (e) => updateSettings({ rate: Number(e.target.value) });
+      <div class="tiles wide">${toggle("poke", t("poke"))}${toggle("pinch", t("pinch"))}${toggle("dwell", t("dwell"))}${toggle("showCam", t("showCam"))}</div>
+      ${stepper(t("smoothing"), settings.smoothing.toFixed(2))}`;
+    const keys = ["poke", "pinch", "dwell", "showCam"];
+    body.querySelectorAll(".tiles .tile").forEach((el, i) => el.addEventListener("click", () => {
+      settings[keys[i]] = !settings[keys[i]];
+      saveSettings();
+      applyGestureSettings();
+      refreshPanel();
+    }));
+    bindStepper(body.querySelector(".stepper"), (d) => {
+      settings.smoothing = clamp(settings.smoothing + d * 0.05, 0, 0.85);
+      saveSettings();
+      applyGestureSettings();
+      refreshPanel();
+    });
   },
 
   help(body) {
-    const items = t("helpItems");
-    body.innerHTML =
-      `<p class="muted">${t("helpTitle")}</p>` +
-      items.map(([e, g, d]) => `<div class="help-item"><span class="e">${e}</span><b>${g}</b><span>${d}</span></div>`).join("") +
-      `<p class="muted">🎙️ «Nikolai, abre las notas» · «Nikolai, habla en inglés» · «Nikolai, ¿qué tiempo hace en Madrid?»</p>`;
+    body.innerHTML = t("helpItems").map(([g, d]) => `<div class="help-row"><b>${esc(g)}</b><span>${esc(d)}</span></div>`).join("") +
+      `<p class="muted">${esc(t("voiceHelp"))}</p>`;
   },
 };
 
-function updateSettings(patch) {
-  Object.assign(settings, patch);
-  store.set("settings", settings);
-  voice.speakEnabled = settings.speak;
-  voice.rate = settings.rate;
-  if (gestures) gestures.smoothing = settings.smoothing;
-  ui.camBox.classList.toggle("mini", !settings.showCam);
+const clamp = (v, a, b) => Math.round(Math.min(b, Math.max(a, v)) * 100) / 100;
+
+// =====================================================================
+// Voz: ciclo continuo escuchar → pensar → hablar → escuchar
+// =====================================================================
+const listener = new Listener();
+const speaker = new Speaker();
+const mic = new MicMeter();
+let voiceOn = false;
+let greeted = false;
+let state = "off"; // off | listening | thinking | speaking
+let voiceTask = null; // null | {kind: "note"} | {kind: "translate"}
+let askCtl = null;
+let lastHeard = "", lastReply = "";
+let lastTranslation = { source: "", text: "", target: "en" };
+let lastListenAt = 0;
+let restartTimer = null;
+const history = [];
+
+function applyVoice() {
+  speaker.voiceName = settings.voiceName;
+  speaker.rate = settings.rate;
+  speaker.pitch = settings.pitch;
+  speaker.lang = LANGS[getLang()].speech;
+  listener.lang = LANGS[getLang()].speech;
 }
 
-function setWake(on) {
-  updateSettings({ wake: on });
-  voice.setWakeMode(on);
-  say(on ? t("wakeOn") : t("wakeOff"), { silent: true });
+function setState(s, label) {
+  state = s;
+  document.body.classList.remove("v-listening", "v-thinking", "v-speaking", "v-off");
+  document.body.classList.add("v-" + s);
+  ui.vbState.textContent = (label || (s === "off" ? (voiceOn ? t("paused") : t("micOff")) : t(s))).toUpperCase();
+  updateHint();
 }
 
-function addNote(text) {
-  notes.unshift({ text, at: Date.now() });
-  store.set("notes", notes);
+function updateHint() {
+  ui.vbHint.textContent = !speechSupported
+    ? t("noSpeech")
+    : !voiceOn && !voiceTask ? t("tapToStart")
+    : state === "listening" ? (voiceTask ? t("sayCommand") : settings.mode === "wake" ? t("wakeHint") : t("sayCommand"))
+    : "";
 }
 
-// ---------- Conversación con la IA ----------
-function addBubble(role, text, log = $("#chatLog")) {
-  if (!log) return null;
-  const el = document.createElement("div");
-  el.className = `msg ${role}`;
-  el.textContent = text;
-  log.appendChild(el);
-  log.scrollTop = log.scrollHeight;
-  return el;
+async function ensureMic() {
+  if (mic.analyser) return;
+  try { await mic.start(); } catch { /* el visualizador queda plano */ }
 }
 
-function setStatus(kind) {
-  document.body.classList.toggle("thinking", kind === "thinking" || kind === "searching");
-  document.body.classList.toggle("listening", kind === "listening");
-  ui.status.textContent = { thinking: "◐ ", searching: "🌐 ", listening: "🎙️ ", idle: "● " }[kind] + t(kind);
-}
-
-function speakingAnim(on) {
-  document.body.classList.toggle("speaking", on);
-}
-
-function say(text, { silent = false } = {}) {
-  ui.caption.textContent = text;
-  if (!silent) {
-    voice.cancelSpeech();
-    voice.speak(text, speakingAnim);
+function toggleVoice() {
+  if (!speechSupported) { ui.reply.textContent = t("noSpeech"); return; }
+  if (voiceOn) {
+    voiceOn = false;
+    voiceTask = null;
+    stopAll();
+    setState("off");
+  } else {
+    voiceOn = true;
+    ensureMic();
+    if (!greeted) {
+      greeted = true;
+      speakOnce(t("greeting"));
+    } else listenNow();
   }
+  if (openId === "core") refreshPanel();
+  updateCards();
 }
 
-function startListening() {
-  voice.cancelSpeech();
-  if (!voice.listenOnce()) say("⚠️ Reconocimiento de voz no disponible en este navegador (usa Chrome o Edge).", { silent: true });
+function stopAll() {
+  clearTimeout(restartTimer);
+  listener.stop();
+  askCtl?.abort();
+  askCtl = null;
+  speaker.cancel();
 }
+
+/** Interrumpe lo que esté diciendo y vuelve a escuchar. */
+function interrupt() {
+  if (state !== "speaking" && state !== "thinking") return false;
+  askCtl?.abort();
+  askCtl = null;
+  speaker.cancel();
+  afterSpeech();
+  return true;
+}
+
+function startTask(task) {
+  if (!speechSupported) { ui.reply.textContent = t("noSpeech"); return; }
+  ensureMic();
+  voiceTask = task;
+  stopAll();
+  listenNow();
+  refreshPanel();
+}
+
+function listenNow() {
+  clearTimeout(restartTimer);
+  if (!voiceOn && !voiceTask) { setState("off"); return; }
+  const since = performance.now() - lastListenAt;
+  if (since < 400) { restartTimer = setTimeout(listenNow, 900); return; } // evita reinicios en bucle
+  lastListenAt = performance.now();
+  listener.lang = LANGS[getLang()].speech;
+  setState("listening");
+  const ok = listener.listen({
+    onInterim: (text) => { ui.heard.innerHTML = `<b>›</b> ${esc(text)}`; },
+    onFinal: handleFinal,
+    onEnd: (got) => {
+      if (got || state !== "listening") return;
+      restartTimer = setTimeout(listenNow, 150); // silencio: seguir escuchando
+    },
+    onError: (err) => {
+      if (err === "not-allowed" || err === "service-not-allowed" || err === "audio-capture") {
+        voiceOn = false;
+        voiceTask = null;
+        ui.reply.textContent = t("micDenied");
+        setState("off");
+      }
+    },
+  });
+  if (!ok) setState("off");
+}
+
+function handleFinal(text) {
+  lastHeard = text;
+  ui.heard.innerHTML = `<b>${esc(t("you").toUpperCase())} ›</b> ${esc(text)}`;
+  const task = voiceTask;
+  voiceTask = null;
+  if (task?.kind === "note") {
+    addNote(text);
+    speakOnce(t("noteSaved"));
+    refreshPanel();
+    return;
+  }
+  if (task?.kind === "translate") {
+    translate(text);
+    return;
+  }
+  if (settings.mode === "wake") {
+    const command = stripWakeWord(text);
+    if (command === null) { listenNow(); return; } // no era para mí
+    if (!command) { speakOnce(t("yes")); return; }
+    ask(command);
+    return;
+  }
+  ask(text);
+}
+
+function speakOnce(text, lang) {
+  stopAll();
+  lastReply = text;
+  ui.reply.textContent = text;
+  setState("speaking");
+  speaker.say(text, lang || LANGS[getLang()].speech);
+}
+
+function afterSpeech() {
+  if (voiceOn || voiceTask) restartTimer = setTimeout(listenNow, 350);
+  else setState("off");
+}
+speaker.onStart = () => { if (state === "thinking") setState("speaking"); };
+speaker.onIdle = () => { if (state === "speaking" || state === "thinking") afterSpeech(); };
 
 const ACTIONS = {
   set_language: ({ code }) => applyLanguage(code),
-  open_panel: ({ panel }) => openPanel(panel),
-  save_note: ({ text }) => {
-    addNote(text);
-    if (currentPanel === "notes") openPanel("notes");
-  },
+  open_panel: ({ panel }) => (panel === "none" ? closePanel() : openPanel(panel)),
+  save_note: ({ text }) => { addNote(text); if (openId === "notes") refreshPanel(); },
 };
 
-// Envía mensajes al servidor y lee la respuesta en streaming (Server-Sent Events).
-async function askBrain(messages, { onText, onAction, onStatus } = {}) {
-  let text = "";
-  let error = null;
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, lang: getLang(), now: new Date().toString() }),
-    });
-    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const parts = buffer.split("\n\n");
-      buffer = parts.pop();
-      for (const part of parts) {
-        if (!part.startsWith("data: ")) continue;
-        const ev = JSON.parse(part.slice(6));
-        if (ev.type === "text") { text += ev.text; onText?.(text); }
-        else if (ev.type === "action") onAction?.(ev);
-        else if (ev.type === "status") onStatus?.(ev.status);
-        else if (ev.type === "error") error = ev.error;
-      }
-    }
-  } catch (err) {
-    error = err.message;
-  }
-  return { text, error };
-}
-
-async function sendMessage(text) {
-  if (busy) return;
-  busy = true;
-  voice.cancelSpeech();
-  history.push({ role: "user", content: text });
-  addBubble("user", text);
-  const bubble = addBubble("assistant", "…");
-  ui.caption.textContent = "";
-  setStatus("thinking");
-
-  const { text: reply, error } = await askBrain(history, {
-    onText: (full) => {
-      setStatus("thinking");
-      if (bubble?.isConnected) bubble.textContent = full;
-      ui.caption.textContent = full.slice(-280);
-    },
-    onAction: (ev) => ACTIONS[ev.name]?.(ev.input),
-    onStatus: (s) => setStatus(s),
+/** Envía al servidor y lee la respuesta en streaming (Server-Sent Events). */
+async function stream(payload, { onText, onAction, onStatus, signal }) {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lang: getLang(), now: new Date().toString(), ...payload }),
+    signal,
   });
-
-  setStatus("idle");
-  busy = false;
-  if (reply) {
-    history.push({ role: "assistant", content: reply });
-    const log = $("#chatLog");
-    if (log && !bubble?.isConnected) addBubble("assistant", reply);
-    say(reply);
+  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "", error = null;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop();
+    for (const part of parts) {
+      if (!part.startsWith("data: ")) continue;
+      const ev = JSON.parse(part.slice(6));
+      if (ev.type === "text") onText?.(ev.text);
+      else if (ev.type === "action") onAction?.(ev);
+      else if (ev.type === "status") onStatus?.(ev.status);
+      else if (ev.type === "error") error = ev.error;
+    }
   }
-  if (error) {
-    const msg = error === "auth" ? t("errAuth") : error === "refusal" ? t("errRefusal") : t("errGeneric");
-    if (bubble?.isConnected) { bubble.textContent = msg; bubble.classList.add("error"); }
-    if (!reply) history.pop();
-    say(msg);
-  } else if (!reply && bubble?.isConnected) {
-    bubble.remove();
+  return error;
+}
+
+function errorText(err) {
+  return err === "auth" ? t("errAuth") : err === "refusal" ? t("errRefusal") : t("errGeneric");
+}
+
+async function ask(text) {
+  stopAll();
+  history.push({ role: "user", content: text });
+  setState("thinking");
+  ui.reply.textContent = "";
+  speaker.begin();
+  askCtl = new AbortController();
+  const ctl = askCtl;
+  const t0 = performance.now();
+  let reply = "", first = true;
+  try {
+    const err = await stream(
+      { messages: history.slice(-20), notes: notes.map((n) => n.text) },
+      {
+        signal: ctl.signal,
+        onText: (delta) => {
+          if (first) {
+            first = false;
+            stats.lastLatency = Math.round(performance.now() - t0);
+            pushSeries("latency", stats.lastLatency, 30);
+          }
+          reply += delta;
+          ui.reply.textContent = reply.slice(-220);
+          speaker.push(delta);
+        },
+        onAction: (ev) => ACTIONS[ev.name]?.(ev.input),
+        onStatus: (s) => s === "searching" && setState("thinking", t("searching")),
+      },
+    );
+    if (ctl !== askCtl) return; // interrumpido
+    if (reply) {
+      history.push({ role: "assistant", content: reply });
+      stats.responses++;
+      lastReply = reply;
+    } else history.pop();
+    if (err && !reply) {
+      speakOnce(errorText(err));
+      return;
+    }
+    speaker.end();
+  } catch (e) {
+    if (ctl !== askCtl) return;
+    history.pop();
+    speakOnce(t("errGeneric"));
+  } finally {
+    if (ctl === askCtl) askCtl = null;
+    updateCards();
+    if (openId === "core") refreshPanel();
   }
 }
 
-// ---------- Cursor de la mano ----------
-let gestures = null;
-let hoverEl = null;
-let hoverSince = 0;
-let dwellDone = false;
-const dwellRing = ui.cursor.querySelector(".dwell");
-const DWELL_MS = 1300;
+async function translate(text) {
+  stopAll();
+  setState("thinking", t("translating"));
+  const target = settings.target;
+  lastTranslation = { source: text, text: "", target };
+  refreshPanel();
+  askCtl = new AbortController();
+  const ctl = askCtl;
+  let out = "";
+  try {
+    const err = await stream(
+      { messages: [{ role: "user", content: text }], mode: "translate", target },
+      { signal: ctl.signal, onText: (d) => { out += d; ui.reply.textContent = out; } },
+    );
+    if (ctl !== askCtl) return;
+    if (err || !out.trim()) { speakOnce(errorText(err)); return; }
+    lastTranslation.text = out.trim();
+    stats.translations++;
+    stats.lastTranslation = `${LANGS[target].short} · ${lastTranslation.text}`;
+    refreshPanel();
+    updateCards();
+    speakOnce(lastTranslation.text, LANGS[target].speech);
+  } catch {
+    if (ctl === askCtl) speakOnce(t("errGeneric"));
+  } finally {
+    if (ctl === askCtl) askCtl = null;
+  }
+}
 
-function targetAt(x, y) {
-  const el = document.elementFromPoint(x, y);
-  return el?.closest("[data-gesture], button, input, select, textarea, label.row") || null;
+function addNote(text) {
+  notes.unshift({ text: String(text).slice(0, 2000), at: Date.now() });
+  store.set("notes", notes);
+  updateCards();
+}
+
+// Onda de la barra de voz: micrófono real al escuchar, onda sintética al hablar.
+function drawWave(now) {
+  const cv = ui.wave, ctx = cv.getContext("2d");
+  const w = cv.width, h = cv.height;
+  ctx.clearRect(0, 0, w, h);
+  const bars = 40, bw = w / bars;
+  const bands = state === "listening" ? mic.bands() : null;
+  for (let i = 0; i < bars; i++) {
+    let v;
+    if (state === "listening") v = bands ? bands[2 + i] / 255 : 0.15 + 0.1 * Math.sin(now / 200 + i);
+    else if (state === "speaking") v = 0.25 + 0.55 * Math.abs(Math.sin(now / 140 + i * 0.55) * Math.sin(now / 410 + i * 0.21));
+    else if (state === "thinking") v = 0.12 + 0.5 * Math.max(0, Math.sin(now / 160 - i * 0.35)) ** 6;
+    else v = 0.05;
+    const bh = Math.max(2, v * h);
+    ctx.fillStyle = state === "speaking" ? "#ffcc5c" : state === "listening" ? "#79e3ff" : "#9b8cff";
+    ctx.globalAlpha = 0.35 + v * 0.65;
+    ctx.fillRect(i * bw + 1, (h - bh) / 2, bw - 2, bh);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// =====================================================================
+// Idioma
+// =====================================================================
+function applyLanguage(code) {
+  if (!LANGS[code]) return;
+  setLang(code);
+  store.set("lang", code);
+  applyVoice();
+  ui.langState.textContent = LANGS[code].short;
+  buildCarousel();
+  setState(state);
+  if (openId) openPanel(openId);
+  renderSides();
+}
+
+// =====================================================================
+// Cursor de la mano: imán hacia la opción más cercana, toque en el aire,
+// pellizco y permanencia
+// =====================================================================
+let gestures = null;
+let hoverEl = null, hoverSince = 0, dwellDone = false;
+const dwellRing = ui.cursor.querySelector(".c-dwell");
+const DWELL_MS = 1500, SNAP_PX = 64;
+let lastCursor = null;
+
+function targets() {
+  return [...document.querySelectorAll("[data-target]")].filter((el) => {
+    if (el.closest("[hidden]") || el.classList.contains("gone")) return false;
+    if (openId && !el.closest("#panel") && !el.closest(".console")) return false; // con un módulo abierto solo cuenta el módulo
+    return true;
+  });
+}
+
+function nearestTarget(x, y) {
+  let best = null, bestD = Infinity, bestRect = null;
+  for (const el of targets()) {
+    const r = el.getBoundingClientRect();
+    if (!r.width) continue;
+    const dx = Math.max(r.left - x, 0, x - r.right);
+    const dy = Math.max(r.top - y, 0, y - r.bottom);
+    let d = Math.hypot(dx, dy);
+    if (d === 0) d = -1 / (r.width * r.height); // dentro de varios: gana el más pequeño
+    if (d < bestD) { bestD = d; best = el; bestRect = r; }
+  }
+  return bestD <= SNAP_PX ? { el: best, rect: bestRect, inside: bestD <= 0 } : null;
 }
 
 function moveCursor(x, y) {
-  ui.cursor.style.transform = `translate(${x}px, ${y}px)`;
-  const el = targetAt(x, y);
+  const hit = nearestTarget(x, y);
+  let cx = x, cy = y;
+  if (hit && !hit.inside) {
+    // imán: acerca el cursor visual al borde de la opción
+    cx = Math.min(Math.max(x, hit.rect.left + 6), hit.rect.right - 6);
+    cy = Math.min(Math.max(y, hit.rect.top + 6), hit.rect.bottom - 6);
+  }
+  ui.cursor.style.transform = `translate(${cx}px, ${cy}px)`;
+  ui.cursor.classList.toggle("snap", Boolean(hit));
+  const el = hit?.el || null;
   if (el !== hoverEl) {
     hoverEl?.classList.remove("hover");
     hoverEl = el;
@@ -472,125 +736,157 @@ function moveCursor(x, y) {
     hoverSince = performance.now();
     dwellDone = false;
   }
-  // Clic por permanencia: mantener el dedo quieto sobre un botón.
   let progress = 0;
-  if (settings.dwell && hoverEl && !dwellDone && !/^(INPUT|TEXTAREA|SELECT)$/.test(hoverEl.tagName)) {
+  if (settings.dwell && hoverEl && !dwellDone) {
     progress = Math.min((performance.now() - hoverSince) / DWELL_MS, 1);
     if (progress >= 1) {
       dwellDone = true;
       progress = 0;
-      activate(hoverEl, x, y);
+      activate(hoverEl, cx, cy);
     }
   }
-  dwellRing.style.strokeDashoffset = String(100.5 * (1 - progress));
+  dwellRing.style.strokeDashoffset = String(132 * (1 - progress));
+  if (lastCursor) pushSeries("hand", Math.hypot(x - lastCursor.x, y - lastCursor.y), 60);
+  lastCursor = { x, y };
 }
 
 function activate(el, x, y) {
-  const ripple = document.createElement("div");
-  ripple.className = "ripple";
-  ripple.style.left = `${x}px`;
-  ripple.style.top = `${y}px`;
-  document.body.appendChild(ripple);
-  setTimeout(() => ripple.remove(), 600);
-  userInteracted = true;
-
-  if (!el) {
-    // Pellizco en el vacío: abre la opción enfocada del menú.
-    if (menuOpen && !currentPanel) openPanel(focusedItem().id);
-    return;
-  }
-  if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && el.type !== "checkbox") {
-    el.focus();
-    return;
-  }
-  if (el.matches("label.row")) {
-    el.querySelector("input[type=checkbox]")?.click();
-    return;
-  }
-  el.click();
+  const r = document.createElement("div");
+  r.className = "ripple";
+  r.style.left = `${x}px`;
+  r.style.top = `${y}px`;
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+  ui.cursor.classList.add("press");
+  setTimeout(() => ui.cursor.classList.remove("press"), 180);
+  if (el) el.click();
 }
 
 function onGesture(ev) {
   switch (ev.type) {
     case "move":
-      ui.cursor.classList.remove("hidden");
+      ui.cursor.hidden = false;
       moveCursor(ev.x, ev.y);
       break;
     case "hand":
-      ui.cursor.classList.toggle("hidden", !ev.visible);
-      if (!ev.visible) { hoverEl?.classList.remove("hover"); hoverEl = null; }
+      ui.cursor.hidden = !ev.visible;
+      if (!ev.visible) { hoverEl?.classList.remove("hover"); hoverEl = null; lastCursor = null; }
+      renderSides();
       break;
-    case "pinch":
-      ui.cursor.classList.add("pinch");
-      activate(targetAt(ev.x, ev.y), ev.x, ev.y);
+    case "tap":
+    case "pinch": {
+      const hit = hoverEl ? { el: hoverEl } : nearestTarget(ev.x, ev.y);
+      activate(hit?.el, ev.x, ev.y);
       dwellDone = true;
       break;
-    case "release":
-      ui.cursor.classList.remove("pinch");
-      break;
-    case "pose":
-      ui.gesture.textContent = { palm: "✋ palma", fist: "✊ puño", victory: "✌️ V", point: "☝️ cursor", other: "🤚", none: "— sin mano" }[ev.gesture] || ev.gesture;
+    }
+    case "swipe":
+      if (!openId) setFocus(focus - ev.dir);
       break;
     case "gesture":
-      if (ev.gesture === "palm") toggleMenu();
-      else if (ev.gesture === "fist") { if (currentPanel) closePanel(); else toggleMenu(false); }
-      else if (ev.gesture === "victory") startListening();
-      break;
-    case "swipe":
-      rotateMenu(ev.dir);
+      if (ev.gesture === "fist") { if (!interrupt() && openId) closePanel(); }
+      else if (ev.gesture === "victory") toggleVoice();
+      else if (ev.gesture === "palm" && !openId) openPanel(MODULES[focus]);
       break;
   }
+}
+
+function applyGestureSettings() {
+  ui.sensor.classList.toggle("mini", !settings.showCam);
+  if (!gestures) return;
+  gestures.smoothing = settings.smoothing;
+  gestures.pokeEnabled = settings.poke;
+  gestures.pinchEnabled = settings.pinch;
 }
 
 async function startCamera() {
-  ui.camStart.classList.add("hidden");
+  ui.camStart.hidden = true;
   try {
     gestures = new GestureController({ video: $("#video"), canvas: $("#handCanvas"), onEvent: onGesture });
-    gestures.smoothing = settings.smoothing;
+    applyGestureSettings();
     await gestures.start();
-    ui.camBox.classList.remove("off");
+    ui.sensor.classList.remove("off");
   } catch (err) {
     console.error(err);
     gestures = null;
-    ui.camBox.classList.add("off");
-    ui.camStart.classList.remove("hidden");
-    say(`${t("camDenied")} (${err.name || err.message})`, { silent: true });
+    ui.sensor.classList.add("off");
+    ui.camStart.hidden = false;
+    ui.reply.textContent = `${t("camDenied")} (${err.name || err.message})`;
   }
+  updateCards();
 }
 
-// ---------- Teclado (atajos) ----------
-document.addEventListener("keydown", (e) => {
-  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) {
-    if (e.key === "Escape") document.activeElement.blur();
-    return;
-  }
-  if (e.key === "ArrowLeft") rotateMenu(-1);
-  else if (e.key === "ArrowRight") rotateMenu(1);
-  else if (e.key === "Enter" && !currentPanel) openPanel(focusedItem().id);
-  else if (e.key === "Escape") currentPanel ? closePanel() : toggleMenu();
-  else if (e.key === " ") { e.preventDefault(); startListening(); }
-});
+// =====================================================================
+// Columnas laterales y reloj
+// =====================================================================
+function renderSides() {
+  const row = (k, v, cls = "") => `<div class="row"><span class="k">${esc(k)}</span><span class="v ${cls}">${esc(v)}</span></div>`;
+  ui.sideLeft.innerHTML =
+    row(t("brain").toUpperCase(), brain.apiKey ? "OK" : brain.ok ? "KEY?" : "OFF", brain.apiKey ? "ok" : "bad") +
+    row("VOZ", voiceOn ? t("micOn").split(" ")[0] : "OFF", voiceOn ? "ok" : "warn") +
+    row(t("hand").toUpperCase(), gestures?.handVisible ? "✓" : "—", gestures?.handVisible ? "ok" : "") +
+    row(t("camera").toUpperCase().slice(0, 10), gestures?.running ? `${gestures.fps} FPS` : "OFF", gestures?.running ? "ok" : "warn") +
+    row(t("network").toUpperCase(), navigator.onLine ? "ON" : "OFF", navigator.onLine ? "ok" : "bad");
+  ui.sideRight.innerHTML =
+    row(t("language").toUpperCase(), LANGS[getLang()].short) +
+    row(t("notes").toUpperCase(), notes.length) +
+    row(t("responses").toUpperCase(), stats.responses) +
+    row(t("latency").toUpperCase(), stats.lastLatency == null ? "—" : `${stats.lastLatency}ms`) +
+    row("MOD", tagOf(MODULES[focus]), "warn");
+}
 
-// ---------- Arranque ----------
-ui.core.addEventListener("click", () => toggleMenu());
+// =====================================================================
+// Teclado, toque y ratón (alternativas)
+// =====================================================================
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft") setFocus(focus - 1);
+  else if (e.key === "ArrowRight") setFocus(focus + 1);
+  else if (e.key === "Enter") openId ? null : openPanel(MODULES[focus]);
+  else if (e.key === "Escape") { if (!interrupt()) closePanel(); }
+  else if (e.key === " ") { e.preventDefault(); toggleVoice(); }
+});
+let swipeStart = null;
+ui.stage.addEventListener("pointerdown", (e) => { swipeStart = { x: e.clientX, t: performance.now() }; });
+ui.stage.addEventListener("pointerup", (e) => {
+  if (!swipeStart || openId) return;
+  const dx = e.clientX - swipeStart.x;
+  if (Math.abs(dx) > 60 && performance.now() - swipeStart.t < 700) setFocus(focus + (dx < 0 ? 1 : -1));
+  swipeStart = null;
+});
+ui.voiceBar.addEventListener("click", () => { if (!interrupt()) toggleVoice(); });
 $("#panelClose").addEventListener("click", closePanel);
 ui.camStart.addEventListener("click", startCamera);
-document.addEventListener("pointerdown", () => {
-  // Los navegadores no dejan hablar hasta la primera interacción: saludamos entonces.
-  if (!userInteracted) { userInteracted = true; say(t("greeting")); }
-}, { once: true });
+addEventListener("resize", layoutCarousel);
 
-setInterval(() => { ui.clock.textContent = new Date().toLocaleTimeString(getLang(), { hour12: false }); }, 1000);
+// =====================================================================
+// Arranque
+// =====================================================================
+setLang(store.get("lang", detectBrowserLang()));
+applyLanguage(getLang());
+setState("off");
+ui.reply.textContent = t("greeting");
 
-applyLanguage(store.get("lang", detectBrowserLang()));
-updateSettings({});
-ui.caption.textContent = t("greeting");
-if (settings.wake) voice.setWakeMode(true);
+setInterval(() => {
+  ui.clock.textContent = new Date().toLocaleTimeString(getLang(), { hour12: false });
+}, 1000);
+setInterval(() => {
+  pushSeries("mic", mic.level());
+  pushSeries("fps", gestures?.running ? gestures.fps : 0);
+  if (!gestures?.handVisible) pushSeries("hand", 0);
+  updateCards();
+  renderSides();
+}, 1000);
+(function frame(now) { drawWave(now); requestAnimationFrame(frame); })(performance.now());
 
 fetch("/api/health")
   .then((r) => r.json())
-  .then((h) => { brain = h; if (!h.apiKey) ui.caption.textContent = t("errAuth"); })
+  .then((h) => {
+    brain = h;
+    if (!h.apiKey) ui.reply.textContent = t("errAuth");
+    renderSides();
+    updateCards();
+  })
   .catch(() => { brain = { ok: false }; });
 
-ui.camBox.classList.add("off");
+ui.sensor.classList.add("off");
 startCamera();
