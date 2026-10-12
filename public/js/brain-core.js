@@ -403,7 +403,9 @@ export async function runChat({ client, Anthropic, request, send, signal, isAbor
     console.error("[chat]", err);
     const msg = err instanceof Anthropic.AuthenticationError || /authentication|api[ -]?key|x-api-key/i.test(err?.message || "")
       ? "auth"
-      : err instanceof Anthropic.RateLimitError
+      : /credit balance|billing|purchase credits/i.test(err?.message || "")
+        ? "credits"
+        : err instanceof Anthropic.RateLimitError
         ? "rate_limit"
         : err instanceof Anthropic.APIConnectionError
           ? "connection"

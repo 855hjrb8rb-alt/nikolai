@@ -573,3 +573,5 @@ body.booting .floor-ring { animation: ringOut 1.4s .2s ease-out both; }
 .mem-body p { margin: 4px 0 0; line-height: 1.45; overflow-wrap: anywhere; }
 .mem-cat { font-size: 10px; letter-spacing: .14em; color: var(--gold); }
 .mem-item .tile { min-height: 46px; padding: 0; align-items: center; justify-content: center; }
+.key-link { color: var(--cyan); font-family: var(--font-mono); }
+.key-row { grid-template-columns: 1fr auto auto auto; }

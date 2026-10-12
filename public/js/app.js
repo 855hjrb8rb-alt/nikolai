@@ -629,12 +629,18 @@ function keyForm() {
   const has = Boolean(Brain.getKey());
   return `<div class="readout key-box">
       <div class="k">${esc(t("apiKey").toUpperCase())} · ${has ? "✓ " + esc(t("keySaved")) : esc(t("keyMissing"))}</div>
-      <p class="muted">${esc(t("keyHelp"))} <span class="mono">console.anthropic.com</span></p>
+      <ol class="steps">
+        <li>${esc(t("keyStep1"))} <a class="key-link" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" data-target>console.anthropic.com</a></li>
+        <li>${esc(t("keyStep2"))}</li>
+        <li>${esc(t("keyStep3"))}</li>
+      </ol>
       <div class="key-row">
         <input id="apiKeyIn" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
         <button class="tile" data-target id="apiKeySave"><span class="t-main">${esc(t("saveKey"))}</span></button>
+        ${has ? `<button class="tile" data-target id="apiKeyTest"><span class="t-main">${esc(t("testKey"))}</span></button>` : ""}
         ${has ? `<button class="tile" data-target id="apiKeyDel"><span class="t-main">${esc(t("deleteKey"))}</span></button>` : ""}
       </div>
+      <p class="muted" id="keyResult">${esc(t("keyCost"))}</p>
     </div>`;
 }
 
@@ -649,9 +655,11 @@ function bindKeyForm(body) {
     brain.apiKey = true;
     ui.reply.textContent = t("keySaved");
     refreshPanel();
+    testKey();
     renderSides();
     updateCards();
   });
+  body.querySelector("#apiKeyTest")?.addEventListener("click", testKey);
   body.querySelector("#apiKeyDel")?.addEventListener("click", () => {
     Brain.setKey("");
     brain.apiKey = false;
@@ -688,6 +696,26 @@ function greetingText() {
   const name = profile.name ? `, ${profile.name}` : "";
   if (d === 0) return t("birthdayGreeting").replace("{name}", name);
   return t("greeting");
+}
+
+/** Hace una pregunta mínima para comprobar que la clave funciona y tiene créditos. */
+async function testKey() {
+  const out = () => document.querySelector("#keyResult");
+  if (out()) out().textContent = t("keyTesting");
+  let text = "";
+  let err;
+  try {
+    err = await stream({ messages: [{ role: "user", content: t("keyPing") }], channel: "text" }, { onText: (d) => { text += d; } });
+  } catch (e) {
+    err = "connection";
+  }
+  const msg = !err && text ? `✓ ${t("keyOk")}`
+    : err === "auth" ? t("keyBad")
+    : err === "credits" ? t("keyNoCredits")
+    : err === "rate_limit" ? t("keyRate")
+    : `${t("keyFail")} (${err || "—"})`;
+  if (out()) out().textContent = msg;
+  ui.reply.textContent = msg;
 }
 
 const clamp = (v, a, b) => Math.round(Math.min(b, Math.max(a, v)) * 100) / 100;
@@ -964,6 +992,7 @@ async function describePhoto(dataUrl) {
 }
 
 function errorText(err) {
+  if (err === "credits") return t("keyNoCredits");
   if (err === "auth") {
     if (Brain.getMode() === "direct") { setTimeout(() => openPanel("core"), 0); return t("needKey"); }
     return t("errAuth");

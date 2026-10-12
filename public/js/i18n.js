@@ -18,6 +18,14 @@ export const LANGS = {
 
 const T = {
   es: {
+    keyStep1: "Entra en", keyStep2: "Inicia sesión, pulsa «Create Key» y copia la clave (empieza por sk-ant-).",
+    keyStep3: "Pégala aquí abajo y pulsa Guardar. Se guarda solo en este navegador.",
+    testKey: "Probar clave", keyTesting: "Probando la clave…", keyOk: "La clave funciona. NIKOLAI ya puede pensar.",
+    keyBad: "La clave no es válida o fue desactivada. Crea una nueva en console.anthropic.com.",
+    keyNoCredits: "Tu cuenta de Anthropic no tiene créditos. Añade saldo en console.anthropic.com → Billing.",
+    keyRate: "Demasiadas peticiones seguidas; espera un minuto y vuelve a probar.", keyFail: "No se pudo comprobar la clave",
+    keyPing: "Responde solo con la palabra: listo",
+    keyCost: "El uso de la API se paga aparte de la suscripción de Claude (por consumo, en console.anthropic.com).",
     memory: "Memoria", memoryDesc: "Recuerdos que tú decides que NIKOLAI guarde.",
     memOn: "Memoria activada", memOff: "Memoria apagada",
     memExplainOn: "NIKOLAI usa estos recuerdos para conocerte mejor. También puedes decirle «recuerda que…» o «olvida…». Todo se guarda solo en este navegador.",
@@ -170,6 +178,14 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    keyStep1: "Go to", keyStep2: "Sign in, click “Create Key” and copy the key (it starts with sk-ant-).",
+    keyStep3: "Paste it below and tap Save. It is stored only in this browser.",
+    testKey: "Test key", keyTesting: "Testing the key…", keyOk: "The key works. NIKOLAI can think now.",
+    keyBad: "The key is invalid or was disabled. Create a new one at console.anthropic.com.",
+    keyNoCredits: "Your Anthropic account has no credits. Add balance at console.anthropic.com → Billing.",
+    keyRate: "Too many requests in a row; wait a minute and try again.", keyFail: "Couldn't check the key",
+    keyPing: "Reply with just the word: ready",
+    keyCost: "API usage is billed separately from a Claude subscription (pay as you go, at console.anthropic.com).",
     memory: "Memory", memoryDesc: "Memories you choose for NIKOLAI to keep.",
     memOn: "Memory on", memOff: "Memory off",
     memExplainOn: "NIKOLAI uses these memories to know you better. You can also say “remember that…” or “forget…”. Everything stays in this browser only.",
