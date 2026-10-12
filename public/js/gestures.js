@@ -1,7 +1,20 @@
 // Control por gestos: la cámara detecta tu mano con MediaPipe Hand Landmarker
 // (corre 100 % en tu navegador) y la convierte en cursor, clics y atajos.
 
-import { FilesetResolver, HandLandmarker } from "/vendor/tasks-vision/vision_bundle.mjs";
+// Con server.js se sirve desde node_modules; en una web estática se usa el CDN.
+const VISION_LOCAL = "vendor/tasks-vision";
+const VISION_CDN = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+async function loadVision() {
+  for (const base of [VISION_LOCAL, VISION_CDN]) {
+    try {
+      const url = base.startsWith("http") ? base : new URL(base, document.baseURI).href;
+      const mod = await import(`${url}/vision_bundle.mjs`);
+      return { ...mod, wasm: `${url}/wasm` };
+    } catch { /* probar el siguiente */ }
+  }
+  throw new Error("No se pudo cargar MediaPipe");
+}
 
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
@@ -48,7 +61,8 @@ export class GestureController {
   }
 
   async start() {
-    const vision = await FilesetResolver.forVisionTasks("/vendor/tasks-vision/wasm");
+    const { FilesetResolver, HandLandmarker, wasm } = await loadVision();
+    const vision = await FilesetResolver.forVisionTasks(wasm);
     this.landmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
       runningMode: "VIDEO",

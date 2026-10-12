@@ -18,6 +18,10 @@ export const LANGS = {
 
 const T = {
   es: {
+    apiKey: "Clave de Anthropic", keySaved: "Clave guardada en este navegador.", keyMissing: "sin clave",
+    keyHelp: "Para que piense, pegue una vez su clave API de Anthropic. Se guarda solo en este navegador. Consígala en",
+    saveKey: "Guardar", deleteKey: "Borrar", keyInvalid: "La clave debe empezar por sk-ant-.",
+    needKey: "Necesito su clave de Anthropic para pensar. Péguela en el módulo Núcleo IA.",
     core: "Núcleo IA", gestures: "Gestos", responses: "Respuestas", latency: "Latencia", translations: "Traducciones",
     target: "Destino", last: "Última", available: "Disponibles", active: "Activo", speed: "Velocidad", telemetry: "Telemetría",
     startVoice: "Activar voz", pauseVoice: "Pausar voz", repeat: "Repetir", yes: "¿Sí, señor?", wakeHint: "Diga «Nikolai» y su orden",
@@ -58,6 +62,10 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    apiKey: "Anthropic key", keySaved: "Key saved in this browser.", keyMissing: "no key",
+    keyHelp: "To think, paste your Anthropic API key once. It is stored only in this browser. Get one at",
+    saveKey: "Save", deleteKey: "Delete", keyInvalid: "The key must start with sk-ant-.",
+    needKey: "I need your Anthropic key to think. Paste it in the AI Core module.",
     core: "AI Core", gestures: "Gestures", responses: "Responses", latency: "Latency", translations: "Translations",
     target: "Target", last: "Last", available: "Available", active: "Active", speed: "Speed", telemetry: "Telemetry",
     startVoice: "Start voice", pauseVoice: "Pause voice", repeat: "Repeat", yes: "Yes, sir?", wakeHint: "Say “Nikolai” and your command",

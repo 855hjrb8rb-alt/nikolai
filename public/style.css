@@ -259,3 +259,15 @@ body.v-speaking .vb-dot { background: var(--gold); box-shadow: 0 0 12px var(--go
   .reply { font-size: 16px; }
   .sensor { width: 110px; bottom: auto; top: 50px; left: 10px; }
 }
+
+/* Clave de Anthropic (solo en la web sin servidor) */
+.key-box { display: flex; flex-direction: column; gap: 10px; border-color: var(--gold-dim); }
+.key-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; }
+.key-row input {
+  min-width: 0; font: inherit; font-family: var(--font-mono); font-size: 15px; color: #fff; padding: 0 14px; min-height: 60px;
+  background: rgba(5, 6, 26, .6); border: 1px solid var(--line); border-radius: 10px; outline: none; user-select: text;
+}
+.key-row input:focus { border-color: var(--cyan); }
+.key-row .tile { min-height: 60px; padding: 8px 18px; align-items: center; }
+.key-row .tile .t-main { font-size: 16px; }
+@media (max-width: 560px) { .key-row { grid-template-columns: 1fr 1fr; } .key-row input { grid-column: 1 / -1; } }

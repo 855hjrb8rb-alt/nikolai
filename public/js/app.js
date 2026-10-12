@@ -4,6 +4,7 @@
 import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
 import { Listener, Speaker, MicMeter, voicesFor, stripWakeWord, speechSupported } from "./voice.js";
 import { GestureController } from "./gestures.js";
+import * as Brain from "./brain.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -246,10 +247,12 @@ const PANEL = {
         ${tile(esc(t("modeConversation")), t("mode").toUpperCase(), settings.mode === "conversation" ? "on" : "")}
         ${tile(esc(t("modeWake")), t("mode").toUpperCase(), settings.mode === "wake" ? "on" : "")}
       </div>
+      ${Brain.getMode() === "direct" ? keyForm() : ""}
       ${readout(t("heardLabel"), lastHeard || "—", true)}
       ${readout("NIKOLAI", lastReply || t("greeting"))}
       <p class="muted">${esc(t("voiceHelp"))}</p>`;
-    const [toggle, conv, wake] = body.querySelectorAll(".tile");
+    bindKeyForm(body);
+    const [toggle, conv, wake] = body.querySelectorAll(".tiles .tile");
     toggle.onclick = () => { toggleVoice(); refreshPanel(); };
     conv.onclick = () => { settings.mode = "conversation"; saveSettings(); updateHint(); refreshPanel(); };
     wake.onclick = () => { settings.mode = "wake"; saveSettings(); updateHint(); refreshPanel(); };
@@ -362,6 +365,43 @@ const PANEL = {
       `<p class="muted">${esc(t("voiceHelp"))}</p>`;
   },
 };
+
+// Web sin servidor: la clave de Anthropic se guarda solo en este navegador.
+function keyForm() {
+  const has = Boolean(Brain.getKey());
+  return `<div class="readout key-box">
+      <div class="k">${esc(t("apiKey").toUpperCase())} · ${has ? "✓ " + esc(t("keySaved")) : esc(t("keyMissing"))}</div>
+      <p class="muted">${esc(t("keyHelp"))} <span class="mono">console.anthropic.com</span></p>
+      <div class="key-row">
+        <input id="apiKeyIn" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+        <button class="tile" data-target id="apiKeySave"><span class="t-main">${esc(t("saveKey"))}</span></button>
+        ${has ? `<button class="tile" data-target id="apiKeyDel"><span class="t-main">${esc(t("deleteKey"))}</span></button>` : ""}
+      </div>
+    </div>`;
+}
+
+function bindKeyForm(body) {
+  const save = body.querySelector("#apiKeySave");
+  if (!save) return;
+  const input = body.querySelector("#apiKeyIn");
+  save.addEventListener("click", () => {
+    const key = input.value.trim();
+    if (!/^sk-ant-/.test(key)) { input.focus(); ui.reply.textContent = t("keyInvalid"); return; }
+    Brain.setKey(key);
+    brain.apiKey = true;
+    ui.reply.textContent = t("keySaved");
+    refreshPanel();
+    renderSides();
+    updateCards();
+  });
+  body.querySelector("#apiKeyDel")?.addEventListener("click", () => {
+    Brain.setKey("");
+    brain.apiKey = false;
+    refreshPanel();
+    renderSides();
+    updateCards();
+  });
+}
 
 const clamp = (v, a, b) => Math.round(Math.min(b, Math.max(a, v)) * 100) / 100;
 
@@ -530,38 +570,17 @@ const ACTIONS = {
   save_note: ({ text }) => { addNote(text); if (openId === "notes") refreshPanel(); },
 };
 
-/** Envía al servidor y lee la respuesta en streaming (Server-Sent Events). */
-async function stream(payload, { onText, onAction, onStatus, signal }) {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lang: getLang(), now: new Date().toString(), ...payload }),
-    signal,
-  });
-  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "", error = null;
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const parts = buffer.split("\n\n");
-    buffer = parts.pop();
-    for (const part of parts) {
-      if (!part.startsWith("data: ")) continue;
-      const ev = JSON.parse(part.slice(6));
-      if (ev.type === "text") onText?.(ev.text);
-      else if (ev.type === "action") onAction?.(ev);
-      else if (ev.type === "status") onStatus?.(ev.status);
-      else if (ev.type === "error") error = ev.error;
-    }
-  }
-  return error;
+/** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
+function stream(payload, handlers) {
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), ...payload }, handlers);
 }
 
 function errorText(err) {
-  return err === "auth" ? t("errAuth") : err === "refusal" ? t("errRefusal") : t("errGeneric");
+  if (err === "auth") {
+    if (Brain.getMode() === "direct") { setTimeout(() => openPanel("core"), 0); return t("needKey"); }
+    return t("errAuth");
+  }
+  return err === "refusal" ? t("errRefusal") : t("errGeneric");
 }
 
 async function ask(text) {
@@ -839,6 +858,7 @@ function renderSides() {
 // Teclado, toque y ratón (alternativas)
 // =====================================================================
 document.addEventListener("keydown", (e) => {
+  if (e.target instanceof HTMLInputElement) return;
   if (e.key === "ArrowLeft") setFocus(focus - 1);
   else if (e.key === "ArrowRight") setFocus(focus + 1);
   else if (e.key === "Enter") openId ? null : openPanel(MODULES[focus]);
@@ -878,15 +898,15 @@ setInterval(() => {
 }, 1000);
 (function frame(now) { drawWave(now); requestAnimationFrame(frame); })(performance.now());
 
-fetch("/api/health")
-  .then((r) => r.json())
-  .then((h) => {
-    brain = h;
-    if (!h.apiKey) ui.reply.textContent = t("errAuth");
-    renderSides();
-    updateCards();
-  })
-  .catch(() => { brain = { ok: false }; });
+Brain.detect().then((h) => {
+  brain = h;
+  if (!h.apiKey) {
+    ui.reply.textContent = h.mode === "direct" ? t("needKey") : t("errAuth");
+    if (h.mode === "direct") openPanel("core");
+  }
+  renderSides();
+  updateCards();
+});
 
 ui.sensor.classList.add("off");
 startCamera();

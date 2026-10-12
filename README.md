@@ -6,19 +6,44 @@ Su cerebro es **Claude** (Anthropic), con búsqueda web para información actual
 
 ![menú radial](https://img.shields.io/badge/UI-holográfica-00e5ff) ![gestos](https://img.shields.io/badge/gestos-MediaPipe-ffb300) ![IA](https://img.shields.io/badge/IA-Claude-d97757)
 
-## 🚀 Puesta en marcha
+## 🌐 Usarlo como web (sin instalar nada)
 
-Requisitos: **Node.js 18+**, una webcam y **Chrome o Edge** (para el reconocimiento de voz).
+La carpeta `public/` es una web estática completa: se puede publicar en cualquier hosting
+(GitHub Pages, Netlify, Vercel, Cloudflare Pages…). Al abrirla:
+
+1. Permite cámara y micrófono.
+2. La primera vez se abre el módulo **Núcleo IA**: pega tu clave de Anthropic
+   (consíguela en https://console.anthropic.com). Se guarda **solo en tu navegador**.
+3. Toca la barra de voz y habla.
+
+Cada persona que abra la web usa su propia clave; la web no guarda ninguna.
+
+### Publicarla en GitHub Pages
+
+Este repositorio ya incluye el despliegue automático (`.github/workflows/pages.yml`). Solo falta activarlo:
+
+1. **Settings → Pages → Build and deployment → Source: «GitHub Actions»**.
+   (En cuentas gratuitas GitHub Pages solo funciona con repositorios **públicos**.)
+2. **Actions → «Publicar web» → Run workflow** (o cualquier push a la rama).
+3. La web queda en `https://855hjrb8rb-alt.github.io/nikolai/`.
+
+### Alternativa rápida: Netlify Drop
+
+Entra en https://app.netlify.com/drop y arrastra la carpeta `public/`. Te da un enlace `https://…` al momento.
+
+> La cámara y el micrófono solo funcionan en `https://` o en `localhost`.
+
+## 🖥️ Con servidor propio (la clave queda en el servidor)
+
+Requisitos: **Node.js 18+**, una webcam y **Chrome o Edge**.
 
 ```bash
 npm install
-export ANTHROPIC_API_KEY="sk-ant-..."   # tu clave de https://console.anthropic.com
+export ANTHROPIC_API_KEY="sk-ant-..."
 npm start
 ```
 
-Abre **http://localhost:3000**, permite el acceso a la cámara y al micrófono, y listo.
-
-> Sin clave API la interfaz, los gestos, las notas y los ajustes funcionan igual; solo el «cerebro» no responderá.
+Abre **http://localhost:3000**. En este modo la web no pide clave.
 
 ## 🎙️ Solo voz y manos
 
@@ -90,7 +115,10 @@ navegador                                   servidor (Node)            Anthropic
 └──────────────────────────────┘          └────────────────┘          └────────┘
 ```
 
-- `server.js` — sirve la web y hace de puente con Claude (la clave **nunca** llega al navegador). Respuestas en streaming, búsqueda web, herramientas para controlar la interfaz y *fallback* automático de modelo si un filtro de seguridad rechaza una petición.
+- `public/js/brain-core.js` — instrucciones, herramientas y bucle de conversación con Claude (streaming, búsqueda web, control de la interfaz y *fallback* de modelo). Lo usan el servidor y la web estática.
+- `public/js/brain.js` — elige el modo: con servidor (`/api/chat`) o directo desde el navegador con la clave guardada.
+- `server.js` — modo servidor: sirve la web y guarda la clave en el servidor.
+- `public/vendor/anthropic-sdk.mjs` — SDK oficial de Anthropic empaquetado para el navegador (`npm run build:vendor`).
 - `public/js/gestures.js` — detección de la mano y reconocimiento de gestos.
 - `public/js/voice.js` — reconocimiento de voz, síntesis frase a frase y medidor del micrófono.
 - `public/js/i18n.js` — textos de la interfaz en 12 idiomas.

@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && for f in public/js/*.js; do node --check \"$f\" || exit 1; done"
+    "check": "node --check server.js && for f in public/js/*.js; do node --check \"$f\" || exit 1; done",
+    "build:vendor": "esbuild scripts/anthropic-sdk-entry.mjs --bundle --format=esm --platform=browser --minify --legal-comments=none --outfile=public/vendor/anthropic-sdk.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -14,5 +15,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
     "@mediapipe/tasks-vision": "0.10.14"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
   }
 }
