@@ -13,7 +13,7 @@ export const LANGUAGES = {
 };
 export const PANELS = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos", "voice", "translator",
-  "notes", "language", "profile", "system", "settings", "help", "none",
+  "notes", "memory", "language", "profile", "system", "settings", "help", "none",
 ];
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -34,7 +34,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), language (idioma), profile (perfil del usuario), system (telemetría), settings (gestos), help (ayuda). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), system (telemetría), settings (gestos), help (ayuda). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -47,6 +47,33 @@ export const UI_TOOLS = [
   {
     name: "save_note",
     description: "Guarda una nota o recordatorio en el panel de notas del usuario.",
+    input_schema: {
+      type: "object",
+      properties: { text: { type: "string" } },
+      required: ["text"],
+      additionalProperties: false,
+    },
+    strict: true,
+    eager_input_streaming: true,
+  },
+  {
+    name: "remember",
+    description: "Guarda un recuerdo permanente sobre el usuario (gustos, datos personales, personas, fechas importantes, metas…) cuando el usuario te pida recordar algo o te cuente algo importante que querría que recordaras. Escribe el recuerdo en tercera persona, breve y claro.",
+    input_schema: {
+      type: "object",
+      properties: {
+        text: { type: "string" },
+        category: { type: "string", enum: ["personal", "family", "likes", "school", "health", "dates", "other"] },
+      },
+      required: ["text", "category"],
+      additionalProperties: false,
+    },
+    strict: true,
+    eager_input_streaming: true,
+  },
+  {
+    name: "forget",
+    description: "Borra un recuerdo guardado cuando el usuario pida olvidarlo. text = palabras clave del recuerdo a borrar.",
     input_schema: {
       type: "object",
       properties: { text: { type: "string" } },
@@ -111,6 +138,8 @@ function validToolInput(name, input) {
   if (name === "set_language") return typeof input.code === "string" && input.code in LANGUAGES;
   if (name === "open_panel") return PANELS.includes(input.panel);
   if (name === "save_note") return typeof input.text === "string" && input.text.trim().length > 0;
+  if (name === "remember") return typeof input.text === "string" && input.text.trim().length > 0;
+  if (name === "forget") return typeof input.text === "string" && input.text.trim().length > 0;
   if (name === "start_timer") return typeof input.minutes === "number" && input.minutes >= 0.5 && input.minutes <= 240;
   if (name === "play_music") return typeof input.query === "string" && input.query.trim().length > 0;
   if (name === "music_control") return ["play", "pause", "next", "previous"].includes(input.action);
@@ -127,7 +156,7 @@ function profileLine(profile) {
   return parts.join(" ");
 }
 
-function systemPrompt({ lang, now, notes, profile, channel }, webSearch) {
+function systemPrompt({ lang, now, notes, profile, channel, memories }, webSearch) {
   const voice = channel !== "text";
   return [
     "Eres NIKOLAI, una asistente de inteligencia artificial al estilo de JARVIS: brillante, leal, elegante, cálida y con un toque de humor sutil.",
@@ -142,6 +171,10 @@ function systemPrompt({ lang, now, notes, profile, channel }, webSearch) {
     "Usa tus herramientas para cambiar el idioma, abrir módulos, guardar notas, poner temporizadores, poner o controlar música o activar emergencias cuando el usuario lo pida. Tras usarlas, confirma en pocas palabras.",
     "Si el usuario dice que está en peligro o necesita ayuda urgente, usa la herramienta emergency de inmediato y dale instrucciones breves y calmadas.",
     profileLine(profile),
+    memories.length
+      ? `Memoria a largo plazo (recuerdos que el usuario quiso que guardaras; úsalos con naturalidad cuando vengan al caso, sin recitarlos):\n${memories.map((m) => "- " + m).join("\n")}`
+      : "",
+    "Si el usuario te pide recordar algo o te cuenta algo importante sobre sí mismo que querría que recordaras, guárdalo con la herramienta remember. Si pide olvidarlo, usa forget.",
     notes.length ? `Notas guardadas del usuario (más recientes primero):\n${notes.map((n) => "- " + n).join("\n")}` : "El usuario no tiene notas guardadas.",
     webSearch ? "Si necesitas información actual (noticias, clima, precios de acciones o criptomonedas, resultados), usa la búsqueda web." : "",
     `Fecha y hora local del usuario: ${now}.`,
@@ -219,7 +252,7 @@ export function parseRequest(body) {
   if (!messages.length || messages[messages.length - 1].role !== "user") return null;
   const profile = body.profile && typeof body.profile === "object" ? body.profile : {};
   const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
-  const mode = ["translate", "homework", "news"].includes(body.mode) ? body.mode : "chat";
+  const mode = ["translate", "homework", "news", "describe"].includes(body.mode) ? body.mode : "chat";
   return {
     messages,
     mode,
@@ -230,6 +263,9 @@ export function parseRequest(body) {
       ? body.notes.filter((n) => typeof n === "string").slice(0, 30).map((n) => n.slice(0, 500))
       : [],
     profile: { name: str(profile.name, 60), birthday: str(profile.birthday, 5), city: str(profile.city, 80) },
+    memories: Array.isArray(body.memories)
+      ? body.memories.filter((m) => typeof m === "string").slice(0, 80).map((m) => m.slice(0, 400))
+      : [],
     translateTo: mode === "translate" && LANGUAGES[body.target] ? LANGUAGES[body.target] : null,
     task: HOMEWORK[body.task] ? body.task : "solve",
     level: LEVELS[body.level] ? body.level : "secondary",
@@ -264,6 +300,12 @@ function plan(request, webSearch, effort) {
       // Resolver ejercicios pide más razonamiento; el resto va rápido.
       effort: request.task === "solve" ? "high" : "medium",
       format: request.task === "quiz" ? QUIZ_SCHEMA : request.task === "cards" ? CARDS_SCHEMA : null,
+    };
+  }
+  if (mode === "describe") {
+    return {
+      system: `Describe la foto en una o dos frases para poder recordarla después: quién o qué aparece, dónde y qué ocurre. Responde en ${LANGUAGES[lang] || "español"}, sin introducciones.`,
+      tools: [], effort: "low",
     };
   }
   if (mode === "news") {

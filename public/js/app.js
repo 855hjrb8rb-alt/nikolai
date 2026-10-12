@@ -14,6 +14,7 @@ import {
   spotify, renderMusic, handleRedirect, isConnected as spotifyConnected, refreshNow, control as spotifyControl,
   search as spotifySearch, playItem, setEmbed, presetFor, PRESETS, playInEmbed, hidePlayer, player as miniPlayer,
 } from "./spotify.js";
+import { memory, renderMemory, addMemory, forgetMatching, memoriesForBrain } from "./memory.js";
 import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
 import {
   profile, daysToBirthday, renderProfile, renderSos, dial, shareLocation, renderWeather, weather, loadWeather, wmo,
@@ -67,6 +68,7 @@ const ICON = {
   siren: '<path d="M7 18v-6a5 5 0 0 1 10 0v6M5 18h14v3H5zM12 2v2M4.2 5.2l1.4 1.4M19.8 5.2l-1.4 1.4"/>',
   install: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
   expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  memory: '<path d="M9.5 3a4 4 0 0 0-4 4 3.5 3.5 0 0 0-2 6.2A3.8 3.8 0 0 0 7 19a3 3 0 0 0 5 1V4.5A2.5 2.5 0 0 0 9.5 3zM14.5 3a4 4 0 0 1 4 4 3.5 3.5 0 0 1 2 6.2A3.8 3.8 0 0 1 17 19a3 3 0 0 1-5 1"/><path d="M9 9.5h1.5M14 12.5h1.5M9 15h1.5"/>',
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
 };
@@ -74,9 +76,9 @@ const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 
 const MODULES = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos",
-  "voice", "translator", "notes", "language", "profile", "system", "settings", "help",
+  "voice", "translator", "notes", "memory", "language", "profile", "system", "settings", "help",
 ];
-const WIDE = new Set(["chat", "homework", "music", "markets", "news", "tools"]);
+const WIDE = new Set(["chat", "homework", "music", "markets", "news", "tools", "memory"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -116,6 +118,7 @@ function cardBody(id) {
     case "help": return `<p class="desc" style="flex:1">${esc(t("voiceHelp"))}</p><div class="stats">${stat("gestures", "gestureCount")}${stat("language", "langCount2", "accent")}</div>`;
     case "chat": return `<p class="desc" data-bind="lastChat" style="flex:1"></p><div class="stats">${stat("messages", "chatCount")}${stat("readAloud", "chatSpeak", "accent")}</div>`;
     case "homework": return `<p class="desc" style="flex:1">${esc(t("hwCardDesc"))}</p><div class="stats">${stat("tasksDone", "hwDone")}${stat("level", "hwLevel", "accent")}</div>`;
+    case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("change24h", "btcChange", "accent")}</div>`;
     case "news": return `<p class="desc" data-bind="newsInfo" style="flex:1"></p><div class="stats">${stat("topics", "newsTopics")}${stat("source", "newsSource", "accent")}</div>`;
@@ -225,6 +228,9 @@ function values() {
     bdayDays: bday === 0 ? "🎂" : bday == null ? "—" : `${bday}`,
     bdayDate: profile.birthday ? profile.birthday.split("-").reverse().join("/") : "—",
     profileName: profile.name || "—",
+    memCount: memory.items.length,
+    memState: memory.enabled ? t("on") : t("off"),
+    memLast: memory.items[0] ? new Date(memory.items[0].at).toLocaleDateString(getLang(), { day: "numeric", month: "short" }) : "—",
     musicNow: spotify.now ? `${spotify.now.playing ? "▶" : "⏸"} ${spotify.now.title} — ${spotify.now.artist}` : t("musicCardDesc"),
     musicAccount: spotifyConnected() ? "Spotify ✓" : "—",
     musicDevice: spotify.now?.device || "—",
@@ -447,6 +453,14 @@ const PANEL = {
 
   markets(body) {
     renderMarkets(body, moduleCtx(), marketState);
+  },
+
+  memory(body) {
+    renderMemory(body, {
+      ...moduleCtx(),
+      onChange: () => { updateCards(); renderSides(); },
+      describe: brain.apiKey ? describePhoto : null,
+    });
   },
 
   music(body) {
@@ -905,6 +919,8 @@ const ACTIONS = {
   set_language: ({ code }) => applyLanguage(code),
   open_panel: ({ panel }) => (panel === "none" ? closePanel() : openPanel(panel)),
   save_note: ({ text }) => { addNote(text); if (openId === "notes") refreshPanel(); },
+  remember: ({ text, category }) => { if (memory.enabled) addMemory({ text, category }); updateCards(); if (openId === "memory") refreshPanel(); },
+  forget: ({ text }) => { forgetMatching(text); updateCards(); if (openId === "memory") refreshPanel(); },
   start_timer: ({ minutes }) => { startTimer(Math.round(minutes * 60)); updateCards(); if (openId === "tools") refreshPanel(); },
   play_music: async ({ query }) => {
     const preset = presetFor(query);
@@ -934,7 +950,17 @@ const ACTIONS = {
 
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
-  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, ...payload }, handlers);
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), ...payload }, handlers);
+}
+
+/** Pide a NIKOLAI una descripción corta de una foto para guardarla como recuerdo. */
+async function describePhoto(dataUrl) {
+  let text = "";
+  const err = await stream(
+    { messages: [{ role: "user", content: t("memDescribe") }], mode: "describe", channel: "text", images: [{ media_type: "image/jpeg", data: dataUrl.split(",")[1] }] },
+    { onText: (d) => { text += d; } },
+  );
+  return err ? "" : text.trim();
 }
 
 function errorText(err) {
@@ -1247,6 +1273,7 @@ function renderSides() {
   ui.sideRight.innerHTML =
     row(t("language").toUpperCase(), LANGS[getLang()].short) +
     row(t("notes").toUpperCase(), notes.length) +
+    row(t("memory").toUpperCase(), memory.enabled ? memory.items.length : "OFF", memory.enabled ? "" : "warn") +
     row(t("responses").toUpperCase(), stats.responses) +
     row(t("latency").toUpperCase(), stats.lastLatency == null ? "—" : `${stats.lastLatency}ms`) +
     row("MOD", tagOf(MODULES[focus]), "warn");

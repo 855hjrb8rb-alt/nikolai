@@ -18,6 +18,16 @@ export const LANGS = {
 
 const T = {
   es: {
+    memory: "Memoria", memoryDesc: "Recuerdos que tú decides que NIKOLAI guarde.",
+    memOn: "Memoria activada", memOff: "Memoria apagada",
+    memExplainOn: "NIKOLAI usa estos recuerdos para conocerte mejor. También puedes decirle «recuerda que…» o «olvida…». Todo se guarda solo en este navegador.",
+    memExplainOff: "La memoria está apagada: NIKOLAI no usa ni guarda recuerdos nuevos por voz. Tus recuerdos siguen aquí.",
+    memNew: "Nuevo recuerdo", memPlaceholder: "¿Qué quieres que recuerde? Por ejemplo: «Mi perro se llama Rocky» o «Mi comida favorita son los tacos».",
+    memDate: "Fecha", memPhoto: "Foto", memSearch: "Buscar en mis recuerdos…", memCount: "Recuerdos", memEmpty: "Todavía no hay recuerdos.",
+    memExport: "Descargar copia", memImport: "Importar copia", memFull: "El navegador ya no tiene espacio: borra algunas fotos o descarga una copia.",
+    memImportError: "Ese archivo no es una copia de recuerdos de NIKOLAI.", memDescribe: "Describe esta foto para que la recuerde.",
+    mem_personal: "Personal", mem_family: "Familia y amigos", mem_likes: "Gustos", mem_school: "Escuela y trabajo",
+    mem_health: "Salud", mem_dates: "Fechas importantes", mem_other: "Otro",
     sleepTitle: "Sistema en reposo", sleepTapHint: "Toca la pantalla una vez para activar los sensores",
     sleepReadyHint: "Sensores activos · Di «despierta» o da dos aplausos", sleepPowerOn: "Encender", sleep: "Reposo",
     bootText: "Iniciando sistemas", morning: "Buenos días", afternoon: "Buenas tardes", evening: "Buenas noches",
@@ -160,6 +170,16 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    memory: "Memory", memoryDesc: "Memories you choose for NIKOLAI to keep.",
+    memOn: "Memory on", memOff: "Memory off",
+    memExplainOn: "NIKOLAI uses these memories to know you better. You can also say “remember that…” or “forget…”. Everything stays in this browser only.",
+    memExplainOff: "Memory is off: NIKOLAI won't use or save new memories by voice. Your memories are still here.",
+    memNew: "New memory", memPlaceholder: "What should I remember? For example: “My dog is called Rocky” or “My favourite food is tacos”.",
+    memDate: "Date", memPhoto: "Photo", memSearch: "Search my memories…", memCount: "Memories", memEmpty: "No memories yet.",
+    memExport: "Download backup", memImport: "Import backup", memFull: "The browser is out of space: delete some photos or download a backup.",
+    memImportError: "That file isn't a NIKOLAI memories backup.", memDescribe: "Describe this photo so you can remember it.",
+    mem_personal: "Personal", mem_family: "Family & friends", mem_likes: "Likes", mem_school: "School & work",
+    mem_health: "Health", mem_dates: "Important dates", mem_other: "Other",
     sleepTitle: "System on standby", sleepTapHint: "Tap the screen once to activate the sensors",
     sleepReadyHint: "Sensors active · Say “wake up” or clap twice", sleepPowerOn: "Power on", sleep: "Sleep",
     bootText: "Starting systems", morning: "Good morning", afternoon: "Good afternoon", evening: "Good evening",

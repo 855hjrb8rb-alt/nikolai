@@ -91,6 +91,7 @@ Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de acce
 | **Emergencia** | Llamar al 911, llamar a tu contacto, enviar tu ubicación por SMS y sirena. |
 | **Voz** | Voz femenina / masculina, estilos (Natural, JARVIS, Suave, Rápida), todas las voces del sistema con su calidad, velocidad y tono. |
 | **Traductor** | Habla y escucha la traducción. |
+| **Memoria** | Recuerdos que tú decides guardar (texto, categoría, fecha y foto opcionales). NIKOLAI los usa para conocerte; se activa o apaga cuando quieras. Por voz: «recuerda que…» / «olvida…». Copia de seguridad para descargar e importar. |
 | **Notas** | Notas dictadas que NIKOLAI puede leer. |
 | **Idioma** | 12 idiomas. |
 | **Perfil** | Nombre, **cumpleaños** (cuenta atrás y felicitación), ciudad y contacto de emergencia. |
@@ -110,6 +111,7 @@ Además: **pantalla completa** e **instalar como app** en la computadora o el ce
 - «Pon un temporizador de 25 minutos»
 - «¿A cuánto está el bitcoin?» / «¿Cómo va Apple hoy?»
 - «Emergencia, llama a mi contacto»
+- «Recuerda que mi perro se llama Rocky» / «Olvida lo de Rocky»
 
 ## ⚙️ Configuración (variables de entorno)
 
