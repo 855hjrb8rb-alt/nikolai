@@ -630,3 +630,5 @@ body.lowpower :is(.card, .panel, .voice-bar, .mini-player, .side) { backdrop-fil
 body.lowpower :is(.beam, .floor-ring, .vignette) { display: none; }
 body.lowpower .floor { opacity: .4; }
 body.lowpower .card, body.lowpower .panel { box-shadow: none; }
+/* Iconos dentro de cualquier mosaico */
+.tile svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
