@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NIKOLAI · Asistente IA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <header class="topbar">
+    <div class="brand">N·I·K·O·L·A·I</div>
+    <div class="status">
+      <span id="statusText" class="chip">—</span>
+      <span id="gestureText" class="chip">✋ —</span>
+      <span id="langChip" class="chip">🇪🇸</span>
+      <span id="clock" class="chip mono">00:00:00</span>
+    </div>
+  </header>
+
+  <main class="stage">
+    <!-- Núcleo central (reactor) + menú radial -->
+    <section class="core-wrap" id="coreWrap">
+      <div class="radial" id="radial"></div>
+      <button class="core" id="core" data-gesture title="Menú">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="ring r1" cx="100" cy="100" r="92"/>
+          <circle class="ring r2" cx="100" cy="100" r="76"/>
+          <circle class="ring r3" cx="100" cy="100" r="60"/>
+          <circle class="glow" cx="100" cy="100" r="34"/>
+        </svg>
+        <span class="core-label">NIKOLAI</span>
+      </button>
+    </section>
+
+    <!-- Panel lateral con la opción elegida -->
+    <aside class="panel hidden" id="panel">
+      <div class="panel-head">
+        <h2 id="panelTitle"></h2>
+        <button class="btn icon" id="panelClose" data-gesture>✕</button>
+      </div>
+      <div class="panel-body" id="panelBody"></div>
+    </aside>
+  </main>
+
+  <!-- Subtítulos de la última respuesta -->
+  <div class="caption" id="caption"></div>
+
+  <!-- Vista de la cámara con el esqueleto de la mano -->
+  <div class="cam" id="camBox">
+    <video id="video" playsinline muted></video>
+    <canvas id="handCanvas"></canvas>
+    <button class="btn small" id="camStart" data-gesture></button>
+  </div>
+
+  <!-- Cursor holográfico controlado con la mano -->
+  <div class="cursor hidden" id="cursor"><svg viewBox="0 0 40 40"><circle class="dwell" cx="20" cy="20" r="16"/></svg></div>
+
+  <template id="tpl-chat">
+    <div class="chat-log" id="chatLog"></div>
+    <form class="chat-form" id="chatForm">
+      <input id="chatInput" autocomplete="off" data-gesture>
+      <button type="button" class="btn icon" id="micBtn" data-gesture>🎙️</button>
+      <button type="submit" class="btn" id="sendBtn" data-gesture></button>
+    </form>
+    <button class="btn ghost small" id="clearChat" data-gesture></button>
+  </template>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
