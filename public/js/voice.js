@@ -36,7 +36,8 @@ export class Listener {
     const rec = new Recognition();
     rec.lang = this.lang;
     // Sin internet, los navegadores que lo permiten reconocen la voz en el propio dispositivo.
-    if (navigator.onLine === false && "processLocally" in rec) rec.processLocally = true;
+    // Solo si el usuario activó antes la voz sin internet (función experimental de Chrome).
+    if (navigator.onLine === false && offlineSpeechReady() && "processLocally" in rec) rec.processLocally = true;
     rec.continuous = false;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
@@ -364,15 +365,21 @@ export class ClapDetector {
   }
 }
 
-/** Prepara el reconocimiento de voz sin internet (solo navegadores que lo soportan). */
+export const offlineSpeechSupported = Boolean(Recognition?.install);
+export function offlineSpeechReady() {
+  try { return localStorage.getItem("nikolai.offlineSpeech") === "1"; } catch { return false; }
+}
+
+/**
+ * Descarga el reconocimiento de voz para usarlo sin internet (Chrome, experimental).
+ * Solo se llama cuando el usuario lo pide: en algunos navegadores esta función todavía falla.
+ */
 export async function prepareOfflineSpeech(lang) {
   if (!Recognition?.install) return "unsupported";
   try {
-    const opts = { langs: [lang], processLocally: true };
-    const status = await Recognition.available?.(opts);
-    if (status === "available") return "ready";
-    if (status === "unavailable") return "unsupported";
-    return (await Recognition.install(opts)) ? "ready" : "unsupported";
+    const ok = await Recognition.install({ langs: [lang], processLocally: true });
+    if (ok) { try { localStorage.setItem("nikolai.offlineSpeech", "1"); } catch { /* bloqueado */ } }
+    return ok ? "ready" : "unsupported";
   } catch {
     return "unsupported";
   }

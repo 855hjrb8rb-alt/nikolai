@@ -4,7 +4,7 @@
 import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
 import {
   Listener, Speaker, MicMeter, voicesFor, voiceGender, voiceQuality, stripWakeWord, speechSupported,
-  isMobile, isIOS, inAppBrowser, isBrave, ClapDetector, prepareOfflineSpeech,
+  isMobile, isIOS, inAppBrowser, isBrave, ClapDetector, prepareOfflineSpeech, offlineSpeechSupported, offlineSpeechReady,
 } from "./voice.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -481,6 +481,7 @@ const PANEL = {
       <div class="tiles wide">
         ${tile(`${icon("install")}<br>${esc(prog ? t("offPreparing") : p ? t("offUpdate") : t("offPrepare"))}`, prog ? `${prog.done}/${prog.total} · ${Math.round(prog.bytes / 1e6)} MB` : "", "action" + (prog ? " live" : ""))}
         ${tile(esc(t("lowPower")), settings.lowPower ? t("on") : t("off"), settings.lowPower ? "on" : "")}
+        ${offlineSpeechSupported ? tile(`${icon("mic")}<br>${esc(t("offSpeechBtn"))}`, offlineSpeechReady() ? "✓" : esc(t("experimental")).toUpperCase(), offlineSpeechReady() ? "on" : "") : ""}
       </div>
       ${p ? `<div class="readout"><div class="k">${esc(t("offPack").toUpperCase())} · ${esc(new Date(p.at).toLocaleString(getLang()))}</div>
         <div class="diag">
@@ -496,7 +497,15 @@ const PANEL = {
       <div class="readout"><div class="k">${esc(t("offPending").toUpperCase())} · ${offline.pending.length}</div>
         ${offline.pending.length ? offline.pending.map((q, i) => `<div class="note-row"><div class="readout"><div class="v small">${esc(q.text)}</div></div><button class="tile" data-target data-pi="${i}" aria-label="${esc(t("remove"))}">${icon("trash")}</button></div>`).join("") : `<p class="muted">${esc(t("offNoPending"))}</p>`}
       </div>`;
-    const [prep, power] = body.querySelectorAll(".tiles.wide .tile");
+    const [prep, power, speech] = body.querySelectorAll(".tiles.wide .tile");
+    speech?.addEventListener("click", async () => {
+      if (isOffline()) { ui.reply.textContent = t("offNeedNet"); return; }
+      ui.reply.textContent = t("offPreparing");
+      const r = await prepareOfflineSpeech(LANGS[getLang()].speech);
+      if (offline.prepared) markPrepared({ ...offline.prepared, speech: r });
+      ui.reply.textContent = r === "ready" ? t("offPackSpeech") + " ✓" : t("offPackNoSpeech");
+      if (openId === "offline") refreshPanel();
+    });
     prep.addEventListener("click", () => {
       if (offline.progress) return;
       if (isOffline()) { ui.reply.textContent = t("offNeedNet"); return; }
@@ -849,8 +858,7 @@ async function prepareOffline(onUpdate) {
   results.weather = Boolean(weather.data);
   await loadCoins().catch(() => {});
   results.coins = market.coins.length > 0;
-  // 3) Reconocimiento de voz en el dispositivo (si el navegador lo permite).
-  results.speech = await prepareOfflineSpeech(LANGS[getLang()].speech);
+  results.speech = offlineSpeechReady() ? "ready" : "no";
   markPrepared({ ...results, mb: Math.round((offline.progress?.bytes || 0) / 1e6) });
   offline.progress = null;
   onUpdate();
