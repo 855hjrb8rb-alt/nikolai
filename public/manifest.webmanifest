@@ -1,0 +1,15 @@
+{
+  "name": "NIKOLAI · Asistente IA",
+  "short_name": "NIKOLAI",
+  "description": "Asistente de IA tipo JARVIS: voz, gestos, chat, tareas, bolsa, cripto, noticias y clima.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05061a",
+  "theme_color": "#12114a",
+  "lang": "es",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

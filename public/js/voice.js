@@ -71,7 +71,8 @@ export class Speaker {
     this.voiceName = "";
     this.lang = "es-ES";
     this.rate = 1;
-    this.pitch = 0.9;
+    this.pitch = 1;
+    this.gender = "female";
     this.buffer = "";
     this.pending = 0;
     this.closed = true;
@@ -127,13 +128,20 @@ export class Speaker {
   }
 
   #say(text, lang = this.lang) {
-    const clean = text.replace(/[*_#`>|]/g, "").replace(/\[(.*?)\]\(.*?\)/g, "$1").trim();
+    const clean = text
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/\$\$?([^$]+)\$\$?/g, (_, f) => f.replace(/\\[a-z]+/gi, " ").replace(/[{}^_]/g, " "))
+      .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[*_#`>|~]/g, "")
+      .replace(/\p{Extended_Pictographic}/gu, "")
+      .trim();
     if (!clean || !("speechSynthesis" in window)) return;
     const u = new SpeechSynthesisUtterance(clean);
     u.lang = lang;
     u.rate = this.rate;
     u.pitch = this.pitch;
-    const voice = pickVoice(lang, this.voiceName);
+    const voice = pickVoice(lang, this.voiceName, this.gender);
     if (voice) u.voice = voice;
     this.pending++;
     const gen = this.gen;
@@ -147,28 +155,43 @@ export class Speaker {
   }
 }
 
-/** Voces disponibles para un idioma, de mejor a peor calidad. */
-export function voicesFor(lang) {
+// Nombres habituales de voces del sistema (Windows/Edge, Chrome, macOS/iOS, Android).
+const FEMALE = /(female|mujer|woman|helena|laura|sabina|elvira|dalia|paloma|m[oó]nica|paulina|luc[ií]a|camila|ximena|isabela|elsa|zira|aria|jenny|samantha|victoria|karen|moira|tessa|fiona|catherine|am[eé]lie|marie|anna|alice|francisca|catalina|valentina|renata|larissa|abril|beatriz|triana|irene|vera|salome|salom[eé]|marisol|esperanza|google espa[nñ]ol|denise|vivienne|katja|elsa|isabella|nanami|xiaoxiao|sun-hi|svetlana|zariyah|swara|emma|ava|michelle|sonia|libby|natasha|clara|sofia|sof[ií]a)/i;
+const MALE = /(\bmale\b|hombre|jorge|pablo|[aá]lvaro|ra[uú]l|diego|enrique|juan|carlos|jos[eé]|gerardo|tom[aá]s|liam|guy|david|mark|george|daniel|alex\b|fred|ryan|henri|thomas|antonio|dar[ií]o|emilio|lorenzo|gonzalo|nuno|cristiano|conrad|diego|keita|yunxi|injoon|dmitry|madhur|hamed|andrew|brian|christopher|eric|roger|steffan|alvaro|federico|jorge)/i;
+
+export function voiceGender(v) {
+  if (FEMALE.test(v.name)) return "female";
+  if (MALE.test(v.name)) return "male";
+  return "unknown";
+}
+
+export function voiceQuality(v) {
+  if (/natural|neural|online|premium|enhanced|wavenet|siri/i.test(v.name)) return 3; // las más naturales
+  if (/google/i.test(v.name)) return 2;
+  return v.localService === false ? 2 : 1;
+}
+
+/** Voces disponibles para un idioma, de mejor a peor, priorizando el género elegido. */
+export function voicesFor(lang, gender = "any") {
   if (!("speechSynthesis" in window)) return [];
   const base = lang.slice(0, 2);
   return speechSynthesis
     .getVoices()
     .filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith(base))
-    .sort((a, b) => voiceScore(b, lang) - voiceScore(a, lang));
+    .filter((v) => gender === "any" || voiceGender(v) === gender)
+    .sort((a, b) => voiceScore(b, lang, gender) - voiceScore(a, lang, gender));
 }
 
-function voiceScore(v, lang) {
-  let s = 0;
-  if (/natural|neural|online|premium|enhanced|wavenet/i.test(v.name)) s += 4; // voces de alta calidad
-  if (/google/i.test(v.name)) s += 2;
+function voiceScore(v, lang, gender) {
+  let s = voiceQuality(v) * 2;
   if (v.lang.replace("_", "-") === lang) s += 1;
-  if (/male|hombre|jorge|pablo|alvaro|álvaro|raul|daniel|george|guy|ryan|thomas|henri/i.test(v.name)) s += 1;
+  if (gender !== "any" && voiceGender(v) === gender) s += 3;
   return s;
 }
 
-function pickVoice(lang, preferredName) {
-  const list = voicesFor(lang);
-  return list.find((v) => v.name === preferredName) || list[0] || null;
+function pickVoice(lang, preferredName, gender) {
+  const all = voicesFor(lang);
+  return all.find((v) => v.name === preferredName) || voicesFor(lang, gender)[0] || all[0] || null;
 }
 
 if ("speechSynthesis" in window) {

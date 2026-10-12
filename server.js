@@ -85,7 +85,7 @@ function readBody(req) {
     let data = "";
     req.on("data", (chunk) => {
       data += chunk;
-      if (data.length > 1_000_000) { reject(new Error("too large")); req.destroy(); }
+      if (data.length > 30_000_000) { reject(new Error("too large")); req.destroy(); }
     });
     req.on("end", () => resolve(data));
     req.on("error", reject);

@@ -72,20 +72,31 @@ Para cortarle, cierra el puño ✊ o toca la barra. En el módulo **Núcleo IA**
 
 La detección de la mano corre **100 % en tu navegador** (MediaPipe Hand Landmarker); el vídeo nunca sale de tu equipo.
 
-## 🧭 Módulos del carrusel
+## 🧭 Módulos
 
-Tarjetas de cristal en un anillo 3D a tu alrededor; la del centro se marca en oro. Cada una muestra telemetría real.
+Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de accesos** arriba, como un escritorio.
 
 | Módulo | Qué hace |
 |---|---|
-| **M-01 Núcleo IA** | Activar/pausar la voz, modo conversación o palabra clave, último intercambio. |
-| **M-02 Voz** | Elegir la voz (prioriza las voces neuronales/naturales del sistema), velocidad y tono. |
-| **M-03 Idioma** | 12 idiomas: cambia interfaz, micrófono y voz. |
-| **M-04 Traductor** | Pulsa, habla, y escucha la traducción en el idioma elegido. |
-| **M-05 Notas** | Dictar notas por voz y que te las lea. |
-| **M-06 Sistema** | Núcleo IA, cámara (FPS), mano, red, batería, latencia, nivel del micrófono. |
-| **M-07 Gestos** | Activar/desactivar toque en el aire, pellizco y permanencia; suavizado del cursor. |
-| **M-08 Protocolos** | Recordatorio de gestos y comandos de voz. |
+| **Núcleo IA** | Activar/pausar la voz, modo conversación o palabra clave, clave de Anthropic. |
+| **Chat** | Chat escrito con formato y fórmulas; NIKOLAI puede leer sus respuestas en voz alta. Dictado por voz. |
+| **Tareas** | Resolver paso a paso, explicar, resumir, redactar, corregir, **cuestionarios interactivos** y **tarjetas de estudio**. Nivel primaria → universidad. **Foto del ejercicio**. |
+| **Bolsa y Cripto** | Cripto en vivo (Binance, cada segundo), acciones e índices, **todas las acciones** (screener), mapa del mercado, gráficos y noticias del mercado (TradingView). |
+| **Noticias** | Resumen de las noticias de hoy por tema (principales, mi ciudad, mundo, economía, tecnología, deportes…) con fuentes. |
+| **Clima** | Clima actual, 24 h y 7 días (Open-Meteo). |
+| **Herramientas** | Calculadora científica y temporizador de estudio con aviso por voz. |
+| **Emergencia** | Llamar al 911, llamar a tu contacto, enviar tu ubicación por SMS y sirena. |
+| **Voz** | Voz femenina / masculina, estilos (Natural, JARVIS, Suave, Rápida), todas las voces del sistema con su calidad, velocidad y tono. |
+| **Traductor** | Habla y escucha la traducción. |
+| **Notas** | Notas dictadas que NIKOLAI puede leer. |
+| **Idioma** | 12 idiomas. |
+| **Perfil** | Nombre, **cumpleaños** (cuenta atrás y felicitación), ciudad y contacto de emergencia. |
+| **Sistema · Gestos · Protocolos** | Telemetría, ajustes del control con la mano y ayuda. |
+
+Además: **pantalla completa** e **instalar como app** en la computadora o el celular (desde la barra de accesos).
+
+> **Emergencias:** una página web no puede hacer llamadas sola. Al pulsar «Llamar», el teléfono abre el marcador con el número listo y solo hay que confirmar. En una computadora, usa tu celular.
+> Tu número de contacto se guarda solo en tu navegador (módulo Perfil), nunca en el código.
 
 ### Comandos de voz
 
@@ -93,6 +104,9 @@ Tarjetas de cristal en un anillo 3D a tu alrededor; la del centro se marca en or
 - «Habla en inglés» → cambia todo el sistema de idioma
 - «Apunta comprar pan» / «Lee mis notas»
 - «¿Qué tiempo hace en Ciudad de México?» → busca en la web y responde
+- «Pon un temporizador de 25 minutos»
+- «¿A cuánto está el bitcoin?» / «¿Cómo va Apple hoy?»
+- «Emergencia, llama a mi contacto»
 
 ## ⚙️ Configuración (variables de entorno)
 

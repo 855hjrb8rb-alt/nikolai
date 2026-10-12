@@ -2,9 +2,16 @@
 // continuo (escuchar → pensar → hablar → escuchar) y cursor controlado con el dedo.
 
 import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
-import { Listener, Speaker, MicMeter, voicesFor, stripWakeWord, speechSupported } from "./voice.js";
+import { Listener, Speaker, MicMeter, voicesFor, voiceGender, voiceQuality, stripWakeWord, speechSupported } from "./voice.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
+import { renderInto, speakable } from "./md.js";
+import { renderHomework, study } from "./study.js";
+import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
+import {
+  profile, daysToBirthday, renderProfile, renderSos, dial, shareLocation, renderWeather, weather, loadWeather, wmo,
+  weatherSentence, renderTools, timer, startTimer, fmtTime, renderNews,
+} from "./extras.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -15,7 +22,10 @@ const store = {
   set(k, v) { try { localStorage.setItem("nikolai." + k, JSON.stringify(v)); } catch { /* bloqueado */ } },
 };
 const settings = Object.assign(
-  { mode: "conversation", voiceName: "", rate: 1, pitch: 0.9, poke: true, pinch: true, dwell: true, showCam: true, smoothing: 0.4, target: "en" },
+  {
+    mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
+    showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary",
+  },
   store.get("settings", {}),
 );
 const saveSettings = () => store.set("settings", settings);
@@ -34,15 +44,34 @@ const ICON = {
   mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
   speaker: '<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
   trash: '<path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13"/>',
+  chat: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  homework: '<path d="M3 7l9-4 9 4-9 4z"/><path d="M7 9v5c0 1.7 2.2 3 5 3s5-1.3 5-3V9M21 7v6"/>',
+  markets: '<path d="M4 20V4M4 20h16"/><path d="M7 16l4-5 3 3 5-7"/><path d="M15 7h4v4"/>',
+  news: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 12.5h7M7 16h4"/>',
+  weather: '<circle cx="9" cy="9" r="3.5"/><path d="M9 2.5v1.5M9 14v1.5M2.5 9H4M14 9h1.5M4.4 4.4l1 1M12.6 12.6l1 1M4.4 13.6l1-1M12.6 5.4l1-1"/><path d="M10 19h8a3 3 0 0 0 0-6 4.5 4.5 0 0 0-8.4 1.5A2.3 2.3 0 0 0 10 19z"/>',
+  tools: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11v6M8 14h2M12 14h2M8 17h2M12 17h2"/>',
+  sos: '<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5M12 17v.5"/>',
+  profile: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+  send: '<path d="M4 12l16-8-6 16-3-6.5z"/><path d="M11 13.5L20 4"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  phone: '<path d="M6 3h3l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z"/>',
+  pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  siren: '<path d="M7 18v-6a5 5 0 0 1 10 0v6M5 18h14v3H5zM12 2v2M4.2 5.2l1.4 1.4M19.8 5.2l-1.4 1.4"/>',
+  install: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
+  expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 
-const MODULES = ["core", "voice", "language", "translator", "notes", "system", "settings", "help"];
+const MODULES = [
+  "core", "chat", "homework", "markets", "news", "weather", "tools", "sos",
+  "voice", "translator", "notes", "language", "profile", "system", "settings", "help",
+];
+const WIDE = new Set(["chat", "homework", "markets", "news", "tools"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
 // ---------- Telemetría real ----------
-const series = { mic: [], fps: [], hand: [], latency: [] };
+const series = { mic: [], fps: [], hand: [], latency: [], btc: market.btcSeries };
 const pushSeries = (k, v, max = 60) => { series[k].push(v); if (series[k].length > max) series[k].shift(); };
 const stats = { responses: 0, lastLatency: null, translations: 0, lastTranslation: "" };
 let brain = { ok: false, apiKey: false, model: "" };
@@ -75,6 +104,14 @@ function cardBody(id) {
     case "system": return spark("fps", "FPS") + `<div class="stats">${stat("camera", "fps")}${stat("battery", "battery", "accent")}</div>`;
     case "settings": return spark("hand", t("hand").toUpperCase()) + `<div class="stats">${stat("hand", "handState")}${stat("smoothing", "smoothing", "accent")}</div>`;
     case "help": return `<p class="desc" style="flex:1">${esc(t("voiceHelp"))}</p><div class="stats">${stat("gestures", "gestureCount")}${stat("language", "langCount2", "accent")}</div>`;
+    case "chat": return `<p class="desc" data-bind="lastChat" style="flex:1"></p><div class="stats">${stat("messages", "chatCount")}${stat("readAloud", "chatSpeak", "accent")}</div>`;
+    case "homework": return `<p class="desc" style="flex:1">${esc(t("hwCardDesc"))}</p><div class="stats">${stat("tasksDone", "hwDone")}${stat("level", "hwLevel", "accent")}</div>`;
+    case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("change24h", "btcChange", "accent")}</div>`;
+    case "news": return `<p class="desc" data-bind="newsInfo" style="flex:1"></p><div class="stats">${stat("topics", "newsTopics")}${stat("source", "newsSource", "accent")}</div>`;
+    case "weather": return `<div class="big-code" data-bind="wxTemp">—</div><div class="stats">${stat("sky", "wxDesc")}${stat("humidity", "wxHum", "accent")}</div>`;
+    case "tools": return `<div class="big-code mono" data-bind="timerLeft">25:00</div><div class="stats">${stat("timer", "timerState")}${stat("calculator", "calcReady", "accent")}</div>`;
+    case "sos": return `<p class="desc" style="flex:1">${esc(t("sosCardDesc"))}</p><div class="stats">${stat("emergencyNumber", "sosNumber")}${stat("contactName", "sosContact", "accent")}</div>`;
+    case "profile": return `<div class="big-code" data-bind="bdayDays">—</div><div class="stats">${stat("birthday", "bdayDate")}${stat("name", "profileName", "accent")}</div>`;
   }
   return "";
 }
@@ -132,6 +169,10 @@ function setFocus(i) {
 function values() {
   const voice = voicesFor(LANGS[getLang()].speech).find((v) => v.name === settings.voiceName) || voicesFor(LANGS[getLang()].speech)[0];
   const last = notes[0];
+  const live = market.live.BTCUSDT;
+  const btcCoin = market.coins.find((c) => c.pair === "BTCUSDT");
+  const btc = live || (btcCoin ? priceOf(btcCoin) : null);
+  const bday = daysToBirthday();
   return {
     responses: stats.responses,
     latency: stats.lastLatency == null ? "—" : `${stats.lastLatency}`,
@@ -152,6 +193,27 @@ function values() {
     handState: gestures?.handVisible ? "✓" : "—",
     smoothing: settings.smoothing.toFixed(2),
     gestureCount: t("helpItems").length,
+    lastChat: lastReply ? lastReply.slice(0, 110) : "",
+    chatCount: history.length,
+    chatSpeak: settings.chatSpeak ? t("on") : t("off"),
+    hwDone: study.done,
+    hwLevel: t("lv_" + settings.level),
+    btcPrice: btc ? fmtMoney(btc.price) : "—",
+    btcChange: btc ? fmtPct(btc.change) : "—",
+    newsInfo: t("newsCardDesc"),
+    newsTopics: 8,
+    newsSource: "WEB",
+    wxTemp: weather.data ? `${Math.round(weather.data.current.temperature_2m)}°` : "—",
+    wxDesc: weather.data ? t("wx_" + wmo(weather.data.current.weather_code)[0]) : "—",
+    wxHum: weather.data ? `${weather.data.current.relative_humidity_2m}%` : "—",
+    timerLeft: fmtTime(timer.left),
+    timerState: timer.running ? t("running") : t("paused"),
+    calcReady: "✓",
+    sosNumber: profile.emergencyNumber,
+    sosContact: profile.contactName || (profile.contactPhone ? "✓" : "—"),
+    bdayDays: bday === 0 ? "🎂" : bday == null ? "—" : `${bday}`,
+    bdayDate: profile.birthday ? profile.birthday.split("-").reverse().join("/") : "—",
+    profileName: profile.name || "—",
   };
 }
 
@@ -161,7 +223,12 @@ function updateCards() {
     const k = el.dataset.bind;
     if (k.startsWith("status-")) {
       const id = k.slice(7);
-      const live = id === "core" ? brain.apiKey : id === "settings" || id === "system" ? Boolean(gestures?.running) : true;
+      const live = id === "core" || id === "chat" || id === "homework" || id === "news" ? brain.apiKey
+        : id === "settings" ? Boolean(gestures?.running)
+        : id === "markets" ? Boolean(market.live.BTCUSDT)
+        : id === "weather" ? Boolean(weather.data)
+        : id === "tools" ? true
+        : true;
       el.textContent = live ? "● ONLINE" : "○ STANDBY";
       el.classList.toggle("idle", !live);
     } else if (k in v) el.textContent = v[k];
@@ -216,7 +283,9 @@ function openPanel(id) {
   ui.stage.classList.add("dimmed");
   ui.panelTag.textContent = tagOf(id);
   ui.panelTitle.textContent = titleOf(id);
+  ui.panel.classList.toggle("wide", WIDE.has(id));
   ui.panelBody.innerHTML = "";
+  renderDock();
   PANEL[id](ui.panelBody);
 }
 let panelTimer = null;
@@ -225,6 +294,7 @@ function closePanel() {
   openId = null;
   ui.panel.hidden = true;
   ui.stage.classList.remove("dimmed");
+  renderDock();
 }
 const refreshPanel = () => openId && openPanel(openId);
 
@@ -259,25 +329,129 @@ const PANEL = {
   },
 
   voice(body) {
-    const voices = voicesFor(LANGS[getLang()].speech).slice(0, 8);
-    const current = voices.find((v) => v.name === settings.voiceName) || voices[0];
+    const all = voicesFor(LANGS[getLang()].speech, settings.gender);
+    const current = all.find((v) => v.name === settings.voiceName) || all[0];
+    const presets = [
+      ["natural", 1, 1], ["jarvis", 0.95, 0.85], ["soft", 0.92, 1.12], ["fast", 1.25, 1],
+    ];
+    const short = (v) => v.name.replace(/^(Microsoft|Google|Apple)\s*/i, "").replace(/\s*-\s*.*$/, "");
+    const quality = (v) => ["", "★", "★★", "★★★"][voiceQuality(v)];
     body.innerHTML = `
-      <div class="tiles wide">${voices.map((v) => tile(esc(v.name.replace(/^(Microsoft|Google|Apple)\s*/i, "")), esc(v.lang), v === current ? "on" : "")).join("") || `<p class="muted">—</p>`}</div>
-      ${stepper(t("rate"), settings.rate.toFixed(1) + "×")}
-      ${stepper(t("pitch"), settings.pitch.toFixed(1))}
-      <div class="tiles">${tile(`${icon("speaker")}<br>${esc(t("test"))}`, "", "action")}</div>`;
-    const tiles = body.querySelectorAll(".tiles.wide .tile");
-    tiles.forEach((el, i) => el.addEventListener("click", () => {
-      settings.voiceName = voices[i].name;
-      saveSettings();
-      applyVoice();
-      refreshPanel();
-      speakOnce(t("greeting"));
+      <div class="tiles">${["female", "male", "any"].map((g) => tile(esc(t("gender_" + g)), esc(t("gender").toUpperCase()), settings.gender === g ? "on" : "")).join("")}</div>
+      <div class="tiles">${presets.map(([k]) => tile(esc(t("preset_" + k)), esc(t("presets").toUpperCase()))).join("")}</div>
+      <div class="tiles wide voice-list">${all.map((v) => tile(esc(short(v)), `${esc(v.lang)} · ${quality(v)}${voiceGender(v) === "female" ? " · ♀" : voiceGender(v) === "male" ? " · ♂" : ""}`, v === current ? "on" : "")).join("") || `<p class="muted">${esc(t("noVoices"))}</p>`}</div>
+      ${stepper(t("rate"), settings.rate.toFixed(2) + "×")}
+      ${stepper(t("pitch"), settings.pitch.toFixed(2))}
+      <div class="tiles">${tile(`${icon("speaker")}<br>${esc(t("test"))}`, "", "action")}</div>
+      <p class="muted">${esc(t("bestVoiceTip"))}</p>`;
+    const groups = body.querySelectorAll(".tiles");
+    groups[0].querySelectorAll(".tile").forEach((el, i) => el.addEventListener("click", () => {
+      settings.gender = ["female", "male", "any"][i];
+      settings.voiceName = "";
+      saveSettings(); applyVoice(); refreshPanel(); speakOnce(t("voiceSample"));
+    }));
+    groups[1].querySelectorAll(".tile").forEach((el, i) => el.addEventListener("click", () => {
+      [, settings.rate, settings.pitch] = presets[i];
+      saveSettings(); applyVoice(); refreshPanel(); speakOnce(t("voiceSample"));
+    }));
+    groups[2].querySelectorAll(".tile").forEach((el, i) => el.addEventListener("click", () => {
+      settings.voiceName = all[i].name;
+      saveSettings(); applyVoice(); refreshPanel(); speakOnce(t("voiceSample"));
     }));
     const [rateStep, pitchStep] = body.querySelectorAll(".stepper");
-    bindStepper(rateStep, (d) => { settings.rate = clamp(settings.rate + d * 0.1, 0.6, 1.8); saveSettings(); applyVoice(); refreshPanel(); });
-    bindStepper(pitchStep, (d) => { settings.pitch = clamp(settings.pitch + d * 0.1, 0.5, 1.6); saveSettings(); applyVoice(); refreshPanel(); });
-    body.querySelector(".tile.action").onclick = () => speakOnce(t("greeting"));
+    bindStepper(rateStep, (d) => { settings.rate = clamp(settings.rate + d * 0.05, 0.6, 1.8); saveSettings(); applyVoice(); refreshPanel(); });
+    bindStepper(pitchStep, (d) => { settings.pitch = clamp(settings.pitch + d * 0.05, 0.5, 1.6); saveSettings(); applyVoice(); refreshPanel(); });
+    body.querySelector(".tile.action").onclick = () => speakOnce(t("voiceSample"));
+  },
+
+  chat(body) {
+    body.innerHTML = `
+      <div class="chat-log" id="chatLog"></div>
+      <form class="chat-form" id="chatForm">
+        <textarea class="field" id="chatIn" rows="1" placeholder="${esc(t("typeMessage"))}"></textarea>
+        <button type="button" class="tile icon-tile" data-target id="chatMic" aria-label="${esc(t("dictate"))}">${icon("mic")}</button>
+        <button type="submit" class="tile icon-tile action" data-target aria-label="${esc(t("send"))}">${icon("send")}</button>
+      </form>
+      <div class="tiles">
+        ${tile(esc(t("readAloud")), settings.chatSpeak ? t("on") : t("off"), settings.chatSpeak ? "on" : "")}
+        ${tile(esc(t("clearChat")))}
+      </div>`;
+    const log = body.querySelector("#chatLog");
+    const addMsg = (role, text) => {
+      const el = document.createElement("div");
+      el.className = `msg ${role}`;
+      if (role === "assistant") renderInto(el, text); else el.textContent = text;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    };
+    history.forEach((m) => addMsg(m.role, m.content));
+    if (!history.length) addMsg("assistant", greetingText());
+    const input = body.querySelector("#chatIn");
+    const send = () => {
+      const text = input.value.trim();
+      if (!text || chatBusy) return;
+      input.value = "";
+      addMsg("user", text);
+      const bubble = addMsg("assistant", "…");
+      bubble.classList.add("pending");
+      let pending = false;
+      ask(text, {
+        channel: "text",
+        speak: settings.chatSpeak,
+        onText: (full) => {
+          if (pending) return;
+          pending = true;
+          requestAnimationFrame(() => { pending = false; renderInto(bubble, full); log.scrollTop = log.scrollHeight; });
+        },
+        onDone: (full, err) => {
+          bubble.classList.remove("pending");
+          renderInto(bubble, full || errorText(err));
+          if (!full) bubble.classList.add("error");
+          log.scrollTop = log.scrollHeight;
+        },
+      });
+    };
+    body.querySelector("#chatForm").addEventListener("submit", (e) => { e.preventDefault(); send(); });
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+    body.querySelector("#chatMic").addEventListener("click", () => dictateInto((said) => { input.value = (input.value ? input.value + " " : "") + said; input.focus(); }));
+    const [speakT, clearT] = body.querySelectorAll(".tiles .tile");
+    speakT.addEventListener("click", () => { settings.chatSpeak = !settings.chatSpeak; saveSettings(); refreshPanel(); });
+    clearT.addEventListener("click", () => { history.length = 0; refreshPanel(); updateCards(); });
+    setTimeout(() => input.focus(), 50);
+  },
+
+  homework(body) {
+    study.level = settings.level;
+    renderHomework(body, {
+      ...moduleCtx(),
+      onLevel: (lv) => { settings.level = lv; saveSettings(); updateCards(); },
+      onDone: () => updateCards(),
+    });
+  },
+
+  markets(body) {
+    renderMarkets(body, moduleCtx(), marketState);
+  },
+
+  news(body) {
+    renderNews(body, moduleCtx());
+  },
+
+  weather(body) {
+    renderWeather(body, { ...moduleCtx(), lang: getLang(), onUpdate: updateCards });
+  },
+
+  tools(body) {
+    renderTools(body, moduleCtx());
+  },
+
+  sos(body) {
+    renderSos(body, moduleCtx());
+  },
+
+  profile(body) {
+    renderProfile(body, { ...moduleCtx(), onSaved: () => { updateCards(); renderSides(); } });
   },
 
   language(body) {
@@ -403,6 +577,35 @@ function bindKeyForm(body) {
   });
 }
 
+const marketState = {};
+let chatBusy = false;
+
+/** Lo que necesitan los módulos externos para pintar y hablar. */
+function moduleCtx() {
+  return {
+    t, esc, tile, icon, stream, errorText,
+    speak: (text, lang) => speakOnce(text, lang),
+    dictate: dictateInto,
+    open: openPanel,
+  };
+}
+
+/** Escucha una frase y la entrega como texto (para escribir con la voz). */
+function dictateInto(cb) {
+  voiceTask = { kind: "dictate", cb };
+  if (!speechSupported) { ui.reply.textContent = t("noSpeech"); voiceTask = null; return; }
+  ensureMic();
+  stopAll();
+  listenNow();
+}
+
+function greetingText() {
+  const d = daysToBirthday();
+  const name = profile.name ? `, ${profile.name}` : "";
+  if (d === 0) return t("birthdayGreeting").replace("{name}", name);
+  return t("greeting");
+}
+
 const clamp = (v, a, b) => Math.round(Math.min(b, Math.max(a, v)) * 100) / 100;
 
 // =====================================================================
@@ -463,7 +666,7 @@ function toggleVoice() {
     ensureMic();
     if (!greeted) {
       greeted = true;
-      speakOnce(t("greeting"));
+      speakOnce(greetingText());
     } else listenNow();
   }
   if (openId === "core") refreshPanel();
@@ -529,6 +732,11 @@ function handleFinal(text) {
   ui.heard.innerHTML = `<b>${esc(t("you").toUpperCase())} ›</b> ${esc(text)}`;
   const task = voiceTask;
   voiceTask = null;
+  if (task?.kind === "dictate") {
+    task.cb(text);
+    afterSpeech();
+    return;
+  }
   if (task?.kind === "note") {
     addNote(text);
     speakOnce(t("noteSaved"));
@@ -568,11 +776,18 @@ const ACTIONS = {
   set_language: ({ code }) => applyLanguage(code),
   open_panel: ({ panel }) => (panel === "none" ? closePanel() : openPanel(panel)),
   save_note: ({ text }) => { addNote(text); if (openId === "notes") refreshPanel(); },
+  start_timer: ({ minutes }) => { startTimer(Math.round(minutes * 60)); updateCards(); if (openId === "tools") refreshPanel(); },
+  emergency: ({ target }) => {
+    openPanel("sos");
+    if (target === "services") dial(profile.emergencyNumber);
+    else if (target === "contact") { if (!dial(profile.contactPhone)) openPanel("profile"); }
+    else shareLocation(t);
+  },
 };
 
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
-  return Brain.stream({ lang: getLang(), now: new Date().toString(), ...payload }, handlers);
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, ...payload }, handlers);
 }
 
 function errorText(err) {
@@ -583,7 +798,11 @@ function errorText(err) {
   return err === "refusal" ? t("errRefusal") : t("errGeneric");
 }
 
-async function ask(text) {
+/**
+ * Pregunta al cerebro. Por voz (por defecto) habla mientras llega la respuesta;
+ * desde el chat (channel "text") pinta la respuesta y la lee solo si speak es true.
+ */
+async function ask(text, { channel = "voice", speak = true, onText, onDone } = {}) {
   stopAll();
   history.push({ role: "user", content: text });
   setState("thinking");
@@ -591,11 +810,12 @@ async function ask(text) {
   speaker.begin();
   askCtl = new AbortController();
   const ctl = askCtl;
+  if (channel === "text") chatBusy = true;
   const t0 = performance.now();
-  let reply = "", first = true;
+  let reply = "", first = true, err = null;
   try {
-    const err = await stream(
-      { messages: history.slice(-20), notes: notes.map((n) => n.text) },
+    err = await stream(
+      { messages: history.slice(-20), notes: notes.map((n) => n.text), channel },
       {
         signal: ctl.signal,
         onText: (delta) => {
@@ -605,8 +825,9 @@ async function ask(text) {
             pushSeries("latency", stats.lastLatency, 30);
           }
           reply += delta;
-          ui.reply.textContent = reply.slice(-220);
-          speaker.push(delta);
+          ui.reply.textContent = speakable(reply).slice(-220);
+          onText?.(reply);
+          if (speak) speaker.push(channel === "text" ? speakable(delta) + (/\n\s*$/.test(delta) ? ". " : "") : delta);
         },
         onAction: (ev) => ACTIONS[ev.name]?.(ev.input),
         onStatus: (s) => s === "searching" && setState("thinking", t("searching")),
@@ -616,19 +837,23 @@ async function ask(text) {
     if (reply) {
       history.push({ role: "assistant", content: reply });
       stats.responses++;
-      lastReply = reply;
+      lastReply = speakable(reply);
     } else history.pop();
+    onDone?.(reply, err);
     if (err && !reply) {
-      speakOnce(errorText(err));
+      if (speak) speakOnce(errorText(err));
+      else { ui.reply.textContent = errorText(err); speaker.cancel(); afterSpeech(); }
       return;
     }
     speaker.end();
   } catch (e) {
     if (ctl !== askCtl) return;
     history.pop();
-    speakOnce(t("errGeneric"));
+    onDone?.("", "error");
+    if (speak) speakOnce(t("errGeneric")); else afterSpeech();
   } finally {
     if (ctl === askCtl) askCtl = null;
+    if (channel === "text") chatBusy = false;
     updateCards();
     if (openId === "core") refreshPanel();
   }
@@ -703,6 +928,7 @@ function applyLanguage(code) {
   setState(state);
   if (openId) openPanel(openId);
   renderSides();
+  renderDock();
 }
 
 // =====================================================================
@@ -858,7 +1084,7 @@ function renderSides() {
 // Teclado, toque y ratón (alternativas)
 // =====================================================================
 document.addEventListener("keydown", (e) => {
-  if (e.target instanceof HTMLInputElement) return;
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
   if (e.key === "ArrowLeft") setFocus(focus - 1);
   else if (e.key === "ArrowRight") setFocus(focus + 1);
   else if (e.key === "Enter") openId ? null : openPanel(MODULES[focus]);
@@ -879,12 +1105,51 @@ ui.camStart.addEventListener("click", startCamera);
 addEventListener("resize", layoutCarousel);
 
 // =====================================================================
+// Escritorio: barra de accesos, pantalla completa e instalar como app
+// =====================================================================
+let installPrompt = null;
+addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; renderDock(); });
+addEventListener("appinstalled", () => { installPrompt = null; renderDock(); });
+
+function renderDock() {
+  const dock = $("#dock");
+  if (!dock) return;
+  dock.innerHTML = MODULES.map((id) => `<button class="dock-btn ${openId === id ? "on" : ""} ${id === "sos" ? "sos" : ""}" data-target data-open="${id}" title="${esc(titleOf(id))}">${icon(id)}<span>${esc(titleOf(id))}</span></button>`).join("") +
+    `<i class="dock-sep"></i>` +
+    `<button class="dock-btn" data-target id="dockFull" title="${esc(t("fullscreen"))}">${icon("expand")}<span>${esc(t("fullscreen"))}</span></button>` +
+    (installPrompt ? `<button class="dock-btn gold" data-target id="dockInstall" title="${esc(t("install"))}">${icon("install")}<span>${esc(t("install"))}</span></button>` : "");
+  dock.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => (openId === b.dataset.open ? closePanel() : openPanel(b.dataset.open))));
+  $("#dockFull")?.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else document.documentElement.requestFullscreen?.().catch(() => {});
+  });
+  $("#dockInstall")?.addEventListener("click", async () => {
+    installPrompt?.prompt();
+    await installPrompt?.userChoice.catch(() => {});
+    installPrompt = null;
+    renderDock();
+  });
+}
+
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+// Temporizador: tarjeta en vivo y aviso por voz al terminar.
+timer.onTick = () => document.querySelectorAll('[data-bind="timerLeft"]').forEach((el) => { el.textContent = fmtTime(timer.left); });
+timer.onDone = () => { speakOnce(t("timerDone")); updateCards(); if (openId === "tools") refreshPanel(); };
+
+// =====================================================================
 // Arranque
 // =====================================================================
 setLang(store.get("lang", detectBrowserLang()));
 applyLanguage(getLang());
 setState("off");
-ui.reply.textContent = t("greeting");
+ui.reply.textContent = greetingText();
+document.body.classList.toggle("birthday", daysToBirthday() === 0);
+renderDock();
+connectLive();
+if (profile.city) loadWeather(getLang()).then(updateCards);
 
 setInterval(() => {
   ui.clock.textContent = new Date().toLocaleTimeString(getLang(), { hour12: false });
