@@ -19,7 +19,7 @@ export const LANGS = {
 const T = {
   es: {
     offline: "Sin conexión", offlineDesc: "Úsalo sin internet: modo local y ahorro de batería.",
-    offChip: "SIN CONEXIÓN · MODO LOCAL", offShort: "OFF", offStatus: "Estado de la conexión",
+    offChip: "SIN CONEXIÓN", offShort: "OFF", offStatus: "Estado de la conexión",
     offIsOnline: "Conectado a internet", offIsOffline: "Sin internet: NIKOLAI funciona en modo local",
     offExplain: "Sin internet NIKOLAI sigue funcionando el tiempo que necesites (4, 5 horas o más) con lo que hay en tu dispositivo. Lo que necesite internet lo guarda y lo responde al volver la conexión.",
     offPrepare: "Preparar modo sin conexión", offUpdate: "Actualizar paquete sin conexión", offPreparing: "Descargando…",
@@ -220,7 +220,7 @@ const T = {
   },
   en: {
     offline: "Offline", offlineDesc: "Use it without internet: local mode and battery saver.",
-    offChip: "OFFLINE · LOCAL MODE", offShort: "OFF", offStatus: "Connection status",
+    offChip: "OFFLINE", offShort: "OFF", offStatus: "Connection status",
     offIsOnline: "Connected to the internet", offIsOffline: "No internet: NIKOLAI is running in local mode",
     offExplain: "Without internet NIKOLAI keeps working as long as you need (4, 5 hours or more) with what's on your device. Anything that needs the internet is saved and answered when the connection returns.",
     offPrepare: "Prepare offline mode", offUpdate: "Update offline pack", offPreparing: "Downloading…",

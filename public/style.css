@@ -277,7 +277,7 @@ body.v-speaking .vb-dot { background: var(--gold); box-shadow: 0 0 12px var(--go
    ===================================================================== */
 .hud-top { gap: 16px; }
 .dock {
-  flex: 1; min-width: 0; display: flex; justify-content: center; gap: 4px; overflow-x: auto; scrollbar-width: none;
+  flex: 1; min-width: 0; display: flex; justify-content: safe center; gap: 4px; overflow-x: auto; scrollbar-width: none;
   padding: 4px; margin-inline: 12px;
 }
 .dock::-webkit-scrollbar { display: none; }
@@ -613,7 +613,8 @@ body.booting .floor-ring { animation: ringOut 1.4s .2s ease-out both; }
 }
 
 /* Sin conexión */
-.net-chip { color: var(--gold); border: 1px solid var(--gold-dim); padding: 2px 8px; border-radius: 999px; }
+.brand { flex: none; }
+.net-chip { white-space: nowrap; color: var(--gold); border: 1px solid var(--gold-dim); padding: 2px 8px; border-radius: 999px; }
 .off-status.up { border-color: rgba(125, 255, 178, .4); }
 .off-status.down { border-color: var(--gold); }
 .off-status .v { font-size: 20px; }
