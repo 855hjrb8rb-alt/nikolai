@@ -504,3 +504,49 @@ body.birthday .brand b { color: var(--gold); }
 body.clap-flash .floor-ring { border-color: var(--gold); box-shadow: 0 0 60px var(--gold); transition: none; }
 body.clap-flash .beam { opacity: .9; }
 @media (max-width: 900px) { .mini-player { bottom: 150px; } }
+
+/* =====================================================================
+   Reposo y arranque tipo JARVIS
+   ===================================================================== */
+.sleep-screen {
+  position: fixed; inset: 0; z-index: 60; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  background: radial-gradient(circle at 50% 45%, rgba(18, 17, 74, .55), #02030c 70%); text-align: center; padding: 24px;
+}
+body.sleeping .sleep-screen { display: flex; }
+body.sleeping :is(.hud-top, .side, .stage, .console, .panel, .sensor) { opacity: 0; pointer-events: none; }
+body.sleeping .scene { opacity: .25; }
+.sleep-core { position: relative; width: 160px; height: 160px; }
+.sleep-core i { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(121, 227, 255, .35); animation: sleepPulse 4s ease-in-out infinite; }
+.sleep-core i:nth-child(2) { inset: 24px; border-color: rgba(155, 140, 255, .4); animation-delay: .6s; }
+.sleep-core i:nth-child(3) { inset: 56px; background: radial-gradient(circle, rgba(121, 227, 255, .5), transparent 70%); border: 0; animation-delay: 1.2s; }
+@keyframes sleepPulse { 50% { opacity: .35; transform: scale(.94); } }
+.sleep-title { margin: 0; font-size: 13px; letter-spacing: .4em; color: var(--ice-dim); text-transform: uppercase; }
+.sleep-hint { margin: 0; max-width: 34ch; font-size: 16px; color: var(--ice); line-height: 1.5; }
+.sleep-power {
+  margin-top: 6px; padding: 10px 22px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ice-dim);
+  font-size: 11px; letter-spacing: .3em; text-transform: uppercase; cursor: pointer;
+}
+.sleep-power:hover, .sleep-power.hover { border-color: var(--gold); color: var(--gold); }
+
+/* Encendido: línea de escaneo y los elementos aparecen escalonados con parpadeo */
+.boot-scan { position: fixed; left: 0; right: 0; top: -10vh; height: 10vh; z-index: 70; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, transparent, rgba(121, 227, 255, .35), transparent); }
+body.booting .boot-scan { animation: scan 1.3s cubic-bezier(.5, 0, .5, 1) forwards; }
+@keyframes scan { 0% { top: -10vh; opacity: 1; } 100% { top: 105vh; opacity: 0; } }
+body.booting .scene { animation: powerScene 1.6s ease-out both; }
+body.booting .hud-top { animation: powerOn .7s .35s both; }
+body.booting .side-left { animation: powerOn .7s .55s both; }
+body.booting .side-right { animation: powerOn .7s .65s both; }
+body.booting .stage { animation: powerStage 1.1s .7s both; }
+body.booting .console { animation: powerOn .7s 1.1s both; }
+body.booting .sensor { animation: powerOn .6s 1.3s both; }
+body.booting .floor-ring { animation: ringOut 1.4s .2s ease-out both; }
+@keyframes powerOn {
+  0% { opacity: 0; filter: brightness(3) blur(4px); transform: translateY(8px); }
+  30% { opacity: .9; } 40% { opacity: .2; } 55% { opacity: 1; filter: brightness(1.6) blur(0); }
+  100% { opacity: 1; filter: none; transform: none; }
+}
+@keyframes powerStage { 0% { opacity: 0; transform: scale(.85); filter: brightness(2.5) blur(6px); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; filter: none; } }
+@keyframes powerScene { 0% { opacity: .1; } 100% { opacity: 1; } }
+@keyframes ringOut { 0% { opacity: 0; transform: translateX(-50%) rotateX(78deg) scale(.2); } 60% { opacity: 1; } 100% { transform: translateX(-50%) rotateX(78deg) scale(1); } }
+@media (prefers-reduced-motion: reduce) { body.booting * { animation: none !important; } }

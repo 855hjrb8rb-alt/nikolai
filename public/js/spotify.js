@@ -179,7 +179,8 @@ export async function loadPlaylists() {
 
 /** Reproduce en el dispositivo activo del usuario (Premium). */
 export async function playItem(item) {
-  const body = item.type === "track" ? { uris: [item.uri] } : { context_uri: item.uri };
+  // Siempre desde el principio de la canción.
+  const body = item.type === "track" ? { uris: [item.uri], position_ms: 0 } : { context_uri: item.uri, offset: { position: 0 }, position_ms: 0 };
   await api("/me/player/play", { method: "PUT", body });
   setTimeout(refreshNow, 800);
 }
@@ -192,7 +193,7 @@ export function setEmbed(type, id) {
 
 // ---------- Reproductor flotante (Spotify iFrame API) ----------
 // Vive fuera de los módulos, así la música sigue al cerrar el panel.
-let apiPromise = null, controller = null, controllerReady = null;
+let apiPromise = null, controller = null, controllerReady = null, loadedUri = "";
 export const player = { visible: false, playing: false, title: "", onChange: null };
 
 function loadIframeApi() {
@@ -233,7 +234,9 @@ export async function playInEmbed(type, id, title = "") {
   player.onChange?.();
   try {
     const c = await getController(uri);
-    c.loadUri(uri);
+    if (loadedUri === uri) c.seek(0); // la misma canción: vuelve al inicio
+    else c.loadUri(uri);
+    loadedUri = uri;
     c.play();
   } catch {
     // Plan B: reproductor incrustado normal (hay que pulsar ▶) y se reintenta la API la próxima vez.
@@ -278,7 +281,7 @@ export function renderMusic(body, ctx) {
       <section class="music-left">
         <div class="readout clap-box">
           <div class="k">${esc(t("clapTitle").toUpperCase())} · ${esc(ctx.clap.enabled ? t("on") : t("off"))}</div>
-          <div class="v small">👏👏 → ${esc(ctx.clap.songTitle)}</div>
+          <div class="v small">${esc(t("clapTitle"))} → ${esc(ctx.clap.songTitle)}</div>
           <div class="tiles">
             ${tile(esc(ctx.clap.enabled ? t("clapOff") : t("clapOn")), "", ctx.clap.enabled ? "on" : "")}
             ${tile(esc(t("clapTest")), "", "")}

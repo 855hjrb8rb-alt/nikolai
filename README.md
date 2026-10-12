@@ -69,7 +69,8 @@ Para cortarle, cierra el puño ✊ o toca la barra. En el módulo **Núcleo IA**
 | ✋ Palma abierta 1 s | Abre el módulo central |
 | ✊ Puño | Interrumpe la voz / cierra el módulo |
 | ✌️ Gesto V | Activa o pausa el micrófono |
-| 👏👏 Dos aplausos | Pone tu canción: por defecto «Should I Stay or Should I Go» de The Clash (se cambia en Música) |
+| Dos aplausos | Enciende a NIKOLAI y pone tu canción desde el principio: por defecto «Should I Stay or Should I Go» de The Clash (se cambia en Música) |
+| Decir «despierta» / «duérmete» | Enciende o pone en reposo a NIKOLAI |
 
 La detección de la mano corre **100 % en tu navegador** (MediaPipe Hand Landmarker); el vídeo nunca sale de tu equipo.
 

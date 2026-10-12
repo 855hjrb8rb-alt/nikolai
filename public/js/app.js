@@ -67,6 +67,7 @@ const ICON = {
   siren: '<path d="M7 18v-6a5 5 0 0 1 10 0v6M5 18h14v3H5zM12 2v2M4.2 5.2l1.4 1.4M19.8 5.2l-1.4 1.4"/>',
   install: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
   expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
@@ -431,7 +432,7 @@ const PANEL = {
     body.querySelector("#chatMic").addEventListener("click", () => dictateInto((said) => { input.value = (input.value ? input.value + " " : "") + said; input.focus(); }));
     const [speakT, clearT] = body.querySelectorAll(".tiles .tile");
     speakT.addEventListener("click", () => { settings.chatSpeak = !settings.chatSpeak; saveSettings(); refreshPanel(); });
-    clearT.addEventListener("click", () => { history.length = 0; refreshPanel(); updateCards(); });
+    clearT.addEventListener("click", () => { history.length = 0; saveHistory(); refreshPanel(); updateCards(); });
     setTimeout(() => input.focus(), 50);
   },
 
@@ -692,7 +693,9 @@ let lastHeard = "", lastReply = "";
 let lastTranslation = { source: "", text: "", target: "en" };
 let lastListenAt = 0;
 let restartTimer = null;
-const history = [];
+// Historial de conversación: se guarda en este navegador para recordar entre visitas.
+const history = store.get("history", []);
+const saveHistory = () => store.set("history", history.slice(-40));
 
 function applyVoice() {
   speaker.voiceName = settings.voiceName;
@@ -845,6 +848,18 @@ function handleFinal(text) {
   ui.heard.innerHTML = `<b>${esc(t("you").toUpperCase())} ›</b> ${esc(text)}`;
   const task = voiceTask;
   voiceTask = null;
+  if (task?.kind === "wake") {
+    if (WAKE_RE.test(text)) wake("voice");
+    else { voiceTask = task; listenNow(); } // sigue en reposo esperando «despierta»
+    return;
+  }
+  if (!task && SLEEP_RE.test(text)) { goToSleep(); return; }
+  // Con música sonando solo hace caso si la llamas por su nombre (para no reaccionar a la letra).
+  if (!task && miniPlayer.playing && settings.mode !== "wake") {
+    const command = stripWakeWord(text);
+    if (command === null) { listenNow(); return; }
+    if (command) { ask(command); return; }
+  }
   if (task?.kind === "dictate") {
     task.cb(text);
     afterSpeech();
@@ -879,6 +894,7 @@ function speakOnce(text, lang) {
 }
 
 function afterSpeech() {
+  if (pendingSleep) { pendingSleep = false; enterSleep(); return; }
   if (voiceOn || voiceTask) restartTimer = setTimeout(listenNow, 350);
   else setState("off");
 }
@@ -967,6 +983,7 @@ async function ask(text, { channel = "voice", speak = true, onText, onDone } = {
     if (ctl !== askCtl) return; // interrumpido
     if (reply) {
       history.push({ role: "assistant", content: reply });
+      saveHistory();
       stats.responses++;
       lastReply = speakable(reply);
     } else history.pop();
@@ -1164,6 +1181,7 @@ function onGesture(ev) {
       if (!openId) setFocus(focus - ev.dir);
       break;
     case "gesture":
+      if (sleeping) { if (ev.gesture === "palm" || ev.gesture === "victory") wake("gesture"); break; }
       if (ev.gesture === "fist") { if (!interrupt() && openId) closePanel(); }
       else if (ev.gesture === "victory") toggleVoice();
       else if (ev.gesture === "palm" && !openId) openPanel(MODULES[focus]);
@@ -1270,9 +1288,11 @@ function renderDock() {
   if (!dock) return;
   dock.innerHTML = MODULES.map((id) => `<button class="dock-btn ${openId === id ? "on" : ""} ${id === "sos" ? "sos" : ""}" data-target data-open="${id}" title="${esc(titleOf(id))}">${icon(id)}<span>${esc(titleOf(id))}</span></button>`).join("") +
     `<i class="dock-sep"></i>` +
+    `<button class="dock-btn" data-target id="dockSleep" title="${esc(t("sleep"))}">${icon("moon")}<span>${esc(t("sleep"))}</span></button>` +
     `<button class="dock-btn" data-target id="dockFull" title="${esc(t("fullscreen"))}">${icon("expand")}<span>${esc(t("fullscreen"))}</span></button>` +
     (installPrompt ? `<button class="dock-btn gold" data-target id="dockInstall" title="${esc(t("install"))}">${icon("install")}<span>${esc(t("install"))}</span></button>` : "");
   dock.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => (openId === b.dataset.open ? closePanel() : openPanel(b.dataset.open))));
+  $("#dockSleep")?.addEventListener("click", goToSleep);
   $("#dockFull")?.addEventListener("click", () => {
     if (document.fullscreenElement) document.exitFullscreen?.();
     else document.documentElement.requestFullscreen?.().catch(() => {});
@@ -1297,15 +1317,14 @@ timer.onDone = () => { speakOnce(t("timerDone")); updateCards(); if (openId === 
 // Doble aplauso → canción (por defecto «Should I Stay or Should I Go»)
 // =====================================================================
 const claps = new ClapDetector({
-  onClap: () => { ui.heard.innerHTML = "<b>👏</b>"; },
-  onDouble: () => playClapSong(),
+  onClap: () => {},
+  onDouble: () => { playClapSong(); if (sleeping) wake("claps"); },
 });
 // No escuchar aplausos mientras NIKOLAI habla (su propia voz podría parecer un golpe).
 claps.muted = () => speaker.speaking;
 
 function playClapSong() {
   const song = settings.clapSong;
-  ui.heard.innerHTML = "<b>👏👏</b>";
   ui.reply.textContent = `♫ ${song.title}`;
   document.body.classList.add("clap-flash");
   setTimeout(() => document.body.classList.remove("clap-flash"), 900);
@@ -1339,7 +1358,155 @@ function clapCtx() {
 miniPlayer.onChange = () => updateCards();
 $("#mpClose").addEventListener("click", hidePlayer);
 // El audio del navegador solo arranca tras una interacción: el detector empieza con el primer toque.
-["pointerdown", "keydown"].forEach((ev) => addEventListener(ev, () => { userGestured = true; startClaps(); }, { once: true }));
+["pointerdown", "keydown"].forEach((ev) => addEventListener(ev, () => {
+  if (userGestured) return;
+  userGestured = true;
+  startClaps();
+  if (sleeping) startWakeListening();
+}));
+
+// =====================================================================
+// Reposo y arranque tipo JARVIS
+// =====================================================================
+const WAKE_RE = /despiert|despierta|wake ?up|enci[eé]nde|arriba|nikolai|nicolai|jarvis|hola/i;
+const SLEEP_RE = /(du[eé]rmete|a dormir|modo reposo|ap[aá]gate|descansa|go to sleep|sleep mode)/i;
+let sleeping = true;
+let pendingSleep = false;
+const visit = store.get("visit", { count: 0, last: 0 });
+
+function startWakeListening() {
+  if (!sleeping || !speechSupported) return;
+  $("#sleepHint").textContent = t("sleepReadyHint");
+  voiceTask = { kind: "wake" };
+  listenNow();
+}
+
+function goToSleep() {
+  if (sleeping) return;
+  pendingSleep = true;
+  speakOnce(t("sleepBye"));
+}
+
+function enterSleep() {
+  sleeping = true;
+  voiceOn = false;
+  stopAll();
+  closePanel();
+  setState("off");
+  document.body.classList.add("sleeping");
+  $("#sleepHint").textContent = userGestured ? t("sleepReadyHint") : t("sleepTapHint");
+  if (userGestured) setTimeout(startWakeListening, 600);
+}
+
+function salutation(d = new Date()) {
+  const h = d.getHours();
+  return h >= 5 && h < 12 ? t("morning") : h >= 12 && h < 19 ? t("afternoon") : t("evening");
+}
+
+function agoText(ms) {
+  const min = Math.round(ms / 60000);
+  if (min < 2) return t("agoNow");
+  if (min < 60) return t("agoMin").replace("{n}", min);
+  const h = Math.round(min / 60);
+  if (h < 36) return t("agoHour").replace("{n}", h);
+  return t("agoDay").replace("{n}", Math.round(h / 24));
+}
+
+/** Sonido de encendido: barrido grave → agudo y un brillo final. */
+function powerUpSound() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ac.currentTime;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(60, now);
+    o.frequency.exponentialRampToValueAtTime(880, now + 1.1);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.12, now + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 1.3);
+    const f = ac.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(400, now);
+    f.frequency.exponentialRampToValueAtTime(4000, now + 1.1);
+    o.connect(f).connect(g).connect(ac.destination);
+    o.start(now);
+    o.stop(now + 1.4);
+    [1320, 1760].forEach((hz, i) => {
+      const c = ac.createOscillator(), cg = ac.createGain();
+      c.frequency.value = hz;
+      cg.gain.setValueAtTime(0.0001, now + 1.1 + i * 0.12);
+      cg.gain.exponentialRampToValueAtTime(0.08, now + 1.15 + i * 0.12);
+      cg.gain.exponentialRampToValueAtTime(0.0001, now + 1.9 + i * 0.12);
+      c.connect(cg).connect(ac.destination);
+      c.start(now + 1.1 + i * 0.12);
+      c.stop(now + 2 + i * 0.12);
+    });
+    setTimeout(() => ac.close(), 2600);
+  } catch { /* sin audio */ }
+}
+
+/** Enciende la interfaz con animación y saluda según la hora y el historial. */
+function wake(how) {
+  if (!sleeping) return;
+  sleeping = false;
+  voiceTask = null;
+  listener.stop();
+  clearTimeout(restartTimer);
+  powerUpSound();
+  document.body.classList.remove("sleeping");
+  document.body.classList.add("booting");
+  setTimeout(() => document.body.classList.remove("booting"), 2600);
+  const lastVisit = visit.last;
+  const firstTime = !visit.count;
+  visit.count++;
+  visit.last = Date.now();
+  store.set("visit", visit);
+  voiceOn = speechSupported;
+  greeted = true;
+  if (openId === "core") refreshPanel();
+  renderSides();
+  setTimeout(() => greetOnWake(how, firstTime, lastVisit), 1500);
+}
+
+async function greetOnWake(how, firstTime, lastVisit) {
+  const hello = salutation();
+  const name = profile.name ? `, ${profile.name}` : "";
+  const bday = daysToBirthday() === 0 ? ` ${t("birthdayGreeting").replace("{name}", name)}` : "";
+  const local = firstTime
+    ? `${hello}${name}. ${t("welcomeFirst")}${bday}`
+    : `${hello}${name}. ${t("welcomeBack").replace("{ago}", agoText(Date.now() - lastVisit))}${bday}`;
+  // Si ya hay historial y cerebro, que el saludo recuerde de qué hablaron.
+  if (!firstTime && history.length && brain.apiKey) {
+    const instruction = t("greetPrompt")
+      .replace("{how}", t({ voice: "wokeVoice", claps: "wokeClaps", gesture: "wokeGesture" }[how] || "wokeTap"))
+      .replace("{hello}", hello).replace("{name}", name).replace("{ago}", agoText(Date.now() - lastVisit));
+    stopAll();
+    setState("thinking");
+    speaker.begin();
+    askCtl = new AbortController();
+    const ctl = askCtl;
+    let text = "";
+    try {
+      const err = await stream(
+        { messages: [...history.slice(-12), { role: "user", content: instruction }], notes: notes.map((n) => n.text), channel: "voice" },
+        { signal: ctl.signal, onText: (d) => { text += d; ui.reply.textContent = text.slice(-220); speaker.push(d); } },
+      );
+      if (ctl !== askCtl) return;
+      askCtl = null;
+      if (err || !text) { speakOnce(local); return; }
+      lastReply = text;
+      speaker.end();
+      return;
+    } catch {
+      if (ctl !== askCtl) return;
+      askCtl = null;
+    }
+  }
+  speakOnce(local);
+}
+
+// Guarda la hora de la visita mientras está encendida (para saber cuándo fue la última).
+setInterval(() => { if (!sleeping) { visit.last = Date.now(); store.set("visit", visit); } }, 60000);
 
 // =====================================================================
 // Arranque
@@ -1347,7 +1514,12 @@ $("#mpClose").addEventListener("click", hidePlayer);
 setLang(store.get("lang", detectBrowserLang()));
 applyLanguage(getLang());
 setState("off");
-ui.reply.textContent = inAppBrowser ? t("camErrInApp") : !speechSupported ? t("noSpeech") : greetingText();
+ui.reply.textContent = inAppBrowser ? t("camErrInApp") : !speechSupported ? t("noSpeech") : "";
+document.body.classList.add("sleeping");
+$("#sleepTitle").textContent = t("sleepTitle");
+$("#sleepHint").textContent = t("sleepTapHint");
+$("#sleepPower").textContent = t("sleepPowerOn");
+$("#sleepPower").addEventListener("click", (e) => { e.stopPropagation(); userGestured = true; startClaps(); wake("tap"); });
 document.body.classList.toggle("birthday", daysToBirthday() === 0);
 renderDock();
 connectLive();

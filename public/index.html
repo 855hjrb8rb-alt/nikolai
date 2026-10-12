@@ -65,6 +65,15 @@
     <div class="nav mono" id="navLabel"></div>
   </footer>
 
+  <!-- Modo reposo: pantalla apagada hasta oír «despierta» o dos aplausos -->
+  <div class="sleep-screen" id="sleep">
+    <div class="sleep-core"><i></i><i></i><i></i></div>
+    <p class="sleep-title mono" id="sleepTitle">SISTEMA EN REPOSO</p>
+    <p class="sleep-hint" id="sleepHint"></p>
+    <button class="sleep-power mono" id="sleepPower" data-target>ENCENDER</button>
+  </div>
+  <div class="boot-scan" aria-hidden="true"></div>
+
   <!-- Reproductor de música flotante (Spotify) -->
   <div class="mini-player" id="miniPlayer" hidden>
     <div class="mp-head mono"><span>♫ SPOTIFY</span><button class="mp-close" id="mpClose" data-target aria-label="Cerrar">✕</button></div>

@@ -260,8 +260,12 @@ export class ClapCounter {
     this.cooldownUntil = 0;
   }
 
-  /** peak y rms del fragmento (0..1), t en ms. Devuelve "clap", "double" o null. */
-  process(peak, rms, t) {
+  /**
+   * peak y rms del fragmento (0..1), t en ms y flat = planitud espectral (0..1).
+   * Un aplauso es ruido de banda ancha (planitud alta, ~0,5); un pitido, una nota
+   * o una vocal son tonos (planitud muy baja, ~0,01). Devuelve "clap", "double" o null.
+   */
+  process(peak, rms, t, flat = 0.5) {
     let event = null;
     if (this.pending && t - this.pending.t >= 70) {
       // ¿Se apagó rápido? Entonces era un aplauso.
@@ -269,7 +273,7 @@ export class ClapCounter {
       this.pending = null;
     }
     const s = this.sensitivity;
-    const onset = rms > 0.06 / s && rms > this.bg * 5 && peak > 0.25 / s && t - this.lastOnset > 140;
+    const onset = rms > 0.06 / s && rms > this.bg * 5 && peak > 0.25 / s && flat > 0.3 && t - this.lastOnset > 140;
     if (!this.pending && onset && t >= this.cooldownUntil) {
       this.pending = { t, rms };
       this.lastOnset = t;
@@ -317,8 +321,12 @@ export class ClapDetector {
     const src = this.ctx.createMediaStreamSource(this.stream);
     const analyser = this.ctx.createAnalyser();
     analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = 0;
     src.connect(analyser);
     const buf = new Float32Array(analyser.fftSize);
+    const spec = new Float32Array(analyser.frequencyBinCount);
+    const lo = Math.floor((300 / this.ctx.sampleRate) * analyser.fftSize);
+    const hi = Math.floor((8000 / this.ctx.sampleRate) * analyser.fftSize);
     this.timer = setInterval(() => {
       analyser.getFloatTimeDomainData(buf);
       let peak = 0, sum = 0;
@@ -328,7 +336,17 @@ export class ClapDetector {
         sum += v * v;
       }
       if (this.muted()) return;
-      const ev = this.counter.process(peak, Math.sqrt(sum / buf.length), performance.now());
+      // Planitud espectral entre 300 Hz y 8 kHz: media geométrica / media aritmética de la potencia.
+      analyser.getFloatFrequencyData(spec);
+      let logSum = 0, powSum = 0;
+      for (let k = lo; k < hi; k++) {
+        const db = Math.max(spec[k], -160);
+        logSum += db * Math.LN10 / 10;
+        powSum += 10 ** (db / 10);
+      }
+      const n = hi - lo;
+      const flat = Math.exp(logSum / n) / (powSum / n || 1);
+      const ev = this.counter.process(peak, Math.sqrt(sum / buf.length), performance.now(), flat);
       if (ev === "clap") this.onClap?.();
       else if (ev === "double") this.onDouble?.();
     }, 20);
