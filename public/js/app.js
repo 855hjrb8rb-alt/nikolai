@@ -4,7 +4,7 @@
 import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
 import {
   Listener, Speaker, MicMeter, voicesFor, voiceGender, voiceQuality, stripWakeWord, speechSupported,
-  isMobile, isIOS, inAppBrowser, isBrave, ClapDetector,
+  isMobile, isIOS, inAppBrowser, isBrave, ClapDetector, prepareOfflineSpeech,
 } from "./voice.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -14,12 +14,13 @@ import {
   spotify, renderMusic, handleRedirect, isConnected as spotifyConnected, refreshNow, control as spotifyControl,
   search as spotifySearch, playItem, setEmbed, presetFor, PRESETS, playInEmbed, hidePlayer, player as miniPlayer,
 } from "./spotify.js";
+import { offline, localAnswer, isOffline, addPending, takePending, removePending, markPrepared } from "./offline.js";
 import { watchOpeningBell, ringBell, exchangeStatus, EXCHANGES } from "./wallstreet.js";
 import { memory, renderMemory, addMemory, forgetMatching, memoriesForBrain } from "./memory.js";
 import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
 import {
   profile, daysToBirthday, renderProfile, renderSos, dial, shareLocation, renderWeather, weather, loadWeather, wmo,
-  weatherSentence, renderTools, timer, startTimer, fmtTime, renderNews,
+  weatherSentence, renderTools, timer, startTimer, fmtTime, renderNews, calc,
 } from "./extras.js";
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -34,7 +35,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    bell: true, clap: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, lowPower: false, clap: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -70,6 +71,7 @@ const ICON = {
   install: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
   expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   memory: '<path d="M9.5 3a4 4 0 0 0-4 4 3.5 3.5 0 0 0-2 6.2A3.8 3.8 0 0 0 7 19a3 3 0 0 0 5 1V4.5A2.5 2.5 0 0 0 9.5 3zM14.5 3a4 4 0 0 1 4 4 3.5 3.5 0 0 1 2 6.2A3.8 3.8 0 0 1 17 19a3 3 0 0 1-5 1"/><path d="M9 9.5h1.5M14 12.5h1.5M9 15h1.5"/>',
+  offline: '<path d="M2 8.5a15 15 0 0 1 20 0M5 12a10.5 10.5 0 0 1 14 0M8.5 15.5a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19" r="1.3"/><path d="M3 3l18 18"/>',
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
 };
@@ -77,7 +79,7 @@ const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 
 const MODULES = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos",
-  "voice", "translator", "notes", "memory", "language", "profile", "system", "settings", "help",
+  "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
 const WIDE = new Set(["chat", "homework", "music", "markets", "news", "tools", "memory"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
@@ -119,6 +121,7 @@ function cardBody(id) {
     case "help": return `<p class="desc" style="flex:1">${esc(t("voiceHelp"))}</p><div class="stats">${stat("gestures", "gestureCount")}${stat("language", "langCount2", "accent")}</div>`;
     case "chat": return `<p class="desc" data-bind="lastChat" style="flex:1"></p><div class="stats">${stat("messages", "chatCount")}${stat("readAloud", "chatSpeak", "accent")}</div>`;
     case "homework": return `<p class="desc" style="flex:1">${esc(t("hwCardDesc"))}</p><div class="stats">${stat("tasksDone", "hwDone")}${stat("level", "hwLevel", "accent")}</div>`;
+    case "offline": return `<div class="big-code mono" data-bind="netState">ON</div><div class="stats">${stat("offPack", "offPackState")}${stat("offPending", "offPendingCount", "accent")}</div>`;
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
@@ -229,6 +232,9 @@ function values() {
     bdayDays: bday === 0 ? "🎂" : bday == null ? "—" : `${bday}`,
     bdayDate: profile.birthday ? profile.birthday.split("-").reverse().join("/") : "—",
     profileName: profile.name || "—",
+    netState: isOffline() ? "OFF" : "ON",
+    offPackState: offline.prepared ? "✓" : "—",
+    offPendingCount: offline.pending.length,
     nyseState: t("ex_" + exchangeStatus(EXCHANGES[0]).state),
     memCount: memory.items.length,
     memState: memory.enabled ? t("on") : t("off"),
@@ -458,6 +464,46 @@ const PANEL = {
       ...moduleCtx(),
       bell: { enabled: settings.bell, toggle: () => { settings.bell = !settings.bell; saveSettings(); if (settings.bell) ringBell(); } },
     }, marketState);
+  },
+
+  offline(body) {
+    const p = offline.prepared;
+    const prog = offline.progress;
+    const ok = (v) => (v === true || v === "ready" ? "✓" : "✕");
+    const works = ["offW_time", "offW_notes", "offW_memory", "offW_timer", "offW_calc", "offW_weather", "offW_gestures", "offW_sos", "offW_sleep", "offW_markets"];
+    const needs = ["offN_ai", "offN_web", "offN_live", "offN_music", "offN_translate"];
+    body.innerHTML = `
+      <div class="readout off-status ${isOffline() ? "down" : "up"}">
+        <div class="k">${esc(t("offStatus").toUpperCase())}</div>
+        <div class="v">${esc(isOffline() ? t("offIsOffline") : t("offIsOnline"))}</div>
+        <p class="muted">${esc(t("offExplain"))}</p>
+      </div>
+      <div class="tiles wide">
+        ${tile(`${icon("install")}<br>${esc(prog ? t("offPreparing") : p ? t("offUpdate") : t("offPrepare"))}`, prog ? `${prog.done}/${prog.total} · ${Math.round(prog.bytes / 1e6)} MB` : "", "action" + (prog ? " live" : ""))}
+        ${tile(esc(t("lowPower")), settings.lowPower ? t("on") : t("off"), settings.lowPower ? "on" : "")}
+      </div>
+      ${p ? `<div class="readout"><div class="k">${esc(t("offPack").toUpperCase())} · ${esc(new Date(p.at).toLocaleString(getLang()))}</div>
+        <div class="diag">
+          <div class="diag-row ${p.files ? "good" : "bad"}"><span>${ok(p.files)}</span>${esc(t("offPackFiles"))} (${p.mb} MB)</div>
+          <div class="diag-row ${p.weather ? "good" : "bad"}"><span>${ok(p.weather)}</span>${esc(t("offPackWeather"))}</div>
+          <div class="diag-row ${p.coins ? "good" : "bad"}"><span>${ok(p.coins)}</span>${esc(t("offPackCoins"))}</div>
+          <div class="diag-row ${p.speech === "ready" ? "good" : "bad"}"><span>${ok(p.speech)}</span>${esc(p.speech === "ready" ? t("offPackSpeech") : t("offPackNoSpeech"))}</div>
+        </div></div>` : ""}
+      <div class="off-cols">
+        <div class="readout"><div class="k">${esc(t("offWorks").toUpperCase())}</div><ul class="off-list good">${works.map((k) => `<li>${esc(t(k))}</li>`).join("")}</ul></div>
+        <div class="readout"><div class="k">${esc(t("offNeeds").toUpperCase())}</div><ul class="off-list bad">${needs.map((k) => `<li>${esc(t(k))}</li>`).join("")}</ul></div>
+      </div>
+      <div class="readout"><div class="k">${esc(t("offPending").toUpperCase())} · ${offline.pending.length}</div>
+        ${offline.pending.length ? offline.pending.map((q, i) => `<div class="note-row"><div class="readout"><div class="v small">${esc(q.text)}</div></div><button class="tile" data-target data-pi="${i}" aria-label="${esc(t("remove"))}">${icon("trash")}</button></div>`).join("") : `<p class="muted">${esc(t("offNoPending"))}</p>`}
+      </div>`;
+    const [prep, power] = body.querySelectorAll(".tiles.wide .tile");
+    prep.addEventListener("click", () => {
+      if (offline.progress) return;
+      if (isOffline()) { ui.reply.textContent = t("offNeedNet"); return; }
+      prepareOffline(() => { if (openId === "offline") refreshPanel(); });
+    });
+    power.addEventListener("click", () => { settings.lowPower = !settings.lowPower; saveSettings(); applyLowPower(); refreshPanel(); });
+    body.querySelectorAll("[data-pi]").forEach((b) => b.addEventListener("click", () => { removePending(Number(b.dataset.pi)); refreshPanel(); updateCards(); }));
   },
 
   memory(body) {
@@ -721,6 +767,97 @@ async function testKey() {
     : `${t("keyFail")} (${err || "—"})`;
   if (out()) out().textContent = msg;
   ui.reply.textContent = msg;
+}
+
+// =====================================================================
+// Sin conexión: respuestas locales, preguntas pendientes y paquete offline
+// =====================================================================
+function localCtx() {
+  return {
+    t, lang: getLang(), notes: notes.map((n) => n.text),
+    addNote: (x) => { addNote(x); if (openId === "notes") refreshPanel(); },
+    memories: memoriesForBrain(t), memoryEnabled: memory.enabled,
+    addMemory: (x) => { addMemory({ text: x, category: "other" }); updateCards(); },
+    forget: (x) => forgetMatching(x),
+    startTimer: (secs) => { startTimer(secs); updateCards(); },
+    calc, weather, weatherSentence: () => weatherSentence(t),
+    open: openPanel, dial, emergencyNumber: profile.emergencyNumber,
+    profileName: profile.name, salutation,
+  };
+}
+
+function answerOffline(text, { speak = true, onText, onDone } = {}) {
+  stopAll();
+  const { reply, queued } = localAnswer(text, localCtx());
+  if (queued) addPending(text);
+  history.push({ role: "user", content: text }, { role: "assistant", content: reply });
+  saveHistory();
+  lastReply = reply;
+  onText?.(reply);
+  onDone?.(reply, null);
+  updateCards();
+  if (speak) speakOnce(reply);
+  else { ui.reply.textContent = reply; afterSpeech(); }
+}
+
+/** Al volver internet: responde las preguntas que quedaron pendientes. */
+async function flushPending() {
+  if (isOffline() || !offline.pending.length || !brain.apiKey || sleeping) return;
+  const list = takePending();
+  updateCards();
+  ui.reply.textContent = t("offBack").replace("{n}", list.length);
+  for (const p of list) {
+    await new Promise((resolve) => ask(`${t("offPendingPrefix")} ${p.text}`, { channel: "text", speak: voiceOn, onDone: resolve }));
+    while (speaker.speaking) await new Promise((r) => setTimeout(r, 400));
+  }
+}
+
+function updateNetChip() {
+  const chip = $("#netState");
+  if (!chip) return;
+  chip.textContent = isOffline() ? t("offChip") : "";
+  chip.hidden = !isOffline();
+  document.body.classList.toggle("is-offline", isOffline());
+}
+
+addEventListener("offline", () => { updateNetChip(); renderSides(); updateCards(); if (!sleeping) speakOnce(t("offWentOffline")); });
+addEventListener("online", () => { updateNetChip(); renderSides(); updateCards(); setTimeout(flushPending, 1500); });
+
+/** Descarga lo necesario para usar NIKOLAI sin internet. */
+async function prepareOffline(onUpdate) {
+  offline.progress = { done: 0, total: 1, failed: 0, bytes: 0 };
+  onUpdate();
+  const results = {};
+  // 1) Archivos de la app y recursos pesados, vía el service worker.
+  const reg = await navigator.serviceWorker?.ready.catch(() => null);
+  if (reg?.active) {
+    await new Promise((resolve) => {
+      const onMsg = (e) => {
+        if (e.data?.type !== "offline-progress") return;
+        offline.progress = e.data;
+        onUpdate();
+        if (e.data.finished) { navigator.serviceWorker.removeEventListener("message", onMsg); resolve(); }
+      };
+      navigator.serviceWorker.addEventListener("message", onMsg);
+      reg.active.postMessage({ type: "prepare-offline" });
+      setTimeout(resolve, 180_000);
+    });
+    results.files = offline.progress.failed === 0;
+  } else results.files = false;
+  // 2) Datos para consultar sin internet: clima y bolsa.
+  await loadWeather(getLang()).catch(() => {});
+  results.weather = Boolean(weather.data);
+  await loadCoins().catch(() => {});
+  results.coins = market.coins.length > 0;
+  // 3) Reconocimiento de voz en el dispositivo (si el navegador lo permite).
+  results.speech = await prepareOfflineSpeech(LANGS[getLang()].speech);
+  markPrepared({ ...results, mb: Math.round((offline.progress?.bytes || 0) / 1e6) });
+  offline.progress = null;
+  onUpdate();
+}
+
+function applyLowPower() {
+  document.body.classList.toggle("lowpower", settings.lowPower);
 }
 
 const clamp = (v, a, b) => Math.round(Math.min(b, Math.max(a, v)) * 100) / 100;
@@ -1010,6 +1147,7 @@ function errorText(err) {
  * desde el chat (channel "text") pinta la respuesta y la lee solo si speak es true.
  */
 async function ask(text, { channel = "voice", speak = true, onText, onDone } = {}) {
+  if (isOffline()) { answerOffline(text, { speak, onText, onDone }); return; }
   stopAll();
   history.push({ role: "user", content: text });
   setState("thinking");
@@ -1041,6 +1179,12 @@ async function ask(text, { channel = "voice", speak = true, onText, onDone } = {
       },
     );
     if (ctl !== askCtl) return; // interrumpido
+    if (!reply && err === "connection") { // se cayó la conexión a mitad: responde en modo local
+      history.pop();
+      askCtl = null;
+      answerOffline(text, { speak, onText, onDone });
+      return;
+    }
     if (reply) {
       history.push({ role: "assistant", content: reply });
       saveHistory();
@@ -1303,7 +1447,8 @@ function renderSides() {
     row("VOZ", voiceOn ? t("micOn").split(" ")[0] : "OFF", voiceOn ? "ok" : "warn") +
     row(t("hand").toUpperCase(), gestures?.handVisible ? "✓" : "—", gestures?.handVisible ? "ok" : "") +
     row(t("camera").toUpperCase().slice(0, 10), gestures?.running ? `${gestures.fps} FPS` : "OFF", gestures?.running ? "ok" : "warn") +
-    row(t("network").toUpperCase(), navigator.onLine ? "ON" : "OFF", navigator.onLine ? "ok" : "bad");
+    row(t("network").toUpperCase(), navigator.onLine ? "ON" : t("offShort"), navigator.onLine ? "ok" : "bad") +
+    (offline.pending.length ? row(t("offPending").toUpperCase(), offline.pending.length, "warn") : "");
   ui.sideRight.innerHTML =
     row(t("language").toUpperCase(), LANGS[getLang()].short) +
     row(t("notes").toUpperCase(), notes.length) +
@@ -1366,7 +1511,7 @@ function renderDock() {
   });
 }
 
-if ("serviceWorker" in navigator && location.protocol === "https:") {
+if ("serviceWorker" in navigator && window.isSecureContext) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
@@ -1590,6 +1735,8 @@ $("#sleepPower").textContent = t("sleepPowerOn");
 $("#sleepPower").addEventListener("click", (e) => { e.stopPropagation(); userGestured = true; startClaps(); wake("tap"); });
 document.body.classList.toggle("birthday", daysToBirthday() === 0);
 renderDock();
+applyLowPower();
+updateNetChip();
 connectLive();
 if (profile.city) loadWeather(getLang()).then(updateCards);
 

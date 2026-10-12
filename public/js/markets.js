@@ -7,10 +7,11 @@ const BINANCE_WS = "wss://stream.binance.com:9443/stream?streams=";
 const STABLE = new Set(["usdt", "usdc", "dai", "fdusd", "tusd", "usde", "busd", "pyusd", "usds"]);
 
 export const market = {
-  coins: [],        // [{id, symbol, name, image, price, change, spark, pair}]
+  // Última lista guardada: sirve sin internet (con su hora).
+  coins: (() => { try { return JSON.parse(localStorage.getItem("nikolai.coins"))?.coins || []; } catch { return []; } })(),        // [{id, symbol, name, image, price, change, spark, pair}]
   live: {},         // par BINANCE -> {price, change}
   btcSeries: [],    // historial reciente de BTC para la tarjeta
-  updatedAt: 0,
+  updatedAt: (() => { try { return JSON.parse(localStorage.getItem("nikolai.coins"))?.at || 0; } catch { return 0; } })(),
   error: "",
   currency: "usd",
 };
@@ -37,6 +38,7 @@ export async function loadCoins(currency = market.currency) {
       }));
     market.updatedAt = Date.now();
     market.error = "";
+    try { localStorage.setItem("nikolai.coins", JSON.stringify({ coins: market.coins.map(({ spark, ...c }) => ({ ...c, spark: spark.filter((_, i) => i % 4 === 0) })), at: market.updatedAt })); } catch { /* lleno */ }
     connectLive();
   } catch (e) {
     market.error = e.message;

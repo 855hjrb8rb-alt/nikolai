@@ -35,6 +35,8 @@ export class Listener {
     if (!Recognition) return false;
     const rec = new Recognition();
     rec.lang = this.lang;
+    // Sin internet, los navegadores que lo permiten reconocen la voz en el propio dispositivo.
+    if (navigator.onLine === false && "processLocally" in rec) rec.processLocally = true;
     rec.continuous = false;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
@@ -201,8 +203,10 @@ function voiceScore(v, lang, gender) {
 }
 
 function pickVoice(lang, preferredName, gender) {
-  const all = voicesFor(lang);
-  return all.find((v) => v.name === preferredName) || voicesFor(lang, gender)[0] || all[0] || null;
+  let all = voicesFor(lang);
+  // Sin internet solo funcionan las voces instaladas en el dispositivo.
+  if (navigator.onLine === false) all = all.filter((v) => v.localService !== false);
+  return all.find((v) => v.name === preferredName) || all.find((v) => voiceGender(v) === gender) || all[0] || null;
 }
 
 if ("speechSynthesis" in window) {
@@ -357,5 +361,19 @@ export class ClapDetector {
     this.timer = null;
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
+  }
+}
+
+/** Prepara el reconocimiento de voz sin internet (solo navegadores que lo soportan). */
+export async function prepareOfflineSpeech(lang) {
+  if (!Recognition?.install) return "unsupported";
+  try {
+    const opts = { langs: [lang], processLocally: true };
+    const status = await Recognition.available?.(opts);
+    if (status === "available") return "ready";
+    if (status === "unavailable") return "unsupported";
+    return (await Recognition.install(opts)) ? "ready" : "unsupported";
+  } catch {
+    return "unsupported";
   }
 }

@@ -128,7 +128,11 @@ export function renderSos(body, ctx) {
 // =====================================================================
 // Clima (Open-Meteo, sin clave)
 // =====================================================================
-export const weather = { place: "", data: null, error: "", loading: false };
+// El último clima se guarda para poder consultarlo sin internet.
+export const weather = Object.assign(
+  { place: "", data: null, error: "", loading: false, at: 0 },
+  (() => { try { return JSON.parse(localStorage.getItem("nikolai.weather")) || {}; } catch { return {}; } })(),
+);
 
 const WMO = {
   0: ["clear", "☀"], 1: ["mainlyClear", "🌤"], 2: ["partlyCloudy", "⛅"], 3: ["overcast", "☁"], 45: ["fog", "🌫"], 48: ["fog", "🌫"],
@@ -164,6 +168,8 @@ export async function loadWeather(lang, city = profile.city) {
     const r = await fetch(url);
     weather.data = await r.json();
     weather.place = loc.place;
+    weather.at = Date.now();
+    try { localStorage.setItem("nikolai.weather", JSON.stringify({ data: weather.data, place: weather.place, at: weather.at })); } catch { /* lleno */ }
   } catch (e) {
     weather.error = e.message;
   } finally {
@@ -323,7 +329,11 @@ export function renderTools(body, ctx) {
 // Noticias (resumen con búsqueda web)
 // =====================================================================
 const TOPICS = ["top", "local", "world", "economy", "tech", "sports", "science", "entertainment"];
-export const news = { topic: "top", text: "", busy: false, at: 0 };
+export const news = Object.assign(
+  { topic: "top", text: "", busy: false, at: 0 },
+  (() => { try { return JSON.parse(localStorage.getItem("nikolai.news")) || {}; } catch { return {}; } })(),
+  { busy: false },
+);
 
 export function renderNews(body, ctx) {
   const { t, esc, tile, icon } = ctx;
@@ -356,6 +366,7 @@ async function fetchNews(body, ctx) {
     );
     news.text = full || ctx.errorText(err);
     news.at = Date.now();
+    if (full) { try { localStorage.setItem("nikolai.news", JSON.stringify({ topic: news.topic, text: news.text, at: news.at })); } catch { /* lleno */ } }
   } catch {
     news.text = ctx.t("errGeneric");
   } finally {

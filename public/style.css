@@ -611,3 +611,21 @@ body.booting .floor-ring { animation: ringOut 1.4s .2s ease-out both; }
   .ex-grid, .ws-indices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ws-row, .ws-split { grid-template-columns: 1fr; }
 }
+
+/* Sin conexión */
+.net-chip { color: var(--gold); border: 1px solid var(--gold-dim); padding: 2px 8px; border-radius: 999px; }
+.off-status.up { border-color: rgba(125, 255, 178, .4); }
+.off-status.down { border-color: var(--gold); }
+.off-status .v { font-size: 20px; }
+.off-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.off-list { margin: 8px 0 0; padding-left: 1.2em; line-height: 1.6; font-size: 14px; }
+.off-list.good li::marker { content: "✓  "; color: var(--green); }
+.off-list.bad li::marker { content: "✕  "; color: var(--danger); }
+@media (max-width: 900px) { .off-cols { grid-template-columns: 1fr; } }
+
+/* Ahorro de batería: sin animaciones, desenfoques ni efectos de luz */
+body.lowpower *, body.lowpower *::before, body.lowpower *::after { animation: none !important; transition: none !important; }
+body.lowpower :is(.card, .panel, .voice-bar, .mini-player, .side) { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.lowpower :is(.beam, .floor-ring, .vignette) { display: none; }
+body.lowpower .floor { opacity: .4; }
+body.lowpower .card, body.lowpower .panel { box-shadow: none; }

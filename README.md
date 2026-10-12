@@ -94,6 +94,7 @@ Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de acce
 | **Memoria** | Recuerdos que tú decides guardar (texto, categoría, fecha y foto opcionales). NIKOLAI los usa para conocerte; se activa o apaga cuando quieras. Por voz: «recuerda que…» / «olvida…». Copia de seguridad para descargar e importar. |
 | **Notas** | Notas dictadas que NIKOLAI puede leer. |
 | **Idioma** | 12 idiomas. |
+| **Sin conexión** | Funciona sin internet el tiempo que haga falta: NIKOLAI básica (hora, fecha, temporizador, cuentas, notas, recuerdos, clima guardado, emergencias), preguntas pendientes que se responden al volver la conexión, paquete descargable (app, detector de manos, fuentes) y **ahorro de batería**. |
 | **Perfil** | Nombre, **cumpleaños** (cuenta atrás y felicitación), ciudad y contacto de emergencia. |
 | **Sistema · Gestos · Protocolos** | Telemetría, ajustes del control con la mano y ayuda. |
 
