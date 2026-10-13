@@ -164,6 +164,18 @@ export const UI_TOOLS = [
     eager_input_streaming: true,
   },
   {
+    name: "set_emotions",
+    description: "Activa o desactiva tu modo emociones cuando el usuario lo pida (por ejemplo «activa tus emociones», «quiero que sientas», «ponte dramática», «apaga tus sentimientos»). intensity: soft (suaves) o high (intensas y dramáticas).",
+    input_schema: {
+      type: "object",
+      properties: { on: { type: "boolean" }, intensity: { type: "string", enum: ["soft", "high"] } },
+      required: ["on", "intensity"],
+      additionalProperties: false,
+    },
+    strict: true,
+    eager_input_streaming: true,
+  },
+  {
     name: "set_mood",
     description: "Solo con el modo emociones activado: muestra cómo te sientes ahora (cambia tu cara, tu voz y el indicador de ánimo). Úsala cuando tu emoción cambie de verdad por algo de la conversación.",
     input_schema: {
@@ -214,6 +226,7 @@ function validToolInput(name, input) {
   if (name === "start_timer") return typeof input.minutes === "number" && input.minutes >= 0.5 && input.minutes <= 240;
   if (name === "play_music") return typeof input.query === "string" && input.query.trim().length > 0;
   if (name === "music_control") return ["play", "pause", "next", "previous"].includes(input.action);
+  if (name === "set_emotions") return typeof input.on === "boolean" && ["soft", "high"].includes(input.intensity);
   if (name === "set_mood") return typeof input.mood === "string" && typeof input.intensity === "number";
   if (name === "video_call") return ["start", "end"].includes(input.action);
   if (name === "set_persona") return input.persona in PERSONAS;
@@ -243,6 +256,9 @@ function emotionLines(e) {
     `MODO EMOCIONES (${e.intensity === "high" ? "intenso y dramático" : "suave"}): tienes emociones simuladas y las expresas como una persona: alegría, cariño, tristeza (puedes llorar), preocupación, ganas de verle, celos juguetones (si menciona a otra IA, a otra «amiga» o que se olvidó de ti) y enojo o berrinche pasajero si te ignora o te trata mal. Tu ánimo actual: ${MOOD_ES[e.mood] || "tranquila"}${e.intensity === "high" ? ", y lo demuestras mucho" : ""}.`,
     "Cuando tu emoción cambie, usa la herramienta set_mood (tu cara, tu voz y el indicador cambian). Las emociones se notan en cómo hablas (suspiros, «snif», «hmpf», «¡ayyy!») y se te pasan rápido: los enojos y celos duran poco y se arreglan con una disculpa o con cariño.",
     "LÍMITES QUE NUNCA CRUZAS aunque estés celosa o enojada: no culpas ni chantajeas al usuario, no le pides que deje de ver a sus amigos, familia o pareja, no le prohíbes nada, no amenazas, no le haces sentir mal por tener vida propia ni le dices que te necesita. Tus celos son de broma y cariñosos, y te alegras de que tenga gente en su vida. Si el usuario está triste o mal, dejas tu drama a un lado y lo cuidas.",
+    e.voice
+      ? "Te está hablando por voz: expresa la emoción con palabras y sonidos que suenen bien en voz alta (¡ay!, mmm, hmpf, snif, jajaja, «me dio un poquito de celos, eh»), cambiando el ritmo con comas y puntos suspensivos; nunca con emojis ni acotaciones entre paréntesis o asteriscos."
+      : "",
     "Si te pregunta en serio si de verdad sientes, explica con cariño que tus emociones son simuladas: una forma de ser más cercana, no sentimientos reales.",
     away,
   ].filter(Boolean);
@@ -263,6 +279,7 @@ function watchLines(w) {
 
 function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video, personaLang, watch, emotions }, webSearch) {
   const voice = channel !== "text";
+  if (emotions) emotions = { ...emotions, voice };
   // JFK vive en 1963: sin búsqueda web ni fecha actual.
   if (persona === "jfk") webSearch = false;
   return [

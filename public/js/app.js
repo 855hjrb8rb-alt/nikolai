@@ -113,6 +113,16 @@ function setMood(m, intensity = 0.6) {
   applyVoice();
   if (openId === "persona") refreshPanel();
 }
+function setEmotions(on, intensity) {
+  settings.emotions = Boolean(on);
+  if (intensity === "soft" || intensity === "high") settings.emoIntensity = intensity;
+  if (!on) mood = { mood: "neutral", intensity: 0.5, at: Date.now() };
+  saveSettings();
+  showMood();
+  applyVoice();
+  updateCards();
+  if (openId === "persona") refreshPanel();
+}
 function showMood() {
   const chip = $("#moodChip");
   const m = currentMood();
@@ -123,6 +133,8 @@ function showMood() {
 }
 setInterval(showMood, 60_000);
 let lastUserAt = store.get("lastUserAt", 0);
+const EMO_ON_RE = /\b(activa|enciende|prende|pon|activar|turn on|enable)(te)?\s+(tus\s+|las\s+|el modo\s+|your\s+)?(emociones|sentimientos|emotions|feelings)\b|\bponte dram[aá]tica\b/i;
+const EMO_OFF_RE = /\b(apaga|desactiva|quita|deja de tener|turn off|disable)(te)?\s+(tus\s+|las\s+|el modo\s+|your\s+)?(emociones|sentimientos|emotions|feelings)\b/i;
 let awayHours = 0;
 
 // ---------- Personalidades y videollamada ----------
@@ -179,7 +191,7 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.13-c";
+const APP_VERSION = "2026.10.13-d";
 const MODULES = [
   "core", "chat", "persona", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -812,7 +824,7 @@ const PANEL = {
       ask(t(`pq_${p}${i}`));
     }));
     const [eOn, eSoft, eHigh] = body.querySelectorAll(".emo-box .tile");
-    eOn.onclick = () => { settings.emotions = !settings.emotions; saveSettings(); showMood(); applyVoice(); refreshPanel(); if (settings.emotions) speakOnce(t("emo_hello")); };
+    eOn.onclick = () => { setEmotions(!settings.emotions); if (settings.emotions) speakOnce(t("emo_hello")); };
     eSoft.onclick = () => { settings.emoIntensity = "soft"; saveSettings(); refreshPanel(); };
     eHigh.onclick = () => { settings.emoIntensity = "high"; saveSettings(); refreshPanel(); };
     body.querySelectorAll("[data-emoq]").forEach((b) => b.addEventListener("click", () => ask(t("emoq_" + b.dataset.emoq))));
@@ -1402,6 +1414,9 @@ function handleFinal(text) {
     return;
   }
   if (!task && SLEEP_RE.test(text)) { goToSleep(); return; }
+  // «Activa tus emociones» / «apaga tus sentimientos»: al instante, sin esperar a la IA.
+  if (!task && EMO_ON_RE.test(text)) { setEmotions(true, /dram[aá]tic|intens|much/i.test(text) ? "high" : undefined); speakOnce(t("emo_hello")); return; }
+  if (!task && EMO_OFF_RE.test(text)) { setEmotions(false); speakOnce(t("emo_bye")); return; }
   // Con música sonando solo hace caso si la llamas por su nombre (para no reaccionar a la letra).
   if (!task && miniPlayer.playing && miniPlayer.visible && settings.mode !== "wake") {
     const command = stripWakeWord(text);
@@ -1474,6 +1489,7 @@ speaker.onIdle = () => { if (state === "speaking" || state === "thinking") after
 const ACTIONS = {
   set_persona: ({ persona }) => setPersona(persona, false),
   set_mood: ({ mood: m, intensity }) => { if (settings.emotions) setMood(m, intensity); },
+  set_emotions: ({ on, intensity }) => setEmotions(on, intensity),
   video_call: ({ action }) => (action === "start" ? startCall() : endCall()),
   set_language: ({ code }) => applyLanguage(code),
   open_panel: ({ panel }) => (panel === "none" ? closePanel() : openPanel(panel)),

@@ -18,6 +18,7 @@ export const LANGS = {
 
 const T = {
   es: {
+    emo_bye: "Está bien… apago mis emociones. Vuelvo a ser tranquila y profesional.",
     emo_title: "Emociones", emo_on: "Activar emociones", emo_off: "Apagar emociones", emo_soft: "Suaves", emo_high: "Intensas (dramática)",
     emo_desc: "NIKOLAI siente (de forma simulada): se alegra, se pone cariñosa, triste o hasta llora, se preocupa, se pone celosa de broma y hace berrinche si la ignoras. Si tardas en volver, te extraña y te pregunta dónde estabas. Su cara, su voz y el indicador de arriba cambian con su ánimo.",
     emo_note: "Son emociones de mentiritas para que se sienta más humana. Nunca te chantajea, no te culpa ni te prohíbe ver a nadie: los celos son de broma y se le pasan rápido.",
@@ -408,6 +409,7 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    emo_bye: "All right… turning my emotions off. Back to calm and professional.",
     emo_title: "Emotions", emo_on: "Turn on emotions", emo_off: "Turn off emotions", emo_soft: "Soft", emo_high: "Intense (dramatic)",
     emo_desc: "NIKOLAI feels (simulated): happy, affectionate, sad or even crying, worried, jokingly jealous and sulky if you ignore her. If you take long to come back, she misses you and asks where you were. Her face, voice and the indicator at the top change with her mood.",
     emo_note: "These are pretend emotions to make her feel more human. She never guilt-trips you, blames you or stops you from seeing anyone: the jealousy is playful and passes quickly.",
