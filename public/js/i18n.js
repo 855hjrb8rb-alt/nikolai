@@ -18,6 +18,10 @@ export const LANGS = {
 
 const T = {
   es: {
+    persona_house: "Mr. House · Robert House (Fallout)", personaShort_house: "MR. HOUSE", personaSub_house: "LUCKY 38 · ESTRATEGA",
+    personaDesc_house: "El visionario del Strip de New Vegas: frío, calculador y brillante. Te habla desde su monitor y te da estrategias de negocios, poder y futuro pensando en décadas.",
+    pq_house1: "Analiza mi plan como un gran tablero", pq_house2: "¿Cómo construyo un imperio desde cero?", pq_house3: "¿Qué tecnología dominará el futuro?", pq_house4: "Dame tu visión para mis próximos 10 años",
+    persona_hello_house: "Ah{name}. Bienvenido al Lucky 38. Tengo poco tiempo y grandes planes: dígame qué necesita y le diré cómo ganar.",
     persona: "Personalidades", persona_nikolai: "NIKOLAI · tipo JARVIS", persona_lawyer: "Abogado · estilo Harvey Specter", persona_friend: "Mejor amiga",
     personaShort_nikolai: "JARVIS", personaShort_lawyer: "ABOGADO", personaShort_friend: "AMIGA",
     personaSub_nikolai: "ASISTENTE · ELEGANTE", personaSub_lawyer: "SUITS · ESTRATEGA LEGAL", personaSub_friend: "CARIÑOSA · LEAL",
@@ -27,7 +31,7 @@ const T = {
     pq_lawyer1: "Me despidieron, ¿qué hago?", pq_lawyer2: "Revisa este contrato conmigo", pq_lawyer3: "¿Cómo negocio como Harvey?", pq_lawyer4: "Me quieren cobrar algo injusto",
     pq_friend1: "Necesito desahogarme", pq_friend2: "Cuéntame algo que me alegre", pq_friend3: "Dame un consejo sincero", pq_friend4: "¿Cómo me fue hoy? Pregúntame",
     ps_active: "Activa ✓", ps_use: "Usar esta personalidad", ps_voice: "Voz según personalidad",
-    ps_note: "También puedes decir: «modo abogado», «modo amiga» o «vuelve a ser NIKOLAI». El modo abogado da orientación general, no sustituye a un abogado con cédula.",
+    ps_note: "También puedes decir: «modo abogado», «modo amiga», «modo Mr. House» o «vuelve a ser NIKOLAI». El modo abogado da orientación general, no sustituye a un abogado con cédula.",
     persona_hello_nikolai: "Sistemas en línea. Vuelvo a mi modo habitual{name}. ¿En qué le ayudo?",
     persona_hello_lawyer: "Muy bien{name}. Modo abogado activado. Cuéntame el problema: yo no pierdo casos, los gano.",
     persona_hello_friend: "¡Holaaa{name}! Aquí estoy, eh. Cuéntame, ¿cómo estás de verdad hoy?",
@@ -334,6 +338,10 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    persona_house: "Mr. House · Robert House (Fallout)", personaShort_house: "MR. HOUSE", personaSub_house: "LUCKY 38 · STRATEGIST",
+    personaDesc_house: "The visionary of the New Vegas Strip: cold, calculating and brilliant. He speaks from his monitor and gives you strategies for business, power and the future, thinking in decades.",
+    pq_house1: "Analyze my plan like a chessboard", pq_house2: "How do I build an empire from scratch?", pq_house3: "Which technology will rule the future?", pq_house4: "Give me your vision for my next 10 years",
+    persona_hello_house: "Ah{name}. Welcome to the Lucky 38. I have little time and grand plans: tell me what you need and I'll tell you how to win.",
     persona: "Personalities", persona_nikolai: "NIKOLAI · JARVIS-style", persona_lawyer: "Lawyer · Harvey Specter style", persona_friend: "Best friend",
     personaShort_nikolai: "JARVIS", personaShort_lawyer: "LAWYER", personaShort_friend: "FRIEND",
     personaSub_nikolai: "ASSISTANT · REFINED", personaSub_lawyer: "SUITS · LEGAL STRATEGIST", personaSub_friend: "WARM · LOYAL",

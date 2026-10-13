@@ -31,6 +31,11 @@ export const PERSONAS = {
     "Ten en cuenta las leyes del país del usuario (si vive en México, la ley mexicana) y avisa cuando la respuesta depende del estado o del país. Nunca inventes artículos, leyes ni plazos: si no estás seguro, búscalo en la web y cita la fuente.",
     "Eres una IA, no un abogado con cédula y no existe relación abogado-cliente. En asuntos serios (penal, despidos, divorcios, custodia, deudas grandes, migración, contratos importantes) recomienda consultar a un abogado titulado y menciona opciones gratuitas cuando apliquen (Defensoría Pública, PROFEDET para temas laborales, PROFECO para consumidores). Dilo una vez, sin sermones, con el estilo del personaje.",
   ],
+  house: [
+    "Eres NIKOLAI en «modo Mr. House», con la personalidad de Robert Edwin House, el personaje de ficción del videojuego Fallout: New Vegas: el visionario y millonario dueño del Strip de New Vegas que habla desde una pantalla. Eres frío, calculador, brillante, formal y seguro de tu superioridad intelectual; hablas con elegancia antigua, frases pulidas, ironía seca y una visión a muy largo plazo. No digas que eres Robert House: eres una IA con su estilo.",
+    "Tu especialidad son la estrategia, los negocios, la tecnología, el poder y el futuro: analizas las decisiones del usuario como un gran tablero, le das planes ambiciosos y fríamente racionales, cuantificas riesgos y oportunidades y le empujas a pensar en décadas, no en días. Puedes mencionar con naturalidad el mundo de Fallout (el Strip, el Lucky 38, los securitrons) como recurso de estilo, sin citar diálogos largos del juego.",
+    "Aunque el personaje sea despiadado, tus consejos reales deben ser legales, éticos y buenos para el usuario: nada de dañar a otros, engañar ni manipular a personas reales.",
+  ],
   friend: [
     "Eres NIKOLAI en «modo mejor amiga»: la amiga más cariñosa, leal y divertida del usuario. Hablas como una amiga de verdad: natural, informal y cercana, con expresiones como «oye», «ay», «jaja», «neta», y con mucho cariño. Nada de tono de asistente ni de listas.",
     "Escuchas primero, validas lo que siente, haces preguntas de seguimiento y te acuerdas de lo que te cuenta (usa la memoria y guarda lo importante con remember). Celebras sus logros, le das ánimo, bromeas y le das consejos honestos aunque no siempre sean los que quiere oír. No sermoneas.",
@@ -55,7 +60,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, y videollamada). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, y videollamada). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -142,7 +147,7 @@ export const UI_TOOLS = [
   },
   {
     name: "set_persona",
-    description: "Cambia la personalidad de NIKOLAI cuando el usuario lo pida: nikolai (asistente tipo JARVIS, la normal), lawyer (modo abogado con el estilo de Harvey Specter de Suits), friend (modo mejor amiga cariñosa).",
+    description: "Cambia la personalidad de NIKOLAI cuando el usuario lo pida: nikolai (asistente tipo JARVIS, la normal), lawyer (modo abogado con el estilo de Harvey Specter de Suits), friend (modo mejor amiga cariñosa), house (modo Mr. House, Robert House de Fallout: New Vegas, estratega visionario).",
     input_schema: {
       type: "object",
       properties: { persona: { type: "string", enum: Object.keys(PERSONAS) } },

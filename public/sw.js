@@ -3,7 +3,7 @@
 // - Recursos externos pesados (detector de manos, fuentes, fórmulas): caché primero.
 // - «Preparar modo sin conexión» descarga por adelantado esos recursos externos.
 
-const SHELL = "nikolai-shell-v7";
+const SHELL = "nikolai-shell-v8";
 const ASSETS = "nikolai-assets-v1";
 
 const SHELL_FILES = [

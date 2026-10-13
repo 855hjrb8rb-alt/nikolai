@@ -89,9 +89,9 @@ document.body.dataset.persona = settings.persona;
 const LOOK_RE = /\b(m[ií]rame|me ves|c[oó]mo me veo|qu[eé] ves|ves esto|mira esto|mira lo que|look at me|what do you see|how do i look)\b/i;
 
 // ---------- Personalidades y videollamada ----------
-const PERSONA_VOICE = { lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 } };
+const PERSONA_VOICE = { lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 }, house: { gender: "male", premium: "pqHfZKP75CvOlQylNhV4", pitch: 0.95 } };
 function setPersona(p, announce) {
-  if (!["nikolai", "lawyer", "friend"].includes(p)) return;
+  if (!["nikolai", "lawyer", "friend", "house"].includes(p)) return;
   settings.persona = p;
   saveSettings();
   document.body.dataset.persona = p;
@@ -115,7 +115,7 @@ const call = new CallView({
   seeAlways: () => settings.callSees,
   onSeeAlways: () => { settings.callSees = !settings.callSees; saveSettings(); },
   onLook: () => ask(t("call_lookPrompt"), { look: true }),
-  onPersona: () => { const P = ["nikolai", "lawyer", "friend"]; setPersona(P[(P.indexOf(settings.persona) + 1) % 3], true); },
+  onPersona: () => { const P = ["nikolai", "lawyer", "friend", "house"]; setPersona(P[(P.indexOf(settings.persona) + 1) % P.length], true); },
 });
 async function startCall() {
   if (call.active) return;
@@ -686,11 +686,11 @@ const PANEL = {
   },
 
   persona(body) {
-    const P = ["nikolai", "lawyer", "friend"];
+    const P = ["nikolai", "lawyer", "friend", "house"];
     body.innerHTML = `
       <div class="persona-cards">${P.map((p) => `
         <div class="persona-card ${p} ${settings.persona === p ? "on" : ""}">
-          <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", lawyer: "⚖", friend: "♥" }[p]}</span>
+          <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", lawyer: "⚖", friend: "♥", house: "▣" }[p]}</span>
             <div><b>${esc(t("persona_" + p))}</b><small class="mono">${esc(t("personaSub_" + p))}</small></div></div>
           <p>${esc(t("personaDesc_" + p))}</p>
           ${p !== "nikolai" ? `<div class="pc-quick">${[1, 2, 3, 4].map((i) => `<button class="nw-mini" data-target data-q="${p}:${i}">${esc(t(`pq_${p}${i}`))}</button>`).join("")}</div>` : ""}
@@ -1114,7 +1114,7 @@ function applyVoice() {
   if (pv) {
     if (speaker.gender !== pv.gender) { speaker.gender = pv.gender; speaker.voiceName = ""; }
     speaker.pitch = clamp(settings.pitch * pv.pitch, 0.5, 1.6);
-    if (speaker.premium && PREMIUM_VOICES.some((v) => v.id === settings.premiumVoice)) speaker.premium = { ...speaker.premium, voiceId: pv.premium, fx: settings.persona === "lawyer" && speaker.premium.fx };
+    if (speaker.premium && PREMIUM_VOICES.some((v) => v.id === settings.premiumVoice)) speaker.premium = { ...speaker.premium, voiceId: pv.premium, fx: (settings.persona === "lawyer" || settings.persona === "house") && speaker.premium.fx };
   }
   speaker.lang = LANGS[getLang()].speech;
   listener.lang = LANGS[getLang()].speech;

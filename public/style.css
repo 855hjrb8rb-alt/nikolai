@@ -792,7 +792,7 @@ body.lowpower .card, body.lowpower .panel { box-shadow: none; }
 /* ---------- Personalidades ---------- */
 .persona-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
 .persona-card { --pc: var(--cyan); display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--glass); }
-.persona-card.lawyer { --pc: var(--gold); } .persona-card.friend { --pc: #ff9ad5; }
+.persona-card.lawyer { --pc: var(--gold); } .persona-card.friend { --pc: #ff9ad5; } .persona-card.house { --pc: var(--green); }
 .persona-card.on { border-color: var(--pc); box-shadow: 0 0 24px color-mix(in srgb, var(--pc) 30%, transparent); }
 .pc-head { display: flex; gap: 12px; align-items: center; }
 .pc-head b { display: block; font-size: 17px; color: #fff; } .pc-head small { font-size: 10px; color: var(--pc); letter-spacing: .1em; }
@@ -833,3 +833,4 @@ body.in-call #cursor { z-index: 90; }
 .call-btn.end { background: #d63a55; border-color: #ff7a90; color: #fff; }
 .call-btn.end svg { transform: rotate(135deg); }
 @media (max-width: 640px) { .call-self { top: 64px; right: 10px; width: 104px; } .call-zoom button { width: 24px; height: 24px; font-size: 14px; } .call-btn { min-width: 58px; padding: 8px 4px; font-size: 10px; } .call-bar { gap: 6px; } }
+body[data-persona="house"] .brand span { color: var(--green); }
