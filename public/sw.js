@@ -3,7 +3,7 @@
 // - Recursos externos pesados (detector de manos, fuentes, fórmulas): caché primero.
 // - «Preparar modo sin conexión» descarga por adelantado esos recursos externos.
 
-const SHELL = "nikolai-shell-v12";
+const SHELL = "nikolai-shell-v13";
 const ASSETS = "nikolai-assets-v1";
 
 const SHELL_FILES = [
@@ -40,7 +40,9 @@ self.addEventListener("activate", (e) => {
 async function networkFirst(req) {
   const cache = await caches.open(SHELL);
   try {
-    const res = await Promise.race([fetch(req), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3500))]);
+    // «no-cache»: pregunta siempre al servidor si hay versión nueva (si no cambió, responde 304 y es rápido).
+    const fresh = req.mode === "navigate" ? fetch(req.url, { cache: "no-cache", credentials: "same-origin" }) : fetch(req, { cache: "no-cache" });
+    const res = await Promise.race([fresh, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3500))]);
     if (res.ok) cache.put(req, res.clone());
     return res;
   } catch {

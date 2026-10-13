@@ -18,6 +18,7 @@ export const LANGS = {
 
 const T = {
   es: {
+    appVersion: "Versión", modulesWord: "módulos",
     watch: "Ver juntos", watchCardDesc: "Netflix, Prime Video y más con NIKOLAI de compañera: opina, reacciona y te cuenta curiosidades.",
     wt_now: "Viendo", wt_minute: "Minuto", wt_live: "EN VIVO",
     wt_intro: "Elige la plataforma y lo que vas a ver. NIKOLAI te acompaña como compañera de sofá: reacciona contigo, opina, responde tus dudas y cuenta curiosidades, sin spoilers.",
@@ -398,6 +399,7 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    appVersion: "Version", modulesWord: "modules",
     watch: "Watch together", watchCardDesc: "Netflix, Prime Video and more with NIKOLAI as your buddy: opinions, reactions and fun facts.",
     wt_now: "Watching", wt_minute: "Minute", wt_live: "LIVE",
     wt_intro: "Pick the platform and what you'll watch. NIKOLAI keeps you company on the couch: reacts, gives opinions, answers questions and shares fun facts, spoiler-free.",

@@ -145,6 +145,7 @@ function endCall() {
 }
 
 
+const APP_VERSION = "2026.10.13-b";
 const MODULES = [
   "core", "chat", "persona", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -860,6 +861,7 @@ const PANEL = {
         ${tile(`${icon("speaker")}<br>${esc(t("test"))}`, "", "action")}
       </div>
       <p class="muted" id="diagOut">${esc(t("diagHint"))}</p>
+      <p class="muted mono">${esc(t("appVersion"))}: ${APP_VERSION} · ${MODULES.length} ${esc(t("modulesWord"))}</p>
       <div class="readout"><div class="k">${esc(t("vlogTitle").toUpperCase())}</div><div class="vlog" id="voiceLog">${voiceLogHtml()}</div></div>
       <div class="readout"><div class="k">${esc(t("micLevel"))}</div><div class="meter"><i id="sysMeter"></i></div></div>
       ${brain.model ? `<p class="muted mono">MODEL · ${esc(brain.model)}</p>` : ""}`;
@@ -1857,7 +1859,18 @@ function renderDock() {
 }
 
 if ("serviceWorker" in navigator && window.isSecureContext) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  // Busca versiones nuevas al abrir y al volver a la app; cuando llega una, recarga sola una vez.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
+    reg.update().catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+  }).catch(() => {});
 }
 
 // Campana de apertura de Wall Street (9:30 de Nueva York).
