@@ -14,6 +14,7 @@ import {
   spotify, renderMusic, handleRedirect, isConnected as spotifyConnected, refreshNow, control as spotifyControl,
   search as spotifySearch, playItem, setEmbed, presetFor, PRESETS, playInEmbed, hidePlayer, player as miniPlayer, preloadEmbed,
 } from "./spotify.js";
+import { news, prefetchNews } from "./news.js";
 import { offline, localAnswer, isOffline, addPending, takePending, removePending, markPrepared } from "./offline.js";
 import { watchOpeningBell, ringBell, exchangeStatus, EXCHANGES } from "./wallstreet.js";
 import { memory, renderMemory, addMemory, forgetMatching, memoriesForBrain } from "./memory.js";
@@ -218,9 +219,9 @@ function values() {
     hwLevel: t("lv_" + settings.level),
     btcPrice: btc ? fmtMoney(btc.price) : "—",
     btcChange: btc ? fmtPct(btc.change) : "—",
-    newsInfo: t("newsCardDesc"),
+    newsInfo: news.items[0]?.t || t("newsCardDesc"),
     newsTopics: 9,
-    newsSource: "WEB",
+    newsSource: news.items.length ? String(news.items.length) : "WEB",
     wxTemp: weather.data ? `${Math.round(weather.data.current.temperature_2m)}°` : "—",
     wxDesc: weather.data ? t("wx_" + wmo(weather.data.current.weather_code)[0]) : "—",
     wxHum: weather.data ? `${weather.data.current.relative_humidity_2m}%` : "—",
@@ -251,7 +252,8 @@ function updateCards() {
     const k = el.dataset.bind;
     if (k.startsWith("status-")) {
       const id = k.slice(7);
-      const live = id === "core" || id === "chat" || id === "homework" || id === "news" ? brain.apiKey
+      const live = id === "core" || id === "chat" || id === "homework" ? brain.apiKey
+        : id === "news" ? navigator.onLine
         : id === "settings" ? Boolean(gestures?.running)
         : id === "markets" ? Boolean(market.live.BTCUSDT)
         : id === "music" ? true
@@ -1772,6 +1774,7 @@ function wake(how) {
   if (openId === "core") refreshPanel();
   renderSides();
   setTimeout(() => greetOnWake(how, firstTime, lastVisit), 1500);
+  setTimeout(() => prefetchNews(getLang()), 6000);
 }
 
 async function greetOnWake(how, firstTime, lastVisit) {
