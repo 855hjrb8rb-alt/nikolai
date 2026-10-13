@@ -197,7 +197,7 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.13-k";
+const APP_VERSION = "2026.10.13-l";
 const MODULES = [
   "core", "chat", "persona", "lobby", "bots", "map", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
