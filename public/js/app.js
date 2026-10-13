@@ -10,7 +10,7 @@ import {
 import { CallView } from "./call.js";
 import { renderStudio, studio } from "./studio.js";
 import { renderWatch, watch, minuteNow } from "./watch.js";
-import { renderMap, destroy as destroyMap, tac } from "./map.js";
+import { renderMap, destroy as destroyMap, gm } from "./gmaps.js";
 import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -193,7 +193,7 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.13-g";
+const APP_VERSION = "2026.10.13-h";
 const MODULES = [
   "core", "chat", "persona", "map", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -242,7 +242,7 @@ function cardBody(id) {
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
-    case "map": return `<div class="big-code mono map-code" data-bind="tacCoords">—</div><div class="stats">${stat("map_layers", "tacLayers")}${stat("map_targets", "tacPins", "accent")}</div>`;
+    case "map": return `<div class="big-code mono map-code" data-bind="tacCoords">—</div><div class="stats">${stat("gm_view", "gmType")}${stat("gm_modeK", "gmMode", "accent")}</div>`;
     case "watch": return `<p class="desc" data-bind="wtInfo" style="flex:1"></p><div class="stats">${stat("wt_now", "wtNow")}${stat("wt_minute", "wtMin", "accent")}</div>`;
     case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
     case "persona": return `<div class="big-code persona-code" data-bind="personaName">—</div><div class="stats">${stat("call_title", "callState")}${stat("ps_voice", "personaVoice", "accent")}</div>`;
@@ -344,9 +344,9 @@ function values() {
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
     personaName: t("personaShort_" + settings.persona),
-    tacCoords: `${tac.lat.toFixed(2)}, ${tac.lon.toFixed(2)}`,
-    tacLayers: tac.layers.length,
-    tacPins: tac.pins.length,
+    tacCoords: gm.q ? gm.q.slice(0, 18) : `${gm.lat.toFixed(2)}, ${gm.lon.toFixed(2)}`,
+    gmType: t("gmt_" + gm.type),
+    gmMode: localStorage.getItem("nikolai.googleMapsKey") ? t("gm_modeFull") : t("gm_modeBasic"),
     wtInfo: watch.active ? `${watch.title}` : t("watchCardDesc"),
     wtNow: watch.active ? t("wt_live") : "—",
     wtMin: watch.active ? `${minuteNow()}′` : "—",
