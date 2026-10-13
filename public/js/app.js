@@ -41,7 +41,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", persona: "nikolai", personaVoice: true, jfkLang: "es", jfkVintage: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", emotions: false, emoIntensity: "soft", persona: "nikolai", personaVoice: true, jfkLang: "es", jfkVintage: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -92,6 +92,39 @@ const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 document.body.dataset.persona = settings.persona;
 const LOOK_RE = /\b(m[ií]rame|me ves|c[oó]mo me veo|qu[eé] ves|ves esto|mira esto|mira lo que|look at me|what do you see|how do i look)\b/i;
 
+// ---------- Emociones (simuladas) ----------
+const MOODS = {
+  happy: ["😊", 1.04, 1.05], loving: ["🥰", 0.97, 1.04], playful: ["😜", 1.06, 1.06], excited: ["🤩", 1.1, 1.08], neutral: ["🙂", 1, 1],
+  worried: ["😟", 0.98, 1], sad: ["😢", 0.9, 0.95], crying: ["😭", 0.86, 1.06], missing: ["🥺", 0.94, 1.02], jealous: ["😒", 1, 0.98],
+  annoyed: ["😤", 1.05, 0.96], angry: ["😠", 1.1, 0.92],
+};
+let mood = store.get("mood", { mood: "neutral", intensity: 0.5, at: 0 });
+/** Las emociones se calman solas con el tiempo (unos 25 minutos). */
+function currentMood() {
+  if (!settings.emotions) return { mood: "neutral", intensity: 0 };
+  if (mood.mood !== "neutral" && Date.now() - mood.at > 25 * 60_000) mood = { mood: "neutral", intensity: 0.5, at: Date.now() };
+  return mood;
+}
+function setMood(m, intensity = 0.6) {
+  if (!MOODS[m]) return;
+  mood = { mood: m, intensity: Math.min(1, Math.max(0.1, Number(intensity) || 0.6)), at: Date.now() };
+  store.set("mood", mood);
+  showMood();
+  applyVoice();
+  if (openId === "persona") refreshPanel();
+}
+function showMood() {
+  const chip = $("#moodChip");
+  const m = currentMood();
+  document.body.dataset.mood = settings.emotions ? m.mood : "";
+  if (!chip) return;
+  chip.hidden = !settings.emotions;
+  chip.textContent = `${MOODS[m.mood][0]} ${t("mood_" + m.mood)}`;
+}
+setInterval(showMood, 60_000);
+let lastUserAt = store.get("lastUserAt", 0);
+let awayHours = 0;
+
 // ---------- Personalidades y videollamada ----------
 // Retrato oficial de la Casa Blanca (1963), dominio público, servido por Wikimedia Commons.
 const JFK_PHOTO = "https://commons.wikimedia.org/wiki/Special:FilePath/John_F._Kennedy,_White_House_color_photo_portrait.jpg?width=640";
@@ -119,6 +152,7 @@ const call = new CallView({
   speakLevel: () => outputLevel(),
   micLevel: () => Math.min(1, mic.level() * 3),
   persona: () => settings.persona,
+  mood: () => currentMood(),
   title: (p) => t("persona_" + p),
   caption: () => ui.reply.textContent.slice(-180),
   micOn: () => voiceOn,
@@ -145,7 +179,7 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.13-b";
+const APP_VERSION = "2026.10.13-c";
 const MODULES = [
   "core", "chat", "persona", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -737,6 +771,22 @@ const PANEL = {
           ${p !== "nikolai" ? `<div class="pc-quick">${[1, 2, 3, 4].map((i) => `<button class="nw-mini" data-target data-q="${p}:${i}">${esc(t(`pq_${p}${i}`))}</button>`).join("")}</div>` : ""}
           <button class="tile ${settings.persona === p ? "on" : "action"}" data-target data-persona="${p}"><span class="t-main">${esc(settings.persona === p ? t("ps_active") : t("ps_use"))}</span></button>
         </div>`).join("")}</div>
+      <div class="readout emo-box ${settings.emotions ? "on" : ""}">
+        <div class="k">${esc(t("emo_title").toUpperCase())} · ${settings.emotions ? `${MOODS[currentMood().mood][0]} ${esc(t("mood_" + currentMood().mood))}` : esc(t("off"))}</div>
+        <p>${esc(t("emo_desc"))}</p>
+        <div class="tiles">
+          ${tile(esc(settings.emotions ? t("emo_off") : t("emo_on")), "", settings.emotions ? "on" : "action")}
+          ${tile(esc(t("emo_soft")), "", settings.emoIntensity === "soft" ? "on" : "")}
+          ${tile(esc(t("emo_high")), "", settings.emoIntensity === "high" ? "on" : "")}
+        </div>
+        ${settings.emotions ? `<div class="pc-quick">
+          <button class="nw-mini" data-target data-emoq="1">${esc(t("emoq_1"))}</button>
+          <button class="nw-mini" data-target data-emoq="2">${esc(t("emoq_2"))}</button>
+          <button class="nw-mini" data-target data-emoq="3">${esc(t("emoq_3"))}</button>
+          <button class="nw-mini" data-target data-emoq="4">${esc(t("emoq_4"))}</button>
+        </div>` : ""}
+        <p class="muted">${esc(t("emo_note"))}</p>
+      </div>
       <div class="readout call-promo">
         <div class="k">${esc(t("call_title").toUpperCase())}</div>
         <p>${esc(t("call_desc"))}</p>
@@ -761,6 +811,11 @@ const PANEL = {
       if (settings.persona !== p) setPersona(p, false);
       ask(t(`pq_${p}${i}`));
     }));
+    const [eOn, eSoft, eHigh] = body.querySelectorAll(".emo-box .tile");
+    eOn.onclick = () => { settings.emotions = !settings.emotions; saveSettings(); showMood(); applyVoice(); refreshPanel(); if (settings.emotions) speakOnce(t("emo_hello")); };
+    eSoft.onclick = () => { settings.emoIntensity = "soft"; saveSettings(); refreshPanel(); };
+    eHigh.onclick = () => { settings.emoIntensity = "high"; saveSettings(); refreshPanel(); };
+    body.querySelectorAll("[data-emoq]").forEach((b) => b.addEventListener("click", () => ask(t("emoq_" + b.dataset.emoq))));
     const [go, sees, pv] = body.querySelectorAll(".call-promo .tile");
     go.onclick = () => (call.active ? endCall() : startCall());
     sees.onclick = () => { settings.callSees = !settings.callSees; saveSettings(); refreshPanel(); };
@@ -1165,6 +1220,9 @@ function applyVoice() {
     speaker.pitch = clamp(settings.pitch * pv.pitch, 0.5, 1.6);
     if (speaker.premium && PREMIUM_VOICES.some((v) => v.id === settings.premiumVoice)) speaker.premium = { ...speaker.premium, voiceId: pv.premium, fx: (settings.persona === "lawyer" || settings.persona === "house") && speaker.premium.fx };
   }
+  // La emoción cambia un poco la voz (más lenta si está triste, más rápida si está emocionada o enojada).
+  const mv = MOODS[currentMood().mood];
+  if (settings.emotions && mv) { speaker.rate = clamp(speaker.rate * mv[1], 0.5, 2); speaker.pitch = clamp(speaker.pitch * mv[2], 0.5, 1.8); }
   // JFK: en inglés (su idioma) o doblado al español, con sonido de tele de 1963.
   if (settings.persona === "jfk") {
     if (settings.jfkLang === "en") speaker.lang = "en-US";
@@ -1415,6 +1473,7 @@ speaker.onIdle = () => { if (state === "speaking" || state === "thinking") after
 
 const ACTIONS = {
   set_persona: ({ persona }) => setPersona(persona, false),
+  set_mood: ({ mood: m, intensity }) => { if (settings.emotions) setMood(m, intensity); },
   video_call: ({ action }) => (action === "start" ? startCall() : endCall()),
   set_language: ({ code }) => applyLanguage(code),
   open_panel: ({ panel }) => (panel === "none" ? closePanel() : openPanel(panel)),
@@ -1457,7 +1516,7 @@ function dropOrphan(msg) {
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
   const model = { max: "claude-opus-5-5", balanced: "claude-sonnet-5-5", fast: "claude-haiku-5-5" }[settings.aiSpeed];
-  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: settings.persona, personaLang: settings.persona === "jfk" ? settings.jfkLang : "es", video: call.active, ...payload }, handlers);
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: settings.persona, emotions: settings.emotions ? { on: true, intensity: settings.emoIntensity, mood: currentMood().mood, hoursAway: awayHours } : undefined, personaLang: settings.persona === "jfk" ? settings.jfkLang : "es", video: call.active, ...payload }, handlers);
 }
 
 /** Pide a NIKOLAI una descripción corta de una foto para guardarla como recuerdo. */
@@ -1489,6 +1548,9 @@ function errorText(err) {
 async function ask(text, { channel = "voice", speak = true, onText, onDone, look = false } = {}) {
   // En videollamada, NIKOLAI te ve si se lo pides («mírame») o si activaste «que me vea siempre».
   const photo = call.active && (look || settings.callSees || LOOK_RE.test(text)) ? call.snapshot() : null;
+  awayHours = lastUserAt ? (Date.now() - lastUserAt) / 3_600_000 : 0;
+  lastUserAt = Date.now();
+  store.set("lastUserAt", lastUserAt);
   if (isOffline()) { vlog("offline", text); answerOffline(text, { speak, onText, onDone }); return; }
   stopAll();
   const userMsg = { role: "user", content: text };
@@ -2073,12 +2135,16 @@ async function greetOnWake(how, firstTime, lastVisit) {
   const bday = daysToBirthday() === 0 ? ` ${t("birthdayGreeting").replace("{name}", name)}` : "";
   const local = firstTime
     ? `${hello}${name}. ${t("welcomeFirst")}${bday}`
-    : `${hello}${name}. ${t("welcomeBack").replace("{ago}", agoText(Date.now() - lastVisit))}${bday}`;
+    : settings.emotions && Date.now() - lastVisit > 6 * 3_600_000
+      ? `${hello}${name}… ${t("emo_missedLocal").replace("{ago}", agoText(Date.now() - lastVisit))}${bday}`
+      : `${hello}${name}. ${t("welcomeBack").replace("{ago}", agoText(Date.now() - lastVisit))}${bday}`;
   // Si ya hay historial y cerebro, que el saludo recuerde de qué hablaron.
   if (!firstTime && history.length && brain.apiKey) {
     const instruction = t("greetPrompt")
       .replace("{how}", t({ voice: "wokeVoice", claps: "wokeClaps", gesture: "wokeGesture" }[how] || "wokeTap"))
-      .replace("{hello}", hello).replace("{name}", name).replace("{ago}", agoText(Date.now() - lastVisit));
+      .replace("{hello}", hello).replace("{name}", name).replace("{ago}", agoText(Date.now() - lastVisit))
+      + (settings.emotions && Date.now() - lastVisit > 3 * 3_600_000 ? " " + t("emo_greet") : "");
+    awayHours = settings.emotions ? (Date.now() - Math.max(lastVisit || 0, lastUserAt || 0)) / 3_600_000 : 0;
     stopAll();
     setState("thinking");
     speaker.begin();
@@ -2139,6 +2205,7 @@ function tickClock() {
 }
 tickClock();
 setInterval(tickClock, 1000);
+showMood();
 setInterval(() => {
   pushSeries("mic", mic.level());
   pushSeries("fps", gestures?.running ? gestures.fps : 0);

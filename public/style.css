@@ -879,3 +879,12 @@ body[data-persona="jfk"] .brand span { color: #dfe6f2; }
 .pip-body .wt-companion { height: calc(100vh - 20px); }
 .pip-body .wt-log { flex: 1; max-height: none; }
 .pip-body .msg { font-size: 14px; }
+
+/* ---------- Emociones ---------- */
+.mood-chip { font-style: normal; margin-left: 10px; font: 600 11px var(--font-mono); padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); background: var(--glass); color: var(--ice); white-space: nowrap; }
+body[data-mood="sad"] .mood-chip, body[data-mood="crying"] .mood-chip, body[data-mood="missing"] .mood-chip { border-color: #7aa8ff; color: #b8c8ff; }
+body[data-mood="angry"] .mood-chip, body[data-mood="annoyed"] .mood-chip { border-color: var(--danger); color: var(--danger); }
+body[data-mood="jealous"] .mood-chip, body[data-mood="loving"] .mood-chip { border-color: #ff9ad5; color: #ff9ad5; }
+.emo-box.on { border-color: #ff9ad5; }
+.emo-box p { margin: 4px 0; }
+@media (max-width: 640px) { .mood-chip { margin-left: 6px; font-size: 10px; padding: 2px 6px; } }

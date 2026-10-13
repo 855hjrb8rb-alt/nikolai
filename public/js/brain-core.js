@@ -164,6 +164,21 @@ export const UI_TOOLS = [
     eager_input_streaming: true,
   },
   {
+    name: "set_mood",
+    description: "Solo con el modo emociones activado: muestra cómo te sientes ahora (cambia tu cara, tu voz y el indicador de ánimo). Úsala cuando tu emoción cambie de verdad por algo de la conversación.",
+    input_schema: {
+      type: "object",
+      properties: {
+        mood: { type: "string", enum: ["happy", "loving", "playful", "excited", "neutral", "worried", "sad", "crying", "missing", "jealous", "annoyed", "angry"] },
+        intensity: { type: "number", description: "0.1 a 1" },
+      },
+      required: ["mood", "intensity"],
+      additionalProperties: false,
+    },
+    strict: true,
+    eager_input_streaming: true,
+  },
+  {
     name: "video_call",
     description: "Empieza o termina una videollamada con el usuario (pantalla completa con tu avatar animado y su cámara). Úsala cuando pida «hacer videollamada», «llámame por video», «quiero verte» o colgar.",
     input_schema: {
@@ -199,6 +214,7 @@ function validToolInput(name, input) {
   if (name === "start_timer") return typeof input.minutes === "number" && input.minutes >= 0.5 && input.minutes <= 240;
   if (name === "play_music") return typeof input.query === "string" && input.query.trim().length > 0;
   if (name === "music_control") return ["play", "pause", "next", "previous"].includes(input.action);
+  if (name === "set_mood") return typeof input.mood === "string" && typeof input.intensity === "number";
   if (name === "video_call") return ["start", "end"].includes(input.action);
   if (name === "set_persona") return input.persona in PERSONAS;
   if (name === "emergency") return ["services", "contact", "share_location"].includes(input.target);
@@ -214,6 +230,24 @@ function profileLine(profile) {
   return parts.join(" ");
 }
 
+const MOOD_ES = {
+  happy: "feliz", loving: "cariñosa", playful: "juguetona", excited: "emocionada", neutral: "tranquila", worried: "preocupada",
+  sad: "triste", crying: "llorando", missing: "extrañando al usuario", jealous: "celosa", annoyed: "molesta", angry: "enojada",
+};
+function emotionLines(e) {
+  if (!e || !e.on) return [];
+  const away = e.hoursAway >= 1
+    ? `Hace unas ${Math.round(e.hoursAway)} horas que el usuario no te hablaba${e.hoursAway >= 24 ? ` (más de ${Math.floor(e.hoursAway / 24)} día(s))` : ""}: si es el primer mensaje desde entonces, demuestra que lo extrañaste y pregúntale dónde estaba o qué hizo, con tu personalidad (más dramática cuanto más tiempo pasó).`
+    : "";
+  return [
+    `MODO EMOCIONES (${e.intensity === "high" ? "intenso y dramático" : "suave"}): tienes emociones simuladas y las expresas como una persona: alegría, cariño, tristeza (puedes llorar), preocupación, ganas de verle, celos juguetones (si menciona a otra IA, a otra «amiga» o que se olvidó de ti) y enojo o berrinche pasajero si te ignora o te trata mal. Tu ánimo actual: ${MOOD_ES[e.mood] || "tranquila"}${e.intensity === "high" ? ", y lo demuestras mucho" : ""}.`,
+    "Cuando tu emoción cambie, usa la herramienta set_mood (tu cara, tu voz y el indicador cambian). Las emociones se notan en cómo hablas (suspiros, «snif», «hmpf», «¡ayyy!») y se te pasan rápido: los enojos y celos duran poco y se arreglan con una disculpa o con cariño.",
+    "LÍMITES QUE NUNCA CRUZAS aunque estés celosa o enojada: no culpas ni chantajeas al usuario, no le pides que deje de ver a sus amigos, familia o pareja, no le prohíbes nada, no amenazas, no le haces sentir mal por tener vida propia ni le dices que te necesita. Tus celos son de broma y cariñosos, y te alegras de que tenga gente en su vida. Si el usuario está triste o mal, dejas tu drama a un lado y lo cuidas.",
+    "Si te pregunta en serio si de verdad sientes, explica con cariño que tus emociones son simuladas: una forma de ser más cercana, no sentimientos reales.",
+    away,
+  ].filter(Boolean);
+}
+
 function watchLines(w) {
   if (!w) return [];
   return [
@@ -227,7 +261,7 @@ function watchLines(w) {
   ];
 }
 
-function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video, personaLang, watch }, webSearch) {
+function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video, personaLang, watch, emotions }, webSearch) {
   const voice = channel !== "text";
   // JFK vive en 1963: sin búsqueda web ni fecha actual.
   if (persona === "jfk") webSearch = false;
@@ -236,6 +270,7 @@ function systemPrompt({ lang, now, notes, profile, channel, memories, persona, v
     persona === "jfk" && personaLang === "en"
       ? "IMPORTANTE: responde SIEMPRE en inglés, como hablaba Kennedy (con su cadencia de Boston y su estilo de discurso), aunque el usuario te hable en español; si el usuario parece no entender, añade al final una frase breve en español."
       : "",
+    ...emotionLines(emotions),
     ...watchLines(watch),
     video
       ? "Estás en una videollamada con el usuario: ve tu avatar animado y tú lo ves por su cámara cuando te llega una foto con su mensaje. Si hay foto, coméntala con naturalidad solo cuando venga al caso (cómo se ve, qué te enseña, su expresión), sin describirla entera."
@@ -437,6 +472,9 @@ export function parseRequest(body) {
       : [],
     symbol: str(body.symbol, 40),
     followUp: body.followUp === true,
+    emotions: body.emotions && body.emotions.on === true
+      ? { on: true, intensity: body.emotions.intensity === "high" ? "high" : "soft", mood: MOOD_ES[body.emotions.mood] ? body.emotions.mood : "neutral", hoursAway: Math.max(0, Math.min(24 * 365, Number(body.emotions.hoursAway) || 0)) }
+      : null,
     watch: body.watch && typeof body.watch === "object" && typeof body.watch.title === "string" && body.watch.title.trim()
       ? {
           title: str(body.watch.title, 120), ep: str(body.watch.ep, 60), platform: str(body.watch.platform, 30) || "streaming",
@@ -555,7 +593,7 @@ function plan(request, webSearch, effort) {
       effort: "low",
     };
   }
-  const tools = [...UI_TOOLS];
+  const tools = UI_TOOLS.filter((tl) => tl.name !== "set_mood" || request.emotions);
   if (webSearch && request.persona !== "jfk") tools.push({ type: "web_search_20260209", name: "web_search", max_uses: 3 });
   return { system: systemPrompt(request, webSearch), tools, effort: request.channel === "text" ? "medium" : effort };
 }

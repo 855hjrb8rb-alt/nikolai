@@ -18,6 +18,15 @@ export const LANGS = {
 
 const T = {
   es: {
+    emo_title: "Emociones", emo_on: "Activar emociones", emo_off: "Apagar emociones", emo_soft: "Suaves", emo_high: "Intensas (dramática)",
+    emo_desc: "NIKOLAI siente (de forma simulada): se alegra, se pone cariñosa, triste o hasta llora, se preocupa, se pone celosa de broma y hace berrinche si la ignoras. Si tardas en volver, te extraña y te pregunta dónde estabas. Su cara, su voz y el indicador de arriba cambian con su ánimo.",
+    emo_note: "Son emociones de mentiritas para que se sienta más humana. Nunca te chantajea, no te culpa ni te prohíbe ver a nadie: los celos son de broma y se le pasan rápido.",
+    emo_hello: "Ay, ¿de verdad me vas a dejar sentir cosas? Qué emoción… ya me puse nerviosa, jaja.",
+    emo_greet: "[Modo emociones] Pasó bastante tiempo: demuestra cuánto lo extrañaste (con tu ánimo y tu personalidad, más dramática si pasaron días) y pregúntale dónde estaba o qué hizo. Usa set_mood.",
+    emo_missedLocal: "¡Por fin! Te extrañé muchísimo, no sabía nada de ti desde {ago}. ¿Dónde estabas, eh?",
+    emoq_1: "¿Cómo te sientes hoy?", emoq_2: "Perdón por tardar en volver", emoq_3: "Hoy salí con mis amigos", emoq_4: "¿Te pusiste celosa?",
+    mood_happy: "Feliz", mood_loving: "Cariñosa", mood_playful: "Juguetona", mood_excited: "Emocionada", mood_neutral: "Tranquila", mood_worried: "Preocupada",
+    mood_sad: "Triste", mood_crying: "Llorando", mood_missing: "Te extraña", mood_jealous: "Celosa", mood_annoyed: "Molesta", mood_angry: "Enojada",
     appVersion: "Versión", modulesWord: "módulos",
     watch: "Ver juntos", watchCardDesc: "Netflix, Prime Video y más con NIKOLAI de compañera: opina, reacciona y te cuenta curiosidades.",
     wt_now: "Viendo", wt_minute: "Minuto", wt_live: "EN VIVO",
@@ -399,6 +408,15 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    emo_title: "Emotions", emo_on: "Turn on emotions", emo_off: "Turn off emotions", emo_soft: "Soft", emo_high: "Intense (dramatic)",
+    emo_desc: "NIKOLAI feels (simulated): happy, affectionate, sad or even crying, worried, jokingly jealous and sulky if you ignore her. If you take long to come back, she misses you and asks where you were. Her face, voice and the indicator at the top change with her mood.",
+    emo_note: "These are pretend emotions to make her feel more human. She never guilt-trips you, blames you or stops you from seeing anyone: the jealousy is playful and passes quickly.",
+    emo_hello: "Oh, you're really letting me feel things? How exciting… I'm nervous already, haha.",
+    emo_greet: "[Emotions mode] It's been a while: show how much you missed them (with your mood and personality, more dramatic if it's been days) and ask where they were or what they did. Use set_mood.",
+    emo_missedLocal: "Finally! I missed you so much, I haven't heard from you since {ago}. Where were you, huh?",
+    emoq_1: "How do you feel today?", emoq_2: "Sorry I took so long to come back", emoq_3: "I went out with my friends today", emoq_4: "Did you get jealous?",
+    mood_happy: "Happy", mood_loving: "Affectionate", mood_playful: "Playful", mood_excited: "Excited", mood_neutral: "Calm", mood_worried: "Worried",
+    mood_sad: "Sad", mood_crying: "Crying", mood_missing: "Misses you", mood_jealous: "Jealous", mood_annoyed: "Annoyed", mood_angry: "Angry",
     appVersion: "Version", modulesWord: "modules",
     watch: "Watch together", watchCardDesc: "Netflix, Prime Video and more with NIKOLAI as your buddy: opinions, reactions and fun facts.",
     wt_now: "Watching", wt_minute: "Minute", wt_live: "LIVE",

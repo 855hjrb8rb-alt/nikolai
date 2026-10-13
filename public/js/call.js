@@ -196,7 +196,13 @@ export class CallView {
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, w, h);
     const p = this.o.persona();
-    const col = COLORS[p] || COLORS.nikolai;
+    let col = COLORS[p] || COLORS.nikolai;
+    const mood = this.o.mood?.()?.mood;
+    if (p === "nikolai" && mood) {
+      if (["angry", "annoyed"].includes(mood)) col = { main: "#ff7a90", accent: "#ffcc5c", glow: "rgba(255,122,144,.55)" };
+      else if (["sad", "crying", "missing", "worried"].includes(mood)) col = { main: "#7aa8ff", accent: "#b8c8ff", glow: "rgba(122,168,255,.5)" };
+      else if (["loving", "jealous", "playful"].includes(mood)) col = { main: "#ff9ad5", accent: "#ffcc5c", glow: "rgba(255,154,213,.55)" };
+    }
     const T = now / 1000;
     // Nivel de la boca: audio real si hay voz premium, si no, sílabas simuladas mientras habla.
     let target = 0;
@@ -389,11 +395,18 @@ export class CallView {
     }
     g.strokeStyle = col.main;
 
-    // Cejas
+    // Emoción actual (modo emociones): cambia cejas, boca, lágrimas y rubor.
+    const md = this.o.mood?.() || { mood: "neutral", intensity: 0 };
+    const k = Math.max(0.3, md.intensity || 0.5);
+    const sadish = ["sad", "crying", "worried", "missing"].includes(md.mood);
+    const mad = ["angry", "annoyed", "jealous"].includes(md.mood);
+    const warm = ["loving", "playful", "jealous", "excited"].includes(md.mood);
+    // Cejas: la parte interior sube con tristeza y baja con enojo.
     const ey = hy - S * 0.06, ex = S * 0.14;
     const browUp = girl ? S * 0.02 : 0;
-    curve(cx - ex - S * 0.08, ey - S * 0.08 - browUp, cx - ex, ey - S * (girl ? 0.13 : 0.1) - browUp, cx - ex + S * 0.08, ey - S * (girl ? 0.09 : 0.1));
-    curve(cx + ex - S * 0.08, ey - S * (girl ? 0.09 : 0.1), cx + ex, ey - S * (girl ? 0.13 : 0.11) - browUp, cx + ex + S * 0.08, ey - S * 0.08 - browUp);
+    const inner = (sadish ? -S * 0.045 : mad ? S * 0.05 : 0) * k;
+    curve(cx - ex - S * 0.08, ey - S * 0.08 - browUp, cx - ex, ey - S * (girl ? 0.13 : 0.1) - browUp, cx - ex + S * 0.08, ey - S * (girl ? 0.09 : 0.1) + inner);
+    curve(cx + ex - S * 0.08, ey - S * (girl ? 0.09 : 0.1) + inner, cx + ex, ey - S * (girl ? 0.13 : 0.11) - browUp, cx + ex + S * 0.08, ey - S * 0.08 - browUp);
     // Ojos
     for (const sx of [-1, 1]) {
       const x = cx + sx * ex;
@@ -414,10 +427,40 @@ export class CallView {
       curve(cx - mw * 0.9, my - S * 0.045, cx - mw * 0.4, my - S * 0.075, cx - S * 0.01, my - S * 0.055);
       curve(cx + S * 0.01, my - S * 0.055, cx + mw * 0.4, my - S * 0.075, cx + mw * 0.9, my - S * 0.045);
     }
-    const smile = girl ? S * 0.035 : S * 0.012;
+    let smile = girl ? S * 0.035 : S * 0.012;
+    if (sadish) smile = -S * 0.035 * k;
+    else if (mad) smile = -S * 0.015 * k;
+    else if (md.mood === "happy" || md.mood === "excited" || md.mood === "playful") smile = S * 0.05 * k + S * 0.02;
     g.strokeStyle = girl ? col.main : col.main;
     curve(cx - mw, my, cx, my + smile - openH * 0.2, cx + mw, my);
     if (openH > 1) curve(cx - mw * 0.85, my + 1, cx, my + smile + openH, cx + mw * 0.85, my + 1);
+    // Rubor
+    if (warm) {
+      g.save(); g.shadowBlur = 0; g.fillStyle = `rgba(255,120,170,${0.25 * k})`;
+      for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(cx + sx * S * 0.2, ey + S * 0.13, S * 0.06, S * 0.03, 0, 0, Math.PI * 2); g.fill(); }
+      g.restore();
+    }
+    // Lágrimas que caen (llorando, o muy triste)
+    if (md.mood === "crying" || (md.mood === "sad" && k > 0.6)) {
+      const T = now / 1000;
+      g.save(); g.fillStyle = "#9fdcff"; g.shadowColor = "#9fdcff"; g.shadowBlur = 10;
+      for (const sx of [-1, 1]) {
+        for (let i = 0; i < (md.mood === "crying" ? 3 : 1); i++) {
+          const ph = ((T * 0.7 + i * 0.37 + (sx > 0 ? 0.5 : 0)) % 1);
+          const tx = cx + sx * (ex + S * 0.03), ty = ey + S * 0.05 + ph * S * 0.38;
+          g.globalAlpha = 1 - ph;
+          g.beginPath(); g.moveTo(tx, ty - S * 0.025); g.quadraticCurveTo(tx + S * 0.018, ty, tx, ty + S * 0.018); g.quadraticCurveTo(tx - S * 0.018, ty, tx, ty - S * 0.025); g.fill();
+        }
+      }
+      g.restore();
+    }
+    // Venita de enojo
+    if (md.mood === "angry" && k > 0.5) {
+      g.save(); g.strokeStyle = "#ff6b7d"; g.shadowColor = "#ff6b7d";
+      const vx = cx + S * 0.22, vy = hy - S * 0.32;
+      for (const [a, b] of [[[-1, -1], [-0.3, -0.3]], [[1, -1], [0.3, -0.3]], [[-1, 1], [-0.3, 0.3]], [[1, 1], [0.3, 0.3]]]) line([[vx + a[0] * S * 0.04, vy + a[1] * S * 0.04], [vx + b[0] * S * 0.04, vy + b[1] * S * 0.04]]);
+      g.restore();
+    }
     // Orejas
     curve(cx - S * 0.36, ey, cx - S * 0.43, ey + S * 0.07, cx - S * 0.35, ey + S * 0.14);
     curve(cx + S * 0.36, ey, cx + S * 0.43, ey + S * 0.07, cx + S * 0.35, ey + S * 0.14);
