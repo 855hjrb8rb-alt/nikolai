@@ -81,7 +81,7 @@ Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de acce
 | Módulo | Qué hace |
 |---|---|
 | **Núcleo IA** | Activar/pausar la voz, modo conversación o palabra clave, **velocidad de la IA** (Rápida · Equilibrada · Máxima), clave de Anthropic. |
-| **Personalidades** | **NIKOLAI** (tipo JARVIS), **Abogado** con el estilo de Harvey Specter de *Suits* (orientación legal general, estrategia y negociación) **Mejor amiga** cariñosa y muy humana, y **Mr. House** (Robert House de *Fallout: New Vegas*) en su monitor verde, estratega visionario. Cada una con su voz. Por voz: «modo abogado», «modo amiga». |
+| **Personalidades** | **NIKOLAI** (tipo JARVIS), **Abogado** con el estilo de Harvey Specter de *Suits* (orientación legal general, estrategia y negociación) **Mejor amiga** cariñosa y muy humana, y **Mr. House** (Robert House de *Fallout: New Vegas*) en su monitor verde, estratega visionario, y **John F. Kennedy** (recreación histórica: recuerda su vida hasta el 22 de noviembre de 1963 y no sabe en qué año estamos), en una tele de los 60. Cada una con su voz. Por voz: «modo abogado», «modo amiga». |
 | **Videollamada** | Pantalla completa con un avatar holográfico animado (mueve la boca al hablar, parpadea, mira) y tu cámara con **zoom**. Dile «mírame» o toca el ojo y ella te ve (solo envía una foto cuando tú quieres). |
 | **Trabajo** | Currículum, carta de presentación, **simulacro de entrevista** (te pregunta, califica y corrige), correos profesionales, negociar sueldo y perfil de LinkedIn. Copiar y descargar. |
 | **Proyectos** | Tablero por hacer / en curso / hecho, fecha límite y avance; **Planear con IA** divide el proyecto en tareas, **Siguiente paso** y **Pitch**. |

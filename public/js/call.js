@@ -6,6 +6,7 @@ const COLORS = {
   nikolai: { main: "#79e3ff", accent: "#ffcc5c", glow: "rgba(121,227,255,.55)" },
   lawyer: { main: "#ffcc5c", accent: "#cfe3ff", glow: "rgba(255,204,92,.5)" },
   friend: { main: "#ff9ad5", accent: "#c9b8ff", glow: "rgba(255,154,213,.55)" },
+  jfk: { main: "#eef1f6", accent: "#a9b4c8", glow: "rgba(220,228,240,.45)" },
   house: { main: "#7dffb2", accent: "#b8ffd8", glow: "rgba(125,255,178,.55)" },
 };
 
@@ -214,7 +215,7 @@ export class CallView {
     g.restore();
 
     if (p === "nikolai") this.#orb(g, cx, cy, S, T, col);
-    else if (p === "house") this.#monitor(g, cx, cy, S, now, col);
+    else if (p === "house" || p === "jfk") this.#monitor(g, cx, cy, S, now, col, p);
     else this.#face(g, cx, cy, S, now, col, p);
 
     // Líneas de holograma
@@ -253,7 +254,8 @@ export class CallView {
   }
 
   /** Mr. House: su cara en un monitor verde de fósforo, como en el Lucky 38. */
-  #monitor(g, cx, cy, S, now, col) {
+  #monitor(g, cx, cy, S, now, col, p = "house") {
+    const tv = p === "jfk"; // televisor en blanco y negro de 1963
     const T = now / 1000;
     const w = S * 1.5, h = S * 1.25, x = cx - w / 2, y = cy - h / 2 - S * 0.1;
     g.save();
@@ -261,20 +263,27 @@ export class CallView {
     const rr = (x0, y0, w0, h0, r) => { g.beginPath(); g.roundRect(x0, y0, w0, h0, r); g.stroke(); };
     rr(x - S * 0.08, y - S * 0.08, w + S * 0.16, h + S * 0.16, S * 0.08); // carcasa
     g.globalAlpha = 0.5; rr(x, y, w, h, S * 0.14); g.globalAlpha = 1; // pantalla curva
+    if (tv) {
+      // Antena de conejo y perillas
+      g.beginPath(); g.moveTo(cx, y - S * 0.08); g.lineTo(cx - S * 0.35, y - S * 0.5); g.moveTo(cx, y - S * 0.08); g.lineTo(cx + S * 0.3, y - S * 0.52); g.stroke();
+      g.beginPath(); g.arc(cx, y - S * 0.08, S * 0.04, Math.PI, 0); g.stroke();
+    }
     // Pie del monitor
     g.beginPath(); g.moveTo(cx - S * 0.15, y + h + S * 0.08); g.lineTo(cx - S * 0.25, y + h + S * 0.3); g.lineTo(cx + S * 0.25, y + h + S * 0.3); g.lineTo(cx + S * 0.15, y + h + S * 0.08); g.stroke();
     // Brillo de fósforo dentro de la pantalla
     g.beginPath(); g.roundRect(x, y, w, h, S * 0.14); g.clip();
     const ph = g.createRadialGradient(cx, y + h / 2, 0, cx, y + h / 2, w * 0.7);
-    ph.addColorStop(0, "rgba(125,255,178,.16)"); ph.addColorStop(1, "rgba(0,40,20,.05)");
+    ph.addColorStop(0, tv ? "rgba(230,235,245,.14)" : "rgba(125,255,178,.16)"); ph.addColorStop(1, tv ? "rgba(20,20,30,.05)" : "rgba(0,40,20,.05)");
     g.fillStyle = ph; g.fillRect(x, y, w, h);
     g.globalAlpha = 0.85 + Math.sin(T * 50) * 0.04 + (Math.random() < 0.02 ? -0.3 : 0); // parpadeo de tubo
     g.restore();
     g.save();
     g.beginPath(); g.roundRect(x, y, w, h, S * 0.14); g.clip();
-    this.#face(g, cx, y + h * 0.62, S * 0.78, now, col, "house");
-    // Barrido del tubo
-    g.fillStyle = "rgba(125,255,178,.08)";
+    if (tv) this.#face(g, cx, y + h * 0.5, S * 0.62, now, col, "jfk");
+    else this.#face(g, cx, y + h * 0.62, S * 0.78, now, col, "house");
+    // Barrido del tubo (y nieve en la tele antigua)
+    if (tv) { g.fillStyle = "rgba(255,255,255,.05)"; for (let i = 0; i < 60; i++) g.fillRect(x + Math.random() * w, y + Math.random() * h, 2, 1); }
+    g.fillStyle = tv ? "rgba(255,255,255,.06)" : "rgba(125,255,178,.08)";
     g.fillRect(x, y + ((T * 90) % (h + 40)) - 40, w, 26);
     g.restore();
   }
@@ -282,6 +291,7 @@ export class CallView {
   #face(g, cx, cy, S, now, col, p) {
     const girl = p === "friend";
     const house = p === "house";
+    const jfk = p === "jfk";
     // Parpadeo y mirada
     if (now > this.blinkAt + 140) this.blinkAt = now + 2200 + Math.random() * 3200;
     const open = now > this.blinkAt ? 0.08 : 1;
@@ -330,6 +340,11 @@ export class CallView {
       curve(cx - S * 0.38, hy - S * 0.05, cx - S * 0.48, hy + S * 0.5, cx - S * 0.36, sy + S * 0.2);
       curve(cx + S * 0.4, hy - S * 0.05, cx + S * 0.5, hy + S * 0.5, cx + S * 0.38, sy + S * 0.2);
       curve(cx - S * 0.05, hy - S * 0.48, cx - S * 0.2, hy - S * 0.3, cx - S * 0.32, hy - S * 0.2);
+    } else if (jfk) {
+      curve(cx - S * 0.37, hy - S * 0.08, cx - S * 0.36, hy - S * 0.55, cx - S * 0.12, hy - S * 0.56);
+      curve(cx - S * 0.12, hy - S * 0.56, cx + S * 0.2, hy - S * 0.66, cx + S * 0.38, hy - S * 0.22);
+      curve(cx - S * 0.14, hy - S * 0.56, cx + S * 0.05, hy - S * 0.42, cx + S * 0.36, hy - S * 0.3);
+      curve(cx - S * 0.2, hy - S * 0.5, cx - S * 0.25, hy - S * 0.38, cx - S * 0.3, hy - S * 0.3);
     } else {
       curve(cx - S * 0.36, hy - S * 0.1, cx - S * 0.3, hy - S * 0.58, cx + S * 0.05, hy - S * 0.52);
       curve(cx + S * 0.05, hy - S * 0.52, cx + S * 0.34, hy - S * 0.5, cx + S * 0.36, hy - S * 0.12);

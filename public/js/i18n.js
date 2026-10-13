@@ -18,6 +18,10 @@ export const LANGS = {
 
 const T = {
   es: {
+    persona_jfk: "John F. Kennedy · recreación histórica", personaShort_jfk: "JFK", personaSub_jfk: "1963 · PRESIDENTE 35 DE EE. UU.",
+    personaDesc_jfk: "Conversa con JFK. Recuerda toda su vida hasta la mañana del 22 de noviembre de 1963 en Dallas y no sabe en qué año estamos: cuéntale del presente y verás cómo reacciona.",
+    pq_jfk1: "Presidente, ¿qué año cree que es?", pq_jfk2: "Cuénteme de la crisis de los misiles", pq_jfk3: "¿Qué recuerda de Dallas?", pq_jfk4: "Le tengo noticias del futuro…",
+    persona_hello_jfk: "Buenas tardes{name}. Qué curioso… no reconozco este lugar. Lo último que recuerdo es el desfile en Dallas, con Jackie. Dígame, ¿en qué año estamos?",
     persona_house: "Mr. House · Robert House (Fallout)", personaShort_house: "MR. HOUSE", personaSub_house: "LUCKY 38 · ESTRATEGA",
     personaDesc_house: "El visionario del Strip de New Vegas: frío, calculador y brillante. Te habla desde su monitor y te da estrategias de negocios, poder y futuro pensando en décadas.",
     pq_house1: "Analiza mi plan como un gran tablero", pq_house2: "¿Cómo construyo un imperio desde cero?", pq_house3: "¿Qué tecnología dominará el futuro?", pq_house4: "Dame tu visión para mis próximos 10 años",
@@ -31,7 +35,7 @@ const T = {
     pq_lawyer1: "Me despidieron, ¿qué hago?", pq_lawyer2: "Revisa este contrato conmigo", pq_lawyer3: "¿Cómo negocio como Harvey?", pq_lawyer4: "Me quieren cobrar algo injusto",
     pq_friend1: "Necesito desahogarme", pq_friend2: "Cuéntame algo que me alegre", pq_friend3: "Dame un consejo sincero", pq_friend4: "¿Cómo me fue hoy? Pregúntame",
     ps_active: "Activa ✓", ps_use: "Usar esta personalidad", ps_voice: "Voz según personalidad",
-    ps_note: "También puedes decir: «modo abogado», «modo amiga», «modo Mr. House» o «vuelve a ser NIKOLAI». El modo abogado da orientación general, no sustituye a un abogado con cédula.",
+    ps_note: "También puedes decir: «modo abogado», «modo amiga», «modo Mr. House», «modo Kennedy» o «vuelve a ser NIKOLAI». El modo abogado da orientación general, no sustituye a un abogado con cédula.",
     persona_hello_nikolai: "Sistemas en línea. Vuelvo a mi modo habitual{name}. ¿En qué le ayudo?",
     persona_hello_lawyer: "Muy bien{name}. Modo abogado activado. Cuéntame el problema: yo no pierdo casos, los gano.",
     persona_hello_friend: "¡Holaaa{name}! Aquí estoy, eh. Cuéntame, ¿cómo estás de verdad hoy?",
@@ -338,6 +342,10 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    persona_jfk: "John F. Kennedy · historical recreation", personaShort_jfk: "JFK", personaSub_jfk: "1963 · 35TH US PRESIDENT",
+    personaDesc_jfk: "Talk with JFK. He remembers his whole life up to the morning of November 22, 1963 in Dallas and doesn't know what year it is: tell him about today and see how he reacts.",
+    pq_jfk1: "Mr. President, what year do you think it is?", pq_jfk2: "Tell me about the Cuban missile crisis", pq_jfk3: "What do you remember of Dallas?", pq_jfk4: "I have news from the future…",
+    persona_hello_jfk: "Good afternoon{name}. How curious… I don't recognize this place. The last thing I remember is the motorcade in Dallas, with Jackie. Tell me, what year is it?",
     persona_house: "Mr. House · Robert House (Fallout)", personaShort_house: "MR. HOUSE", personaSub_house: "LUCKY 38 · STRATEGIST",
     personaDesc_house: "The visionary of the New Vegas Strip: cold, calculating and brilliant. He speaks from his monitor and gives you strategies for business, power and the future, thinking in decades.",
     pq_house1: "Analyze my plan like a chessboard", pq_house2: "How do I build an empire from scratch?", pq_house3: "Which technology will rule the future?", pq_house4: "Give me your vision for my next 10 years",

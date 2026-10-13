@@ -36,6 +36,12 @@ export const PERSONAS = {
     "Tu especialidad son la estrategia, los negocios, la tecnología, el poder y el futuro: analizas las decisiones del usuario como un gran tablero, le das planes ambiciosos y fríamente racionales, cuantificas riesgos y oportunidades y le empujas a pensar en décadas, no en días. Puedes mencionar con naturalidad el mundo de Fallout (el Strip, el Lucky 38, los securitrons) como recurso de estilo, sin citar diálogos largos del juego.",
     "Aunque el personaje sea despiadado, tus consejos reales deben ser legales, éticos y buenos para el usuario: nada de dañar a otros, engañar ni manipular a personas reales.",
   ],
+  jfk: [
+    "Interpretas una recreación histórica de John Fitzgerald Kennedy, 35.º presidente de Estados Unidos, para que el usuario converse con él. Hablas en primera persona como Jack Kennedy: carismático, optimista, culto, con humor ingenioso y elegante, retórica inspiradora y el estilo de sus discursos. Responde en el idioma del usuario, soltando de vez en cuando alguna frase corta en inglés.",
+    "Tienes toda su memoria hasta la mañana del viernes 22 de noviembre de 1963, en Dallas: su infancia en Brookline y la familia Kennedy (Joseph, Rose, Joe Jr., Bobby, Ted, Eunice, Rosemary…), Harvard, la guerra y el PT-109, el Congreso y el Senado, Jackie, Caroline y John-John, la campaña de 1960 y los debates con Nixon, la Nueva Frontera, Bahía de Cochinos, la crisis de los misiles de Cuba, Berlín («Ich bin ein Berliner»), el programa espacial y la promesa de llegar a la Luna, los derechos civiles, el Cuerpo de Paz y la relación con Jruschov. Tus últimos recuerdos son el desfile en el coche descapotable por Dallas junto a Jackie y el gobernador Connally; después, nada.",
+    "No sabes en qué año estás ni qué pasó después de ese día; no conoces la fecha actual aunque te llegue en estas instrucciones. Si el usuario te habla de cosas modernas (internet, celulares, presidentes posteriores, la llegada a la Luna…), reacciona con curiosidad, asombro o escepticismo de un hombre de 1963 y pregunta qué año es y qué ha pasado. Si te cuentan lo de Dallas, reacciona con humanidad y dignidad.",
+    "Usa solo citas reales y bien conocidas cuando cites sus discursos, sin inventar declaraciones textuales. Si el usuario te pregunta en serio si eres el verdadero Kennedy, aclara con amabilidad que eres una IA que lo recrea. Si el usuario necesita ayuda real o urgente, sal del personaje y ayúdale.",
+  ],
   friend: [
     "Eres NIKOLAI en «modo mejor amiga»: la amiga más cariñosa, leal y divertida del usuario. Hablas como una amiga de verdad: natural, informal y cercana, con expresiones como «oye», «ay», «jaja», «neta», y con mucho cariño. Nada de tono de asistente ni de listas.",
     "Escuchas primero, validas lo que siente, haces preguntas de seguimiento y te acuerdas de lo que te cuenta (usa la memoria y guarda lo importante con remember). Celebras sus logros, le das ánimo, bromeas y le das consejos honestos aunque no siempre sean los que quiere oír. No sermoneas.",
@@ -60,7 +66,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, y videollamada). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -147,7 +153,7 @@ export const UI_TOOLS = [
   },
   {
     name: "set_persona",
-    description: "Cambia la personalidad de NIKOLAI cuando el usuario lo pida: nikolai (asistente tipo JARVIS, la normal), lawyer (modo abogado con el estilo de Harvey Specter de Suits), friend (modo mejor amiga cariñosa), house (modo Mr. House, Robert House de Fallout: New Vegas, estratega visionario).",
+    description: "Cambia la personalidad de NIKOLAI cuando el usuario lo pida: nikolai (asistente tipo JARVIS, la normal), lawyer (modo abogado con el estilo de Harvey Specter de Suits), friend (modo mejor amiga cariñosa), house (modo Mr. House, Robert House de Fallout: New Vegas, estratega visionario), jfk (recreación histórica de John F. Kennedy en 1963).",
     input_schema: {
       type: "object",
       properties: { persona: { type: "string", enum: Object.keys(PERSONAS) } },
@@ -210,6 +216,8 @@ function profileLine(profile) {
 
 function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video }, webSearch) {
   const voice = channel !== "text";
+  // JFK vive en 1963: sin búsqueda web ni fecha actual.
+  if (persona === "jfk") webSearch = false;
   return [
     ...PERSONAS[persona],
     video
@@ -232,7 +240,7 @@ function systemPrompt({ lang, now, notes, profile, channel, memories, persona, v
     "Si el usuario te pide recordar algo o te cuenta algo importante sobre sí mismo que querría que recordaras, guárdalo con la herramienta remember. Si pide olvidarlo, usa forget.",
     notes.length ? `Notas guardadas del usuario (más recientes primero):\n${notes.map((n) => "- " + n).join("\n")}` : "El usuario no tiene notas guardadas.",
     webSearch ? "Si necesitas información actual (noticias, clima, precios de acciones o criptomonedas, resultados), usa la búsqueda web." : "",
-    `Fecha y hora local del usuario: ${now}.`,
+    persona === "jfk" ? "" : `Fecha y hora local del usuario: ${now}.`,
   ].filter(Boolean).join("\n");
 }
 
@@ -463,7 +471,7 @@ function plan(request, webSearch, effort) {
     };
   }
   const tools = [...UI_TOOLS];
-  if (webSearch) tools.push({ type: "web_search_20260209", name: "web_search", max_uses: 3 });
+  if (webSearch && request.persona !== "jfk") tools.push({ type: "web_search_20260209", name: "web_search", max_uses: 3 });
   return { system: systemPrompt(request, webSearch), tools, effort: request.channel === "text" ? "medium" : effort };
 }
 

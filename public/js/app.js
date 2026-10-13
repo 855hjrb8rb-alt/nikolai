@@ -89,9 +89,9 @@ document.body.dataset.persona = settings.persona;
 const LOOK_RE = /\b(m[ií]rame|me ves|c[oó]mo me veo|qu[eé] ves|ves esto|mira esto|mira lo que|look at me|what do you see|how do i look)\b/i;
 
 // ---------- Personalidades y videollamada ----------
-const PERSONA_VOICE = { lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 }, house: { gender: "male", premium: "pqHfZKP75CvOlQylNhV4", pitch: 0.95 } };
+const PERSONA_VOICE = { lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 }, house: { gender: "male", premium: "pqHfZKP75CvOlQylNhV4", pitch: 0.95 }, jfk: { gender: "male", premium: "pNInz6obpgDQGcFmaJgB", pitch: 1 } };
 function setPersona(p, announce) {
-  if (!["nikolai", "lawyer", "friend", "house"].includes(p)) return;
+  if (!["nikolai", "lawyer", "friend", "house", "jfk"].includes(p)) return;
   settings.persona = p;
   saveSettings();
   document.body.dataset.persona = p;
@@ -115,7 +115,7 @@ const call = new CallView({
   seeAlways: () => settings.callSees,
   onSeeAlways: () => { settings.callSees = !settings.callSees; saveSettings(); },
   onLook: () => ask(t("call_lookPrompt"), { look: true }),
-  onPersona: () => { const P = ["nikolai", "lawyer", "friend", "house"]; setPersona(P[(P.indexOf(settings.persona) + 1) % P.length], true); },
+  onPersona: () => { const P = ["nikolai", "lawyer", "friend", "house", "jfk"]; setPersona(P[(P.indexOf(settings.persona) + 1) % P.length], true); },
 });
 async function startCall() {
   if (call.active) return;
@@ -686,11 +686,11 @@ const PANEL = {
   },
 
   persona(body) {
-    const P = ["nikolai", "lawyer", "friend", "house"];
+    const P = ["nikolai", "lawyer", "friend", "house", "jfk"];
     body.innerHTML = `
       <div class="persona-cards">${P.map((p) => `
         <div class="persona-card ${p} ${settings.persona === p ? "on" : ""}">
-          <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", lawyer: "⚖", friend: "♥", house: "▣" }[p]}</span>
+          <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", lawyer: "⚖", friend: "♥", house: "▣", jfk: "★" }[p]}</span>
             <div><b>${esc(t("persona_" + p))}</b><small class="mono">${esc(t("personaSub_" + p))}</small></div></div>
           <p>${esc(t("personaDesc_" + p))}</p>
           ${p !== "nikolai" ? `<div class="pc-quick">${[1, 2, 3, 4].map((i) => `<button class="nw-mini" data-target data-q="${p}:${i}">${esc(t(`pq_${p}${i}`))}</button>`).join("")}</div>` : ""}
