@@ -15,7 +15,7 @@ export const LANGUAGES = {
 };
 export const PANELS = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos", "voice", "translator",
-  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "studio", "watch", "map", "bots", "none",
+  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "studio", "watch", "map", "bots", "lobby", "none",
 ];
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -66,7 +66,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada), studio (estudio: subir fotos o videos y transformarlos como pida el usuario), watch (ver juntos Netflix, Prime Video y otras plataformas con NIKOLAI de compañera), map (Google Maps: buscar lugares, satélite, Street View, tráfico, rutas y el helicóptero UH-1), bots (crear bots de trading y de minería: ahora EN MANTENIMIENTO durante 3 días y 2 horas; si el usuario pregunta, díselo). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada), studio (estudio: subir fotos o videos y transformarlos como pida el usuario), watch (ver juntos Netflix, Prime Video y otras plataformas con NIKOLAI de compañera), map (Google Maps: buscar lugares, satélite, Street View, tráfico, rutas y el helicóptero UH-1), bots (crear bots de trading y de minería: ahora EN MANTENIMIENTO durante 3 días y 2 horas; si el usuario pregunta, díselo), lobby (sala de madera con relojes de ciudades del mundo y personas, y el hotel en la playa con turistas y una computadora de trabajo). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -473,7 +473,7 @@ export function parseRequest(body) {
   if (!messages.length || messages[messages.length - 1].role !== "user") return null;
   const profile = body.profile && typeof body.profile === "object" ? body.profile : {};
   const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
-  const mode = ["translate", "homework", "news", "describe", "market", "coach", "studio"].includes(body.mode) ? body.mode : "chat";
+  const mode = ["translate", "homework", "news", "describe", "market", "coach", "studio", "npc"].includes(body.mode) ? body.mode : "chat";
   return {
     messages,
     mode,
@@ -489,6 +489,9 @@ export function parseRequest(body) {
       : [],
     symbol: str(body.symbol, 40),
     followUp: body.followUp === true,
+    npc: body.npc && typeof body.npc === "object"
+      ? { name: str(body.npc.name, 40), who: str(body.npc.who, 300), place: str(body.npc.place, 120) }
+      : null,
     emotions: body.emotions && body.emotions.on === true
       ? { on: true, intensity: body.emotions.intensity === "high" ? "high" : "soft", mood: MOOD_ES[body.emotions.mood] ? body.emotions.mood : "neutral", hoursAway: Math.max(0, Math.min(24 * 365, Number(body.emotions.hoursAway) || 0)) }
       : null,
@@ -524,6 +527,18 @@ function plan(request, webSearch, effort) {
     return {
       system: `Eres un intérprete profesional. Traduce al ${request.translateTo || "inglés"} el texto que dicte el usuario, de forma natural y fiel. Responde solo con la traducción, sin comillas, notas ni explicaciones: se pronunciará en voz alta.`,
       tools: [], effort,
+    };
+  }
+  if (mode === "npc") {
+    const n = request.npc || { name: "Alex", who: "un huésped del hotel", place: "un hotel" };
+    return {
+      system: [
+        `Eres ${n.name}, ${n.who}. Estás en ${n.place}. Eres un personaje de ficción dentro de la app NIKOLAI y conversas con el usuario como una persona real y natural.`,
+        "Respuestas cortas (1-3 frases), con tu personalidad, tu forma de hablar y detalles de tu vida y de tu viaje o trabajo. Haz preguntas de vez en cuando. Si eres extranjero, puedes soltar alguna palabra en tu idioma.",
+        `Responde en ${LANGUAGES[lang] || "español"} salvo que el usuario te hable en otro idioma. Nunca digas que eres una IA salvo que te lo pregunten en serio.`,
+        `Hora local del usuario: ${request.now}.`,
+      ].join("\n"),
+      tools: [], effort: "low",
     };
   }
   if (mode === "studio") {
