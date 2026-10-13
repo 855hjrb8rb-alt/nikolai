@@ -39,7 +39,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", persona: "nikolai", personaVoice: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", persona: "nikolai", personaVoice: true, jfkLang: "es", jfkVintage: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -89,6 +89,14 @@ document.body.dataset.persona = settings.persona;
 const LOOK_RE = /\b(m[ií]rame|me ves|c[oó]mo me veo|qu[eé] ves|ves esto|mira esto|mira lo que|look at me|what do you see|how do i look)\b/i;
 
 // ---------- Personalidades y videollamada ----------
+// Retrato oficial de la Casa Blanca (1963), dominio público, servido por Wikimedia Commons.
+const JFK_PHOTO = "https://commons.wikimedia.org/wiki/Special:FilePath/John_F._Kennedy,_White_House_color_photo_portrait.jpg?width=640";
+const JFK_SPEECHES = [
+  ["jfk_sp_inaugural", "JFK inaugural address 1961 ask not what your country can do for you"],
+  ["jfk_sp_moon", "JFK we choose to go to the moon speech Rice University 1962"],
+  ["jfk_sp_cuba", "JFK Cuban missile crisis address October 22 1962"],
+  ["jfk_sp_berlin", "JFK Ich bin ein Berliner speech 1963"],
+];
 const PERSONA_VOICE = { lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 }, house: { gender: "male", premium: "pqHfZKP75CvOlQylNhV4", pitch: 0.95 }, jfk: { gender: "male", premium: "pNInz6obpgDQGcFmaJgB", pitch: 1 } };
 function setPersona(p, announce) {
   if (!["nikolai", "lawyer", "friend", "house", "jfk"].includes(p)) return;
@@ -99,10 +107,10 @@ function setPersona(p, announce) {
   updateCards();
   call.refresh();
   if (openId === "persona") refreshPanel();
-  if (announce) speakOnce(t("persona_hello_" + p).replace("{name}", profile.name ? " " + profile.name : ""));
+  if (announce) speakOnce(t("persona_hello_" + p + (p === "jfk" && settings.jfkLang === "en" ? "_en" : "")).replace("{name}", profile.name ? " " + profile.name : ""));
 }
 const call = new CallView({
-  t, esc, icon,
+  t, esc, icon, jfkPhoto: JFK_PHOTO,
   getState: () => state,
   speakLevel: () => outputLevel(),
   micLevel: () => Math.min(1, mic.level() * 3),
@@ -693,6 +701,17 @@ const PANEL = {
           <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", lawyer: "⚖", friend: "♥", house: "▣", jfk: "★" }[p]}</span>
             <div><b>${esc(t("persona_" + p))}</b><small class="mono">${esc(t("personaSub_" + p))}</small></div></div>
           <p>${esc(t("personaDesc_" + p))}</p>
+          ${p === "jfk" ? `
+            <img class="pc-photo" src="${JFK_PHOTO}" alt="John F. Kennedy" referrerpolicy="no-referrer" onerror="this.remove()">
+            <div class="pc-quick">
+              <button class="nw-mini ${settings.jfkLang === "es" ? "on" : ""}" data-target data-jfk="es">${esc(t("jfk_es"))}</button>
+              <button class="nw-mini ${settings.jfkLang === "en" ? "on" : ""}" data-target data-jfk="en">${esc(t("jfk_en"))}</button>
+              <button class="nw-mini ${settings.jfkVintage ? "on" : ""}" data-target data-jfk="vintage">${esc(t("jfk_vintage"))}</button>
+            </div>
+            <div class="pc-real"><span class="mono">${esc(t("jfk_real").toUpperCase())}</span>
+              ${JFK_SPEECHES.map(([k, q]) => `<a class="nw-mini" href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}" target="_blank" rel="noopener" data-target>▶ ${esc(t(k))}</a>`).join("")}
+              <a class="nw-mini" href="https://www.jfklibrary.org/learn/about-jfk/historic-speeches" target="_blank" rel="noopener" data-target>${esc(t("jfk_library"))}</a>
+            </div>` : ""}
           ${p !== "nikolai" ? `<div class="pc-quick">${[1, 2, 3, 4].map((i) => `<button class="nw-mini" data-target data-q="${p}:${i}">${esc(t(`pq_${p}${i}`))}</button>`).join("")}</div>` : ""}
           <button class="tile ${settings.persona === p ? "on" : "action"}" data-target data-persona="${p}"><span class="t-main">${esc(settings.persona === p ? t("ps_active") : t("ps_use"))}</span></button>
         </div>`).join("")}</div>
@@ -708,6 +727,13 @@ const PANEL = {
       </div>
       <p class="muted">${esc(t("ps_note"))}</p>`;
     body.querySelectorAll("[data-persona]").forEach((b) => b.addEventListener("click", () => setPersona(b.dataset.persona, true)));
+    body.querySelectorAll("[data-jfk]").forEach((b) => b.addEventListener("click", () => {
+      const v = b.dataset.jfk;
+      if (v === "vintage") settings.jfkVintage = !settings.jfkVintage; else settings.jfkLang = v;
+      saveSettings();
+      if (settings.persona === "jfk") { applyVoice(); refreshPanel(); speakOnce(t(v === "en" ? "persona_hello_jfk_en" : "persona_hello_jfk").replace("{name}", "")); }
+      else setPersona("jfk", true);
+    }));
     body.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => {
       const [p, i] = b.dataset.q.split(":");
       if (settings.persona !== p) setPersona(p, false);
@@ -1116,6 +1142,11 @@ function applyVoice() {
     speaker.pitch = clamp(settings.pitch * pv.pitch, 0.5, 1.6);
     if (speaker.premium && PREMIUM_VOICES.some((v) => v.id === settings.premiumVoice)) speaker.premium = { ...speaker.premium, voiceId: pv.premium, fx: (settings.persona === "lawyer" || settings.persona === "house") && speaker.premium.fx };
   }
+  // JFK: en inglés (su idioma) o doblado al español, con sonido de tele de 1963.
+  if (settings.persona === "jfk") {
+    if (settings.jfkLang === "en") speaker.lang = "en-US";
+    if (speaker.premium && settings.jfkVintage) speaker.premium = { ...speaker.premium, fx: "vintage" };
+  }
   speaker.lang = LANGS[getLang()].speech;
   listener.lang = LANGS[getLang()].speech;
 }
@@ -1326,7 +1357,7 @@ function speakOnce(text, lang) {
   lastReply = text;
   ui.reply.textContent = text;
   setState("speaking");
-  speaker.say(text, lang || LANGS[getLang()].speech);
+  speaker.say(text, lang || speaker.lang);
 }
 
 function afterSpeech() {
@@ -1392,7 +1423,7 @@ function dropOrphan(msg) {
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
   const model = { max: "claude-opus-5-5", balanced: "claude-sonnet-5-5", fast: "claude-haiku-5-5" }[settings.aiSpeed];
-  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: settings.persona, video: call.active, ...payload }, handlers);
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: settings.persona, personaLang: settings.persona === "jfk" ? settings.jfkLang : "es", video: call.active, ...payload }, handlers);
 }
 
 /** Pide a NIKOLAI una descripción corta de una foto para guardarla como recuerdo. */

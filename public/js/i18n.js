@@ -18,6 +18,10 @@ export const LANGS = {
 
 const T = {
   es: {
+    jfk_es: "Doblado al español", jfk_en: "En inglés (original)", jfk_vintage: "Sonido de tele de 1963",
+    jfk_real: "Escucha su voz real", jfk_library: "Archivo de la Biblioteca JFK",
+    jfk_sp_inaugural: "Toma de posesión (1961)", jfk_sp_moon: "«Elegimos ir a la Luna» (1962)", jfk_sp_cuba: "Crisis de los misiles (1962)", jfk_sp_berlin: "«Ich bin ein Berliner» (1963)",
+    persona_hello_jfk_en: "Good afternoon. How curious… I don't recognize this place. The last thing I remember is the motorcade in Dallas, with Jackie. Tell me, what year is it?",
     persona_jfk: "John F. Kennedy · recreación histórica", personaShort_jfk: "JFK", personaSub_jfk: "1963 · PRESIDENTE 35 DE EE. UU.",
     personaDesc_jfk: "Conversa con JFK. Recuerda toda su vida hasta la mañana del 22 de noviembre de 1963 en Dallas y no sabe en qué año estamos: cuéntale del presente y verás cómo reacciona.",
     pq_jfk1: "Presidente, ¿qué año cree que es?", pq_jfk2: "Cuénteme de la crisis de los misiles", pq_jfk3: "¿Qué recuerda de Dallas?", pq_jfk4: "Le tengo noticias del futuro…",
@@ -342,6 +346,10 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    jfk_es: "Dubbed into Spanish", jfk_en: "In English (original)", jfk_vintage: "1963 TV sound",
+    jfk_real: "Hear his real voice", jfk_library: "JFK Library archive",
+    jfk_sp_inaugural: "Inaugural address (1961)", jfk_sp_moon: "“We choose to go to the Moon” (1962)", jfk_sp_cuba: "Cuban missile crisis (1962)", jfk_sp_berlin: "“Ich bin ein Berliner” (1963)",
+    persona_hello_jfk_en: "Good afternoon. How curious… I don't recognize this place. The last thing I remember is the motorcade in Dallas, with Jackie. Tell me, what year is it?",
     persona_jfk: "John F. Kennedy · historical recreation", personaShort_jfk: "JFK", personaSub_jfk: "1963 · 35TH US PRESIDENT",
     personaDesc_jfk: "Talk with JFK. He remembers his whole life up to the morning of November 22, 1963 in Dallas and doesn't know what year it is: tell him about today and see how he reacts.",
     pq_jfk1: "Mr. President, what year do you think it is?", pq_jfk2: "Tell me about the Cuban missile crisis", pq_jfk3: "What do you remember of Dallas?", pq_jfk4: "I have news from the future…",

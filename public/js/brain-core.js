@@ -214,12 +214,15 @@ function profileLine(profile) {
   return parts.join(" ");
 }
 
-function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video }, webSearch) {
+function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video, personaLang }, webSearch) {
   const voice = channel !== "text";
   // JFK vive en 1963: sin búsqueda web ni fecha actual.
   if (persona === "jfk") webSearch = false;
   return [
     ...PERSONAS[persona],
+    persona === "jfk" && personaLang === "en"
+      ? "IMPORTANTE: responde SIEMPRE en inglés, como hablaba Kennedy (con su cadencia de Boston y su estilo de discurso), aunque el usuario te hable en español; si el usuario parece no entender, añade al final una frase breve en español."
+      : "",
     video
       ? "Estás en una videollamada con el usuario: ve tu avatar animado y tú lo ves por su cámara cuando te llega una foto con su mensaje. Si hay foto, coméntala con naturalidad solo cuando venga al caso (cómo se ve, qué te enseña, su expresión), sin describirla entera."
       : "",
@@ -376,6 +379,7 @@ export function parseRequest(body) {
     symbol: str(body.symbol, 40),
     followUp: body.followUp === true,
     persona: PERSONAS[body.persona] ? body.persona : "nikolai",
+    personaLang: body.personaLang === "en" ? "en" : "es",
     video: body.video === true,
     model: Object.values(MODELS).includes(body.model) ? body.model : null,
     translateTo: mode === "translate" && LANGUAGES[body.target] ? LANGUAGES[body.target] : null,

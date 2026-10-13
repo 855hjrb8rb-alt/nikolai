@@ -329,6 +329,7 @@ function playBuffer(buf, fx) {
   const src = ctx.createBufferSource();
   src.buffer = buf;
   if (!fx) { src.connect(outNode(ctx)); src.start(); return src; }
+  if (fx === "vintage") return playVintage(ctx, src);
   const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 85;
   const low = ctx.createBiquadFilter(); low.type = "lowshelf"; low.frequency.value = 180; low.gain.value = 2.5;
   const pres = ctx.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 3200; pres.Q.value = 0.9; pres.gain.value = 3.5;
@@ -343,6 +344,34 @@ function playBuffer(buf, fx) {
   comp.connect(delay); delay.connect(dGain); dGain.connect(out);
   comp.connect(verb); verb.connect(vGain); vGain.connect(out);
   out.connect(outNode(ctx));
+  src.start();
+  return src;
+}
+
+/** Sonido de televisión de 1963: banda de teléfono/AM, saturación suave y un leve siseo. */
+let hiss = null;
+function playVintage(ctx, src) {
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 320; hp.Q.value = 0.7;
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 3400; lp.Q.value = 0.9;
+  const mid = ctx.createBiquadFilter(); mid.type = "peaking"; mid.frequency.value = 1500; mid.Q.value = 1; mid.gain.value = 4;
+  const sat = ctx.createWaveShaper();
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) { const x = (i / 1023) * 2 - 1; curve[i] = Math.tanh(x * 2.2) / Math.tanh(2.2); }
+  sat.curve = curve;
+  const out = ctx.createGain(); out.gain.value = 1.1;
+  src.connect(hp); hp.connect(lp); lp.connect(mid); mid.connect(sat); sat.connect(out); out.connect(outNode(ctx));
+  // Siseo de fondo mientras habla
+  if (!hiss) {
+    hiss = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const d = hiss.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (Math.random() < 0.0004 ? 0.5 : 0.04);
+  }
+  const noise = ctx.createBufferSource(); noise.buffer = hiss; noise.loop = true;
+  const nGain = ctx.createGain(); nGain.gain.value = 0.18;
+  const nf = ctx.createBiquadFilter(); nf.type = "bandpass"; nf.frequency.value = 2500;
+  noise.connect(nf); nf.connect(nGain); nGain.connect(ctx.destination);
+  noise.start();
+  src.addEventListener("ended", () => { try { noise.stop(); } catch { /* ya parado */ } });
   src.start();
   return src;
 }

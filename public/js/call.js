@@ -27,6 +27,22 @@ export class CallView {
     this.blinkAt = performance.now() + 2000;
     this.look = { x: 0, y: 0, tx: 0, ty: 0, next: 0 };
     this.mouth = 0;
+    // Foto real para la personalidad JFK (si no carga, se usa el dibujo).
+    this.photo = null;
+    if (opts.jfkPhoto) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.referrerPolicy = "no-referrer";
+      img.onload = () => { this.photo = img; };
+      img.onerror = () => {
+        // Sin CORS también se puede pintar (no leemos sus píxeles).
+        const plain = new Image();
+        plain.referrerPolicy = "no-referrer";
+        plain.onload = () => { this.photo = plain; };
+        plain.src = opts.jfkPhoto;
+      };
+      img.src = opts.jfkPhoto;
+    }
   }
 
   get active() { return Boolean(this.el); }
@@ -279,12 +295,32 @@ export class CallView {
     g.restore();
     g.save();
     g.beginPath(); g.roundRect(x, y, w, h, S * 0.14); g.clip();
-    if (tv) this.#face(g, cx, y + h * 0.5, S * 0.62, now, col, "jfk");
+    if (tv && this.photo) this.#photo(g, x, y, w, h, now);
+    else if (tv) this.#face(g, cx, y + h * 0.5, S * 0.62, now, col, "jfk");
     else this.#face(g, cx, y + h * 0.62, S * 0.78, now, col, "house");
     // Barrido del tubo (y nieve en la tele antigua)
     if (tv) { g.fillStyle = "rgba(255,255,255,.05)"; for (let i = 0; i < 60; i++) g.fillRect(x + Math.random() * w, y + Math.random() * h, 2, 1); }
     g.fillStyle = tv ? "rgba(255,255,255,.06)" : "rgba(125,255,178,.08)";
     g.fillRect(x, y + ((T * 90) % (h + 40)) - 40, w, 26);
+    g.restore();
+  }
+
+  /** Foto real en la tele: blanco y negro, con un leve movimiento al hablar. */
+  #photo(g, x, y, w, h, now) {
+    const img = this.photo;
+    const T = now / 1000;
+    // Encuadre de la cara (el retrato es vertical; la cara está en el tercio superior).
+    const zoom = 1 + this.mouth * 0.018 + Math.sin(T * 0.6) * 0.006;
+    const srcW = img.naturalWidth * 0.78 / zoom, srcH = srcW * (h / w);
+    const sx = (img.naturalWidth - srcW) / 2, sy = img.naturalHeight * 0.06 + (1 - zoom) * 20;
+    g.save();
+    g.filter = `grayscale(1) contrast(1.15) brightness(${0.95 + this.mouth * 0.12 + (Math.random() < 0.03 ? -0.15 : 0)})`;
+    g.drawImage(img, sx, Math.max(0, sy), srcW, srcH, x, y + Math.sin(T * 1.1) * 1.5, w, h);
+    g.filter = "none";
+    // Viñeta de tubo de rayos catódicos
+    const v = g.createRadialGradient(x + w / 2, y + h / 2, h * 0.3, x + w / 2, y + h / 2, w * 0.75);
+    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,10,.65)");
+    g.fillStyle = v; g.fillRect(x, y, w, h);
     g.restore();
   }
 
