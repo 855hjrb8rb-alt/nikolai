@@ -8,6 +8,7 @@ import {
   PREMIUM_VOICES, unlockAudio, testPremium, outputLevel,
 } from "./voice.js";
 import { CallView } from "./call.js";
+import { renderStudio, studio } from "./studio.js";
 import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -80,6 +81,7 @@ const ICON = {
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
   work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
   projects: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
+  studio: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 15.5l-5-5-9 8.5"/><path d="M17.5 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>',
   persona: '<circle cx="8" cy="9" r="3.2"/><path d="M2.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="7.5" r="2.7"/><path d="M14.5 12.6c.6-.2 1.3-.3 2-.3 2.4 0 4.3 1.6 4.9 4.4"/>',
   money: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.6-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3.2 6 1.8 6 5 0 1.4-1.3 2.4-3 2.4-1.3 0-2.6-.6-3.2-1.6M12 5.5v13"/>',
 };
@@ -142,10 +144,10 @@ function endCall() {
 
 
 const MODULES = [
-  "core", "chat", "persona", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
+  "core", "chat", "persona", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
-const WIDE = new Set(["persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
+const WIDE = new Set(["studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -189,6 +191,7 @@ function cardBody(id) {
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
+    case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
     case "persona": return `<div class="big-code persona-code" data-bind="personaName">—</div><div class="stats">${stat("call_title", "callState")}${stat("ps_voice", "personaVoice", "accent")}</div>`;
     case "work": return `<p class="desc" style="flex:1">${esc(t("workCardDesc"))}</p><div class="stats">${stat("wk_tools", "workTools")}${stat("wk_last", "workLast", "accent")}</div>`;
     case "projects": return `<div class="big-code" data-bind="pjCount">0</div><div class="stats">${stat("pj_open", "pjOpen")}${stat("pj_doneN", "pjDone", "accent")}</div>`;
@@ -288,6 +291,8 @@ function values() {
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
     personaName: t("personaShort_" + settings.persona),
+    stMedia: studio.kind ? t("st_kind_" + studio.kind) : "—",
+    stEdits: studio.ops.length,
     callState: call.active ? t("call_live") : "—",
     personaVoice: settings.personaVoice ? t("on") : t("off"),
     workTools: 6,
@@ -332,7 +337,7 @@ function updateCards() {
       const id = k.slice(7);
       const live = id === "core" || id === "chat" || id === "homework" ? brain.apiKey
         : id === "news" ? navigator.onLine
-        : id === "work" || id === "projects" || id === "money" || id === "persona" ? true
+        : id === "work" || id === "projects" || id === "money" || id === "persona" || id === "studio" ? true
         : id === "settings" ? Boolean(gestures?.running)
         : id === "markets" ? Boolean(market.live.BTCUSDT)
         : id === "music" ? true
@@ -691,6 +696,11 @@ const PANEL = {
 
   news(body) {
     renderNews(body, moduleCtx());
+  },
+
+  studio(body) {
+    renderStudio(body, { ...moduleCtx(), speakIfVoice: (txt) => settings.chatSpeak && speakOnce(txt) });
+    updateCards();
   },
 
   persona(body) {
@@ -1352,6 +1362,17 @@ function handleFinal(text) {
   ask(text);
 }
 
+/** Pantalla completa (Chrome, Edge, Android y Safari en Mac; en iPhone se usa «Añadir a inicio»). */
+function toggleFullscreen() {
+  const d = document, el = d.documentElement;
+  if (d.fullscreenElement || d.webkitFullscreenElement) { (d.exitFullscreen || d.webkitExitFullscreen)?.call(d); return; }
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req) { try { const r = req.call(el, { navigationUI: "hide" }); r?.catch?.(() => { ui.reply.textContent = t("fullscreenIos"); }); } catch { ui.reply.textContent = t("fullscreenIos"); } }
+  else ui.reply.textContent = t("fullscreenIos");
+}
+$("#hdrFull")?.addEventListener("click", toggleFullscreen);
+["fullscreenchange", "webkitfullscreenchange"].forEach((ev) => document.addEventListener(ev, () => $("#hdrFull")?.classList.toggle("on", Boolean(document.fullscreenElement || document.webkitFullscreenElement))));
+
 function speakOnce(text, lang) {
   stopAll();
   lastReply = text;
@@ -1814,8 +1835,7 @@ function renderDock() {
   dock.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => (openId === b.dataset.open ? closePanel() : openPanel(b.dataset.open))));
   $("#dockSleep")?.addEventListener("click", goToSleep);
   $("#dockFull")?.addEventListener("click", () => {
-    if (document.fullscreenElement) document.exitFullscreen?.();
-    else document.documentElement.requestFullscreen?.().catch(() => {});
+    toggleFullscreen();
   });
   $("#dockInstall")?.addEventListener("click", async () => {
     installPrompt?.prompt();

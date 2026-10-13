@@ -840,3 +840,21 @@ body[data-persona="jfk"] .brand span { color: #dfe6f2; }
 .pc-real > span { width: 100%; font-size: 10px; letter-spacing: .12em; color: var(--ice-dim); }
 .pc-real a { text-decoration: none; }
 .pc-quick .nw-mini.on { border-color: var(--pc); color: var(--pc); }
+.hdr-btn { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line); background: var(--glass); color: var(--ice); cursor: pointer; flex: none; }
+.hdr-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.hdr-btn:hover, .hdr-btn.hover, .hdr-btn.on { border-color: var(--gold); color: var(--gold); }
+
+/* ---------- Estudio ---------- */
+.st-load { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.st-stage, .st-ops, .st-presets, .st-ask, .st-empty, .st-gen-box, .st-reply { flex: none; }
+.st-stage { position: relative; display: grid; place-items: center; background: repeating-conic-gradient(rgba(255,255,255,.04) 0 25%, transparent 0 50%) 0 0 / 22px 22px; border: 1px solid var(--line-faint); border-radius: 14px; padding: 10px; min-height: 220px; }
+.st-stage canvas { max-width: 100%; max-height: 52vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.45); touch-action: none; }
+.st-play { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); width: 54px; height: 54px; border-radius: 50%; border: 1px solid var(--gold); background: rgba(8,10,40,.7); color: var(--gold); font-size: 20px; cursor: pointer; }
+.st-hold { position: absolute; right: 14px; top: 12px; font-size: 10px; color: var(--ice-dim); background: rgba(0,0,0,.4); padding: 3px 8px; border-radius: 99px; }
+.st-ops, .st-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-ask textarea { width: 100%; }
+.st-reply { border-left: 3px solid var(--gold); padding-left: 12px; }
+.st-empty { padding: 20px; border: 1px dashed var(--line); border-radius: 14px; text-align: center; }
+.st-empty p { margin: .4em 0; }
+.st-gen-box summary { cursor: pointer; list-style: none; }
+.st-gen-box[open] { display: flex; flex-direction: column; gap: 8px; }

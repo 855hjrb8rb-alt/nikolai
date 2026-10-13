@@ -15,7 +15,7 @@ export const LANGUAGES = {
 };
 export const PANELS = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos", "voice", "translator",
-  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "none",
+  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "studio", "none",
 ];
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -66,7 +66,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada), studio (estudio: subir fotos o videos y transformarlos como pida el usuario). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -294,6 +294,51 @@ const PLAN_SCHEMA = {
   additionalProperties: false,
 };
 
+// Estudio de fotos y videos: la IA traduce el pedido a operaciones que el navegador aplica.
+export const STUDIO_OPS = [
+  "brightness", "contrast", "saturate", "hue", "grayscale", "sepia", "invert", "blur", "warm", "vignette", "grain",
+  "pixelate", "posterize", "sketch", "cartoon", "rotate", "flip_h", "flip_v", "crop", "zoom", "text", "sticker", "border",
+  "speed", "trim_start", "trim_end", "mute", "reset",
+];
+const STUDIO_SCHEMA = {
+  type: "object",
+  properties: {
+    reply: { type: "string" },
+    ops: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          op: { type: "string", enum: STUDIO_OPS },
+          value: { type: "number" },
+          text: { type: "string" },
+          color: { type: "string" },
+          position: { type: "string", enum: ["top", "center", "bottom", "top-left", "top-right", "bottom-left", "bottom-right"] },
+        },
+        required: ["op", "value", "text", "color", "position"],
+        additionalProperties: false,
+      },
+    },
+    generative: { type: "boolean" },
+    genPrompt: { type: "string" },
+  },
+  required: ["reply", "ops", "generative", "genPrompt"],
+  additionalProperties: false,
+};
+const STUDIO_GUIDE = `Eres el editor de fotos y videos de NIKOLAI. Recibes la foto (o varios fotogramas del video) y el pedido del usuario. Tradúcelo a operaciones que el navegador aplica en este orden, sobre el original:
+- brightness, contrast, saturate: value multiplicador (1 = normal, 0.5 = mitad, 1.5 = +50 %). hue: grados (-180 a 180). grayscale, sepia, invert: value 0 a 1. blur: píxeles (0-20).
+- warm: -1 (frío/azulado) a 1 (cálido/anaranjado). vignette: 0 a 1. grain: 0 a 1 (ruido de película).
+- pixelate: tamaño del bloque (2-40). posterize: niveles (2-8). sketch: dibujo a lápiz (value 1). cartoon: estilo caricatura o cómic (value 1). Estos tres solo en fotos.
+- rotate: 90, 180 o 270. flip_h / flip_v: espejo (value 1). crop: text con proporción "1:1", "4:3", "3:4", "16:9" o "9:16" (centrado). zoom: 1 a 4 (acerca al centro).
+- text: escribe text con color (CSS, p. ej. "#ffffff") y position; value = tamaño (1 pequeño, 2 mediano, 3 grande). sticker: text con un emoji, position y value tamaño. border: marco de value píxeles con color.
+- Solo video: speed (0.25 a 4), trim_start / trim_end (segundos desde el inicio del video), mute (value 1).
+- reset: borra las ediciones anteriores antes de aplicar las nuevas (úsalo si el usuario pide empezar de cero o algo totalmente distinto).
+Rellena siempre todos los campos de cada operación (value 0, text "", color "", position "center" si no aplican).
+Las operaciones se SUMAN a las que ya hay (te digo cuáles hay), salvo que uses reset. Para «vintage» combina sepia, grain y vignette; para «más bonita» ajusta un poco brillo, contraste y saturación; para «película» usa crop 16:9, contrast y vignette.
+Si el pedido necesita crear o cambiar cosas que no existen en la imagen (cambiar el fondo, quitar o añadir objetos o personas, cambiar ropa, estilo anime/Pixar/óleo realista, envejecer, etc.), pon generative = true y escribe en genPrompt, en inglés, una instrucción clara para un modelo de edición de imágenes; y añade igualmente las operaciones simples que sí ayuden (o ninguna).
+Si el usuario solo pregunta algo sobre la foto o el video, responde en reply y deja ops vacío.
+En reply explica en una o dos frases, en el idioma del usuario y con tono cercano, qué hiciste.`;
+
 const QUIZ_SCHEMA = {
   type: "object",
   properties: {
@@ -362,7 +407,7 @@ export function parseRequest(body) {
   if (!messages.length || messages[messages.length - 1].role !== "user") return null;
   const profile = body.profile && typeof body.profile === "object" ? body.profile : {};
   const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
-  const mode = ["translate", "homework", "news", "describe", "market", "coach"].includes(body.mode) ? body.mode : "chat";
+  const mode = ["translate", "homework", "news", "describe", "market", "coach", "studio"].includes(body.mode) ? body.mode : "chat";
   return {
     messages,
     mode,
@@ -378,6 +423,9 @@ export function parseRequest(body) {
       : [],
     symbol: str(body.symbol, 40),
     followUp: body.followUp === true,
+    media: body.media === "video" ? "video" : "photo",
+    duration: Number.isFinite(body.duration) ? Math.min(3600, Math.max(0, body.duration)) : 0,
+    currentOps: str(body.currentOps, 2000),
     persona: PERSONAS[body.persona] ? body.persona : "nikolai",
     personaLang: body.personaLang === "en" ? "en" : "es",
     video: body.video === true,
@@ -401,6 +449,19 @@ function plan(request, webSearch, effort) {
     return {
       system: `Eres un intérprete profesional. Traduce al ${request.translateTo || "inglés"} el texto que dicte el usuario, de forma natural y fiel. Responde solo con la traducción, sin comillas, notas ni explicaciones: se pronunciará en voz alta.`,
       tools: [], effort,
+    };
+  }
+  if (mode === "studio") {
+    return {
+      system: [
+        STUDIO_GUIDE,
+        request.media === "video" ? `Es un VIDEO de ${request.duration.toFixed(1)} segundos; las imágenes son fotogramas de distintos momentos.` : "Es una FOTO.",
+        `Operaciones ya aplicadas: ${request.currentOps || "ninguna"}.`,
+        `Idioma de la interfaz: ${LANGUAGES[lang] || "español"}.`,
+      ].join("\n"),
+      tools: [],
+      effort: "low",
+      format: STUDIO_SCHEMA,
     };
   }
   if (mode === "coach") {
