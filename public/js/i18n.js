@@ -18,6 +18,12 @@ export const LANGS = {
 
 const T = {
   es: {
+    bots: "Bots", bot_status: "Estado", bot_kinds: "Tipos", bot_maint: "En mantenimiento", bot_create: "Crear bot",
+    bot_maintMsg: "Estamos preparando los bots de trading y de minería. Esta opción vuelve en 3 días y 2 horas.",
+    bot_until: "Disponible desde", bot_days: "días", bot_hours: "horas", bot_min: "min", bot_sec: "seg",
+    bot_trading: "Bots de trading", bot_tradingSub: "ACCIONES · CRIPTO", bot_tradingDesc: "Crea bots que compran y venden por ti en tu plataforma según las reglas que elijas.",
+    bot_mining: "Minar con bots", bot_miningSub: "CRIPTOMONEDAS", bot_miningDesc: "Bots para minar criptomonedas y ver cuánto generan.",
+    bot_note: "Mientras tanto puedes seguir los mercados en vivo en Bolsa y Cripto.",
     gm_backMap: "Volver al mapa", gm_needFrom: "Escribe desde dónde sales o permite tu ubicación.",
     gm_search: "Buscar en Google Maps: lugar, dirección, negocio…", gmt_roadmap: "Mapa", gmt_satellite: "Satélite", gmt_hybrid: "Satélite + calles", gmt_terrain: "Relieve",
     gml_traffic: "Tráfico", gml_transit: "Transporte público", gml_bike: "Ciclovías",
@@ -440,6 +446,12 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    bots: "Bots", bot_status: "Status", bot_kinds: "Types", bot_maint: "Under maintenance", bot_create: "Create bot",
+    bot_maintMsg: "We're getting the trading and mining bots ready. This option is back in 3 days and 2 hours.",
+    bot_until: "Available from", bot_days: "days", bot_hours: "hours", bot_min: "min", bot_sec: "sec",
+    bot_trading: "Trading bots", bot_tradingSub: "STOCKS · CRYPTO", bot_tradingDesc: "Create bots that buy and sell for you on your platform following the rules you choose.",
+    bot_mining: "Mining bots", bot_miningSub: "CRYPTOCURRENCIES", bot_miningDesc: "Bots to mine cryptocurrencies and see how much they generate.",
+    bot_note: "Meanwhile you can follow the live markets in Stocks & Crypto.",
     gm_backMap: "Back to map", gm_needFrom: "Type where you start from or allow your location.",
     gm_search: "Search Google Maps: place, address, business…", gmt_roadmap: "Map", gmt_satellite: "Satellite", gmt_hybrid: "Satellite + streets", gmt_terrain: "Terrain",
     gml_traffic: "Traffic", gml_transit: "Transit", gml_bike: "Bike lanes",

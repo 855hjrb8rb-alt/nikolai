@@ -15,7 +15,7 @@ export const LANGUAGES = {
 };
 export const PANELS = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos", "voice", "translator",
-  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "studio", "watch", "map", "none",
+  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "studio", "watch", "map", "bots", "none",
 ];
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -66,7 +66,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada), studio (estudio: subir fotos o videos y transformarlos como pida el usuario), watch (ver juntos Netflix, Prime Video y otras plataformas con NIKOLAI de compañera), map (Google Maps: buscar lugares, satélite, Street View, tráfico, rutas y el helicóptero UH-1). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada), studio (estudio: subir fotos o videos y transformarlos como pida el usuario), watch (ver juntos Netflix, Prime Video y otras plataformas con NIKOLAI de compañera), map (Google Maps: buscar lugares, satélite, Street View, tráfico, rutas y el helicóptero UH-1), bots (crear bots de trading y de minería: ahora EN MANTENIMIENTO durante 3 días y 2 horas; si el usuario pregunta, díselo). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },

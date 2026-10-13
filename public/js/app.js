@@ -11,6 +11,7 @@ import { CallView } from "./call.js";
 import { renderStudio, studio } from "./studio.js";
 import { renderWatch, watch, minuteNow } from "./watch.js";
 import { renderMap, destroy as destroyMap, gm } from "./gmaps.js";
+import { renderBots, botsInMaintenance, MAINTENANCE_UNTIL } from "./bots.js";
 import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -83,6 +84,7 @@ const ICON = {
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
   work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
   projects: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
+  bots: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4M9 13h.01M15 13h.01M9.5 16.5h5M3 12v3M21 12v3"/><circle cx="12" cy="3.5" r="1"/>',
   map: '<circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="2.5"/>',
   watch: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4M10 8.5v5l4.5-2.5z"/>',
   studio: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 15.5l-5-5-9 8.5"/><path d="M17.5 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>',
@@ -193,12 +195,12 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.13-i";
+const APP_VERSION = "2026.10.13-j";
 const MODULES = [
-  "core", "chat", "persona", "map", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
+  "core", "chat", "persona", "bots", "map", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
-const WIDE = new Set(["map", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
+const WIDE = new Set(["bots", "map", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -242,6 +244,7 @@ function cardBody(id) {
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
+    case "bots": return `<div class="big-code mono bot-code" data-bind="botLeft">—</div><div class="stats">${stat("bot_status", "botState")}${stat("bot_kinds", "botKinds", "accent")}</div>`;
     case "map": return `<div class="big-code mono map-code" data-bind="tacCoords">—</div><div class="stats">${stat("gm_view", "gmType")}${stat("gm_modeK", "gmMode", "accent")}</div>`;
     case "watch": return `<p class="desc" data-bind="wtInfo" style="flex:1"></p><div class="stats">${stat("wt_now", "wtNow")}${stat("wt_minute", "wtMin", "accent")}</div>`;
     case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
@@ -344,6 +347,9 @@ function values() {
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
     personaName: t("personaShort_" + settings.persona),
+    botLeft: (() => { const ms = Math.max(0, MAINTENANCE_UNTIL - Date.now()); return `${Math.floor(ms / 864e5)}d ${Math.floor((ms % 864e5) / 36e5)}h`; })(),
+    botState: botsInMaintenance() ? t("bot_maint").toUpperCase() : "OK",
+    botKinds: "2",
     tacCoords: gm.q ? gm.q.slice(0, 18) : `${gm.lat.toFixed(2)}, ${gm.lon.toFixed(2)}`,
     gmType: t("gmt_" + gm.type),
     gmMode: localStorage.getItem("nikolai.googleMapsKey") ? t("gm_modeFull") : t("gm_modeBasic"),
@@ -758,6 +764,10 @@ const PANEL = {
 
   news(body) {
     renderNews(body, moduleCtx());
+  },
+
+  bots(body) {
+    renderBots(body, { ...moduleCtx(), lang: getLang() });
   },
 
   map(body) {
