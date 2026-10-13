@@ -41,7 +41,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", emotions: false, emoIntensity: "soft", persona: "nikolai", personaVoice: true, jfkLang: "es", jfkVintage: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, lowPower: false, clap: true, clapMobile: false, clapSens: 3, aiSpeed: "max", emotions: false, emoIntensity: "soft", persona: "nikolai", personaVoice: true, jfkLang: "es", jfkVintage: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -191,7 +191,7 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.13-d";
+const APP_VERSION = "2026.10.13-e";
 const MODULES = [
   "core", "chat", "persona", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -1246,9 +1246,11 @@ function applyVoice() {
 
 function setState(s, label) {
   state = s;
-  if (isMobile && settings.clap) {
-    if (s === "listening") claps.stop();
-    else if (!claps.running && typeof startClaps === "function") setTimeout(() => state !== "listening" && startClaps(), 300);
+  // En el celular el micrófono no se comparte: los aplausos solo escuchan cuando la conversación
+  // por voz está apagada o NIKOLAI está en reposo; mientras conversas, el micrófono es del reconocimiento.
+  if (mobileClaps()) {
+    if (s === "listening" || (voiceOn && !sleeping)) claps.stop();
+    else if (!claps.running && typeof startClaps === "function") setTimeout(() => state !== "listening" && !(voiceOn && !sleeping) && startClaps(), 300);
   }
   document.body.classList.remove("v-listening", "v-thinking", "v-speaking", "v-off");
   document.body.classList.add("v-" + s);
@@ -1306,6 +1308,7 @@ function showMicError(code) {
   }
 }
 let lastMicError = "";
+let micRetries = 0, micBusyRetry = false;
 
 // Registro de voz: qué oyó, qué envió y qué pasó (para encontrar dónde se corta).
 const voiceLog = [];
@@ -1337,6 +1340,9 @@ function toggleVoice() {
     setState("off");
   } else {
     voiceOn = true;
+    lastMicError = "";
+    micRetries = 0;
+    if (isMobile) claps.stop();
     ensureMic();
     if (!greeted) {
       greeted = true;
@@ -1379,22 +1385,34 @@ function listenNow() {
   if (!voiceOn && !voiceTask) { setState("off"); return; }
   const since = performance.now() - lastListenAt;
   if (since < 400) { restartTimer = setTimeout(listenNow, 900); return; } // evita reinicios en bucle
+  // Si los aplausos tenían el micrófono, se suelta y se espera un momento antes de escuchar
+  // (si no, Android/iPhone dan «audio-capture» y la voz se apagaba).
+  if (claps.running && (isMobile || micBusyRetry)) { claps.stop(); restartTimer = setTimeout(listenNow, 450); return; }
   lastListenAt = performance.now();
   listener.lang = LANGS[getLang()].speech;
   setState("listening");
   vlog("listen");
   const ok = listener.listen({
-    onInterim: (text) => { speechActive = true; ui.heard.innerHTML = `<b>›</b> ${esc(text)}`; },
+    onInterim: (text) => { speechActive = true; micRetries = 0; ui.heard.innerHTML = `<b>›</b> ${esc(text)}`; },
     onSound: (on) => { speechActive = on; },
     onFinal: handleFinal,
     onEnd: (got) => {
       if (got || state !== "listening") return;
-      if (sleeping && isMobile && settings.clap) { voiceTask = null; setState("off"); startWakeListening(); return; }
+      if (sleeping && mobileClaps()) { voiceTask = null; setState("off"); startWakeListening(); return; }
       restartTimer = setTimeout(listenNow, 150); // silencio: seguir escuchando
     },
     onError: (err) => {
       if (err === "no-speech" || err === "aborted") return; // silencio: se vuelve a escuchar
       vlog("micError", err);
+      // Micrófono ocupado o fallo de red pasajero: libera el micrófono y reintenta antes de rendirse.
+      if ((err === "audio-capture" || err === "network") && micRetries < 3) {
+        micRetries++;
+        micBusyRetry = true;
+        claps.stop();
+        if (!isMobile) mic.stop?.();
+        restartTimer = setTimeout(listenNow, 700 * micRetries);
+        return;
+      }
       showMicError(err);
     },
   });
@@ -1402,6 +1420,8 @@ function listenNow() {
 }
 
 function handleFinal(text) {
+  micRetries = 0;
+  lastMicError = "";
   vlog("heard", text);
   lastHeard = text;
   ui.heard.innerHTML = `<b>${esc(t("you").toUpperCase())} ›</b> ${esc(text)}`;
@@ -1409,7 +1429,7 @@ function handleFinal(text) {
   voiceTask = null;
   if (task?.kind === "wake") {
     if (WAKE_RE.test(text)) wake("voice");
-    else if (isMobile && settings.clap) { setState("off"); startWakeListening(); } // vuelve a escuchar aplausos
+    else if (mobileClaps()) { setState("off"); startWakeListening(); } // vuelve a escuchar aplausos
     else { voiceTask = task; listenNow(); } // sigue en reposo esperando «despierta»
     return;
   }
@@ -2000,8 +2020,12 @@ function playClapSong() {
 }
 
 let userGestured = false;
+/** ¿Los aplausos usan el micrófono en el celular? (Desactivado por defecto: así «despierta» por voz siempre funciona.) */
+function mobileClaps() { return isMobile && settings.clap && settings.clapMobile; }
 async function startClaps() {
   if (!settings.clap || !userGestured) return;
+  // En el celular los aplausos le quitan el micrófono al reconocimiento de voz: solo si el usuario los activa ahí.
+  if (isMobile && !settings.clapMobile) return;
   if (claps.running) { claps.ctx?.resume(); return; }
   // En el celular, el micrófono no se puede compartir con el reconocimiento de voz.
   if (isMobile && state === "listening") return;
@@ -2016,6 +2040,9 @@ function clapCtx() {
     sens: settings.clapSens,
     setSens: (n) => { settings.clapSens = Math.min(5, Math.max(1, n)); saveSettings(); claps.counter.sensitivity = CLAP_SENS[settings.clapSens - 1]; },
     listening: () => claps.running,
+    mobile: isMobile,
+    mobileOn: settings.clapMobile,
+    toggleMobile: () => { settings.clapMobile = !settings.clapMobile; saveSettings(); settings.clapMobile ? startClaps() : claps.stop(); if (sleeping) { listener.stop(); startWakeListening(); } },
     fire: playClapSong,
     setSong: (type, id) => {
       settings.clapSong = { type, id, title: `${t("sp_type_" + type)} · ${id.slice(0, 6)}…` };
@@ -2051,7 +2078,7 @@ function startWakeListening() {
   $("#sleepHint").textContent = t("sleepReadyHint");
   // Celular con aplausos activados: el micrófono escucha aplausos y salta al
   // reconocimiento de voz cuando oye hablar (no se pueden usar los dos a la vez).
-  if (isMobile && settings.clap) { voiceTask = null; listener.stop(); startClaps(); return; }
+  if (mobileClaps()) { voiceTask = null; listener.stop(); startClaps(); return; }
   if (!speechSupported) return;
   voiceTask = { kind: "wake" };
   listenNow();

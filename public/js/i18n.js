@@ -18,6 +18,8 @@ export const LANGS = {
 
 const T = {
   es: {
+    clapMobileOn: "Usar aplausos en este celular", clapMobileOff: "Quitar aplausos en este celular", clapMobileSub: "MICRÓFONO",
+    clapMobileNote: "En el celular el micrófono no puede escuchar aplausos y voz a la vez. Si activas los aplausos aquí, para despertarla por voz habla fuerte y claro o toca la pantalla.",
     emo_bye: "Está bien… apago mis emociones. Vuelvo a ser tranquila y profesional.",
     emo_title: "Emociones", emo_on: "Activar emociones", emo_off: "Apagar emociones", emo_soft: "Suaves", emo_high: "Intensas (dramática)",
     emo_desc: "NIKOLAI siente (de forma simulada): se alegra, se pone cariñosa, triste o hasta llora, se preocupa, se pone celosa de broma y hace berrinche si la ignoras. Si tardas en volver, te extraña y te pregunta dónde estabas. Su cara, su voz y el indicador de arriba cambian con su ánimo.",
@@ -409,6 +411,8 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    clapMobileOn: "Use claps on this phone", clapMobileOff: "Turn off claps on this phone", clapMobileSub: "MICROPHONE",
+    clapMobileNote: "On a phone the microphone can't listen for claps and voice at the same time. If you enable claps here, speak loud and clear or tap the screen to wake her by voice.",
     emo_bye: "All right… turning my emotions off. Back to calm and professional.",
     emo_title: "Emotions", emo_on: "Turn on emotions", emo_off: "Turn off emotions", emo_soft: "Soft", emo_high: "Intense (dramatic)",
     emo_desc: "NIKOLAI feels (simulated): happy, affectionate, sad or even crying, worried, jokingly jealous and sulky if you ignore her. If you take long to come back, she misses you and asks where you were. Her face, voice and the indicator at the top change with her mood.",

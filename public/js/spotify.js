@@ -302,6 +302,7 @@ export function renderMusic(body, ctx) {
             ${tile(esc(t("clapTest")), "", "")}
             ${tile(esc(t("clapUseLink")), "", "")}
           </div>
+          ${ctx.clap.mobile ? `<div class="tiles clap-mobile">${tile(esc(ctx.clap.mobileOn ? t("clapMobileOff") : t("clapMobileOn")), esc(t("clapMobileSub")), ctx.clap.mobileOn ? "on" : "")}</div><p class="muted">${esc(t("clapMobileNote"))}</p>` : ""}
           <div class="clap-sens">
             <span class="mono">${esc(t("clapSens").toUpperCase())}</span>
             <button class="tile" data-target data-sens="-1"><span class="t-main">−</span></button>
@@ -358,6 +359,7 @@ export function renderMusic(body, ctx) {
   const [clapToggle, clapTest, clapLink] = body.querySelectorAll(".clap-box .tiles .tile");
   body.querySelectorAll("[data-sens]").forEach((b) => b.addEventListener("click", () => { ctx.clap.setSens(ctx.clap.sens + Number(b.dataset.sens)); ctx.clap.sens = Math.min(5, Math.max(1, ctx.clap.sens + Number(b.dataset.sens))); renderMusic(body, ctx); }));
   clapToggle.addEventListener("click", () => { ctx.clap.toggle(); renderMusic(body, ctx); });
+  body.querySelector(".clap-mobile .tile")?.addEventListener("click", () => { ctx.clap.toggleMobile(); ctx.clap.mobileOn = !ctx.clap.mobileOn; renderMusic(body, ctx); });
   clapTest.addEventListener("click", () => ctx.clap.fire());
   clapLink.addEventListener("click", () => {
     const p = parseLink(body.querySelector("#spLink").value);
