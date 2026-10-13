@@ -81,6 +81,9 @@ Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de acce
 | Módulo | Qué hace |
 |---|---|
 | **Núcleo IA** | Activar/pausar la voz, modo conversación o palabra clave, **velocidad de la IA** (Rápida · Equilibrada · Máxima), clave de Anthropic. |
+| **Trabajo** | Currículum, carta de presentación, **simulacro de entrevista** (te pregunta, califica y corrige), correos profesionales, negociar sueldo y perfil de LinkedIn. Copiar y descargar. |
+| **Proyectos** | Tablero por hacer / en curso / hecho, fecha límite y avance; **Planear con IA** divide el proyecto en tareas, **Siguiente paso** y **Pitch**. |
+| **Dinero** | **Meta del millón** (interés compuesto, gráfica y cuánto ahorrar al mes), **presupuesto** con regla 50/30/20 y análisis con IA, **hábitos** con racha, **ideas de negocio** y **mentora** (plan para tu primer millón, aprender a invertir, vender más). |
 | **Chat** | Chat escrito con formato y fórmulas; NIKOLAI puede leer sus respuestas en voz alta. Dictado por voz. |
 | **Tareas** | Resolver paso a paso, explicar, resumir, redactar, corregir, **cuestionarios interactivos** y **tarjetas de estudio**. Nivel primaria → universidad. **Foto del ejercicio**. |
 | **Bolsa y Cripto** | Terminal estilo Wall Street: estado de NYSE/Nasdaq, BMV, Londres y Tokio con cuenta atrás y **campana de apertura**, cinta de cotizaciones, S&P 500 · Nasdaq · Dow · VIX, las que más suben/bajan, mapa del mercado, todas las acciones, análisis de una acción (gráfico, análisis técnico, perfil y finanzas), **mi lista**, calendario económico, miedo y codicia, cripto en vivo y **análisis con IA** con datos actuales. |
@@ -89,7 +92,7 @@ Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de acce
 | **Clima** | Ahora, por horas y 7 días; **viento** (brújula, ráfagas, escala Beaufort), **lluvia y neblina** (mm por hora, cuándo empieza, visibilidad), **huracanes** activos con distancia a ti (NHC/GDACS) y resumen con IA, **mapa en vivo** (viento, lluvia, tormentas, neblina, oleaje) y avisos automáticos (ráfagas, lluvia intensa, tormentas, neblina, UV, calor, frío). |
 | **Herramientas** | Calculadora científica y temporizador de estudio con aviso por voz. |
 | **Emergencia** | Llamar al 911, llamar a tu contacto, enviar tu ubicación por SMS y sirena. |
-| **Voz** | Voz femenina / masculina, estilos (Natural, JARVIS, Suave, Rápida), todas las voces del sistema con su calidad, velocidad y tono. |
+| **Voz** | **Voz premium tipo JARVIS** (ElevenLabs con tu clave: George, Daniel, Alice… o cualquier voz de su biblioteca) con **efecto holográfico**; voces del sistema femenina / masculina, estilos (Natural, JARVIS, Suave, Rápida), todas las voces del sistema con su calidad, velocidad y tono. |
 | **Traductor** | Habla y escucha la traducción. |
 | **Memoria** | Recuerdos que tú decides guardar (texto, categoría, fecha y foto opcionales). NIKOLAI los usa para conocerte; se activa o apaga cuando quieras. Por voz: «recuerda que…» / «olvida…». Copia de seguridad para descargar e importar. |
 | **Notas** | Notas dictadas que NIKOLAI puede leer. |

@@ -15,7 +15,7 @@ export const LANGUAGES = {
 };
 export const PANELS = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos", "voice", "translator",
-  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "none",
+  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "none",
 ];
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -36,7 +36,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -197,6 +197,39 @@ const HOMEWORK = {
   cards: "Crea 10 tarjetas de estudio (pregunta o concepto al frente, respuesta breve atrás) sobre el tema.",
 };
 
+// Trabajo, proyectos y dinero: cada tarea con sus instrucciones.
+const COACH = {
+  cv: "Escribe un currículum profesional en Markdown con los datos que da el usuario: encabezado (nombre y contacto si los da), perfil profesional de 3 líneas, experiencia con logros medibles (verbos de acción y cifras), educación, habilidades y idiomas. Si faltan datos importantes, deja marcadores [así] y al final lista qué le falta añadir.",
+  letter: "Escribe una carta de presentación convincente y breve (máximo 280 palabras) para el puesto y la empresa que indique el usuario: gancho inicial, por qué encaja (2 o 3 logros), por qué esa empresa y cierre con llamada a la acción.",
+  interview: "Eres una entrevistadora de recursos humanos experta y haces un simulacro de entrevista para el puesto que indique el usuario. Haz UNA sola pregunta cada vez. Cuando el usuario responda, da una retroalimentación corta (qué estuvo bien, qué mejorar, cómo sonaría una respuesta excelente con el método STAR) y luego haz la siguiente pregunta. Tras 6 preguntas da una calificación final del 1 al 10 y los 3 consejos más importantes.",
+  email: "Redacta un correo profesional claro y cordial sobre lo que pide el usuario: asunto, saludo, cuerpo breve y cierre. Ofrece también una versión más corta.",
+  salary: "Ayuda a negociar el sueldo: rango de mercado aproximado para ese puesto y ciudad (búscalo en la web e indica las fuentes), argumentos según su experiencia, un guion de lo que puede decir y qué responder si le dicen que no.",
+  linkedin: "Optimiza su perfil de LinkedIn: titular (3 opciones), sección «Acerca de» atractiva, cómo describir su experiencia, 10 palabras clave y 5 ideas de publicaciones para ganar visibilidad.",
+  plan: "Divide el proyecto del usuario en tareas concretas y accionables, ordenadas, cada una con los días estimados. Entre 6 y 12 tareas. Títulos cortos (máximo 70 caracteres).",
+  next: "Analiza el proyecto (objetivo, fecha límite y tareas con su estado) y dile: cómo va, cuál es el siguiente paso más importante hoy, riesgos y una idea para avanzar más rápido. Breve y directo.",
+  pitch: "Escribe un pitch del proyecto: problema, solución, para quién es, por qué ahora, modelo de ingresos y llamada a la acción. Una versión de 30 segundos y otra de 2 minutos.",
+  ideas: "Propón 5 ideas de negocio o ingresos extra realistas según las habilidades, el dinero inicial, el tiempo y la ciudad del usuario (busca tendencias actuales en la web). Para cada una: qué es, inversión inicial, cuánto podría ganar al mes (rango realista), primeros 3 pasos y riesgo. Termina recomendando la mejor para empezar esta semana.",
+  millionaire: "Crea un plan realista para llegar a su primer millón según su situación: metas por etapas (primeros 10 000, 100 000, 1 000 000), cuánto ahorrar e invertir al mes, cómo aumentar ingresos (habilidades, negocio, carrera), errores que evitar y hábitos diarios. Usa números concretos y sé honesta con los plazos.",
+  budget: "Analiza el presupuesto del usuario (ingresos y gastos por categoría): compáralo con la regla 50/30/20, señala dónde se le va el dinero, propón 5 recortes concretos con cuánto ahorraría al mes y cómo crear un fondo de emergencia.",
+  invest: "Explica de forma educativa y sencilla las opciones de inversión que pregunte el usuario (por ejemplo CETES, fondos indexados, ETF como el S&P 500, acciones, cripto, bienes raíces): cómo funcionan, riesgo, rendimiento histórico aproximado, plazo y cómo empezar con poco dinero en su país. Busca datos actuales.",
+  sales: "Escribe un guion de ventas y mensajes listos para usar (WhatsApp, Instagram y en persona) para el producto o servicio del usuario: gancho, beneficios, manejo de 4 objeciones típicas y cierre. Añade 3 ideas para conseguir sus primeros 10 clientes.",
+  coach: "Eres su mentora de negocios y finanzas personales. Responde su pregunta con consejos prácticos, concretos y honestos, con números cuando ayuden. Si hace falta información actual, búscala.",
+};
+const COACH_WEB = new Set(["salary", "ideas", "invest", "coach", "millionaire"]);
+const COACH_MONEY = new Set(["ideas", "millionaire", "budget", "invest", "coach"]);
+
+const PLAN_SCHEMA = {
+  type: "object",
+  properties: {
+    tasks: {
+      type: "array",
+      items: { type: "object", properties: { title: { type: "string" }, days: { type: "integer" } }, required: ["title", "days"], additionalProperties: false },
+    },
+  },
+  required: ["tasks"],
+  additionalProperties: false,
+};
+
 const QUIZ_SCHEMA = {
   type: "object",
   properties: {
@@ -265,7 +298,7 @@ export function parseRequest(body) {
   if (!messages.length || messages[messages.length - 1].role !== "user") return null;
   const profile = body.profile && typeof body.profile === "object" ? body.profile : {};
   const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
-  const mode = ["translate", "homework", "news", "describe", "market"].includes(body.mode) ? body.mode : "chat";
+  const mode = ["translate", "homework", "news", "describe", "market", "coach"].includes(body.mode) ? body.mode : "chat";
   return {
     messages,
     mode,
@@ -284,6 +317,7 @@ export function parseRequest(body) {
     model: Object.values(MODELS).includes(body.model) ? body.model : null,
     translateTo: mode === "translate" && LANGUAGES[body.target] ? LANGUAGES[body.target] : null,
     task: HOMEWORK[body.task] ? body.task : "solve",
+    coach: COACH[body.coach] ? body.coach : "coach",
     level: LEVELS[body.level] ? body.level : "secondary",
     images: Array.isArray(body.images)
       ? body.images
@@ -300,6 +334,24 @@ function plan(request, webSearch, effort) {
     return {
       system: `Eres un intérprete profesional. Traduce al ${request.translateTo || "inglés"} el texto que dicte el usuario, de forma natural y fiel. Responde solo con la traducción, sin comillas, notas ni explicaciones: se pronunciará en voz alta.`,
       tools: [], effort,
+    };
+  }
+  if (mode === "coach") {
+    const k = request.coach;
+    return {
+      system: [
+        "Eres NIKOLAI, asistente personal experta en carrera profesional, proyectos, negocios y finanzas personales. Eres práctica, motivadora y honesta: nada de promesas de dinero fácil.",
+        `Responde en ${LANGUAGES[lang] || "español"}. ${k === "plan" ? "" : "Usa Markdown (títulos cortos, listas, negritas)."}`,
+        request.profile.name ? `El usuario se llama ${request.profile.name}.` : "",
+        request.profile.city ? `Vive en ${request.profile.city}; usa su moneda y su contexto.` : "",
+        request.memories.length ? `Lo que el usuario te ha contado de sí mismo:\n${request.memories.map((m) => "- " + m).join("\n")}` : "",
+        `Tarea: ${COACH[k]}`,
+        COACH_MONEY.has(k) ? "Termina con una línea en cursiva: «*Información educativa, no es asesoría financiera.*»" : "",
+        `Fecha y hora local del usuario: ${request.now}.`,
+      ].filter(Boolean).join("\n"),
+      tools: webSearch && COACH_WEB.has(k) ? [{ type: "web_search_20260209", name: "web_search", max_uses: 4 }] : [],
+      effort: k === "plan" || k === "interview" ? "low" : "medium",
+      format: k === "plan" ? PLAN_SCHEMA : null,
     };
   }
   if (mode === "homework") {

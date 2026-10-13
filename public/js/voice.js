@@ -107,6 +107,11 @@ export class Speaker {
     this.onStart = null;
     this.onIdle = null;
     this.gen = 0; // invalida callbacks de frases canceladas
+    // Voz premium (ElevenLabs) con la clave del usuario: {key, voiceId, model, fx}
+    this.premium = null;
+    this.chain = Promise.resolve();
+    this.source = null;
+    this.onPremiumError = null;
   }
 
   /** Empieza una respuesta nueva. */
@@ -148,6 +153,9 @@ export class Speaker {
     this.pending = 0;
     this.closed = true;
     this.gen++;
+    this.chain = Promise.resolve();
+    try { this.source?.stop(); } catch { /* ya parado */ }
+    this.source = null;
     if ("speechSynthesis" in window) speechSynthesis.cancel();
   }
 
@@ -164,7 +172,9 @@ export class Speaker {
       .replace(/[*_#`>|~]/g, "")
       .replace(/\p{Extended_Pictographic}/gu, "")
       .trim();
-    if (!clean || !("speechSynthesis" in window)) return;
+    if (!clean) return;
+    if (this.premium?.key && this.premium.voiceId && navigator.onLine !== false) return this.#sayPremium(clean, lang);
+    if (!("speechSynthesis" in window)) return;
     const u = new SpeechSynthesisUtterance(clean);
     u.lang = lang;
     u.rate = this.rate;
@@ -188,6 +198,158 @@ export class Speaker {
       if (this.pending === 0 && this.closed) this.onIdle?.();
     };
     speechSynthesis.speak(u);
+  }
+
+  /** Pide el audio en cuanto llega la frase y lo reproduce en orden, sin pisar la anterior. */
+  #sayPremium(clean, lang) {
+    this.pending++;
+    const gen = this.gen;
+    const audio = premiumAudio(clean, this.premium, lang, this.rate);
+    audio.catch(() => {}); // el error se atiende en la cadena
+    this.chain = this.chain.then(async () => {
+      if (gen !== this.gen) return;
+      try {
+        const buf = await audio;
+        if (gen !== this.gen) return;
+        this.onStart?.();
+        await new Promise((resolve) => {
+          const src = playBuffer(buf, this.premium.fx);
+          this.source = src;
+          src.onended = resolve;
+          // Por si el navegador no avisa del final.
+          setTimeout(resolve, buf.duration * 1000 + 1500);
+        });
+      } catch (e) {
+        if (gen !== this.gen) return;
+        this.onPremiumError?.(e);
+        await browserSayAndWait(clean, lang, this);
+      }
+    }).finally(() => {
+      if (gen !== this.gen) return;
+      this.pending = Math.max(0, this.pending - 1);
+      if (this.pending === 0 && this.closed) this.onIdle?.();
+    });
+  }
+}
+
+// ---------- Voz premium (ElevenLabs) ----------
+// Voces prediseñadas de ElevenLabs. Todas hablan español y otros 30 idiomas con el modelo multilingüe.
+export const PREMIUM_VOICES = [
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", tag: "jarvis", gender: "male", accent: "UK" },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", tag: "jarvis2", gender: "male", accent: "UK" },
+  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", tag: "deep", gender: "male", accent: "US" },
+  { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", tag: "mature", gender: "male", accent: "US" },
+  { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", tag: "deep", gender: "male", accent: "US" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", tag: "friday", gender: "female", accent: "UK" },
+  { id: "pFZP5JQG7iQjIQuC4Bof", name: "Lily", tag: "warm", gender: "female", accent: "UK" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", tag: "soft", gender: "female", accent: "US" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", tag: "warm", gender: "female", accent: "US" },
+];
+
+let audioCtx = null;
+/** Crea o reanuda el audio (los navegadores lo exigen tras un toque del usuario). */
+export function unlockAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!audioCtx) audioCtx = new AC();
+  if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+  return audioCtx;
+}
+
+const cache = new Map(); // frases repetidas (saludos, avisos) no se vuelven a pagar
+async function premiumAudio(text, cfg, lang, rate = 1, noCache = false) {
+  const ctx = unlockAudio();
+  if (!ctx) throw new Error("noaudio");
+  const model = cfg.model || "eleven_flash_v2_5";
+  const k = `${cfg.voiceId}|${model}|${rate}|${text}`;
+  let bytes = noCache ? null : cache.get(k);
+  if (!bytes) {
+    const body = {
+      text,
+      model_id: model,
+      voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.15, use_speaker_boost: true, speed: Math.min(1.2, Math.max(0.7, rate)) },
+    };
+    if (/v2_5|v3/.test(model)) body.language_code = String(lang || "es").slice(0, 2);
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(cfg.voiceId)}?output_format=mp3_44100_128`, {
+      method: "POST",
+      headers: { "xi-api-key": cfg.key, "Content-Type": "application/json", Accept: "audio/mpeg" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) {
+      let detail = "";
+      try { const j = await r.json(); detail = j.detail?.status || j.detail?.message || j.detail || ""; } catch { /* sin detalle */ }
+      const e = new Error(String(detail || r.status));
+      e.status = r.status;
+      throw e;
+    }
+    bytes = await r.arrayBuffer();
+    if (cache.size > 40) cache.delete(cache.keys().next().value);
+    cache.set(k, bytes);
+  }
+  return ctx.decodeAudioData(bytes.slice(0));
+}
+
+let reverbIR = null;
+function impulse(ctx) {
+  if (reverbIR) return reverbIR;
+  const len = Math.floor(ctx.sampleRate * 0.45);
+  reverbIR = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = reverbIR.getChannelData(c);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
+  }
+  return reverbIR;
+}
+
+/**
+ * Reproduce el audio. Con fx activo le da el toque de asistente holográfico:
+ * graves limpios, más presencia, compresión y un eco corto de sala metálica.
+ */
+function playBuffer(buf, fx) {
+  const ctx = unlockAudio();
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  if (!fx) { src.connect(ctx.destination); src.start(); return src; }
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 85;
+  const low = ctx.createBiquadFilter(); low.type = "lowshelf"; low.frequency.value = 180; low.gain.value = 2.5;
+  const pres = ctx.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 3200; pres.Q.value = 0.9; pres.gain.value = 3.5;
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 3.5; comp.attack.value = 0.004; comp.release.value = 0.12;
+  const out = ctx.createGain(); out.gain.value = 0.95;
+  const delay = ctx.createDelay(); delay.delayTime.value = 0.019;
+  const dGain = ctx.createGain(); dGain.gain.value = 0.2;
+  const verb = ctx.createConvolver(); verb.buffer = impulse(ctx);
+  const vGain = ctx.createGain(); vGain.gain.value = 0.14;
+  src.connect(hp); hp.connect(low); low.connect(pres); pres.connect(comp);
+  comp.connect(out);
+  comp.connect(delay); delay.connect(dGain); dGain.connect(out);
+  comp.connect(verb); verb.connect(vGain); vGain.connect(out);
+  out.connect(ctx.destination);
+  src.start();
+  return src;
+}
+
+/** Si la voz premium falla, dice la frase con la voz del sistema y espera a que termine. */
+function browserSayAndWait(text, lang, sp) {
+  return new Promise((resolve) => {
+    if (!("speechSynthesis" in window)) return resolve();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang; u.rate = sp.rate; u.pitch = sp.pitch;
+    const v = pickVoice(lang, sp.voiceName, sp.gender);
+    if (v) u.voice = v;
+    u.onend = u.onerror = resolve;
+    setTimeout(resolve, text.length * 95 + 4000);
+    speechSynthesis.speak(u);
+  });
+}
+
+/** Comprueba la clave y la voz con una frase corta. Devuelve null si todo va bien o el error. */
+export async function testPremium(cfg, text, lang) {
+  try {
+    const buf = await premiumAudio(text, cfg, lang, 1, true);
+    playBuffer(buf, cfg.fx);
+    return null;
+  } catch (e) {
+    return e;
   }
 }
 

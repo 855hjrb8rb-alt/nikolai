@@ -5,7 +5,9 @@ import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
 import {
   Listener, Speaker, MicMeter, voicesFor, voiceGender, voiceQuality, stripWakeWord, speechSupported,
   isMobile, isIOS, inAppBrowser, isBrave, ClapDetector, prepareOfflineSpeech, offlineSpeechSupported, offlineSpeechReady,
+  PREMIUM_VOICES, unlockAudio, testPremium,
 } from "./voice.js";
+import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
 import { renderInto, speakable } from "./md.js";
@@ -36,7 +38,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -75,14 +77,17 @@ const ICON = {
   offline: '<path d="M2 8.5a15 15 0 0 1 20 0M5 12a10.5 10.5 0 0 1 14 0M8.5 15.5a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19" r="1.3"/><path d="M3 3l18 18"/>',
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+  work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
+  projects: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
+  money: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.6-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3.2 6 1.8 6 5 0 1.4-1.3 2.4-3 2.4-1.3 0-2.6-.6-3.2-1.6M12 5.5v13"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 
 const MODULES = [
-  "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos",
+  "core", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
-const WIDE = new Set(["chat", "homework", "music", "markets", "news", "tools", "memory"]);
+const WIDE = new Set(["chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -126,6 +131,9 @@ function cardBody(id) {
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
+    case "work": return `<p class="desc" style="flex:1">${esc(t("workCardDesc"))}</p><div class="stats">${stat("wk_tools", "workTools")}${stat("wk_last", "workLast", "accent")}</div>`;
+    case "projects": return `<div class="big-code" data-bind="pjCount">0</div><div class="stats">${stat("pj_open", "pjOpen")}${stat("pj_doneN", "pjDone", "accent")}</div>`;
+    case "money": return `<div class="big-code mono" data-bind="mnYears">—</div><div class="stats">${stat("mn_toMillion", "mnGoal")}${stat("hb_streak", "hbStreak", "accent")}</div>`;
     case "news": return `<p class="desc" data-bind="newsInfo" style="flex:1"></p><div class="stats">${stat("topics", "newsTopics")}${stat("source", "newsSource", "accent")}</div>`;
     case "weather": return `<div class="big-code" data-bind="wxTemp">—</div><div class="stats">${stat("sky", "wxDesc")}${stat("humidity", "wxHum", "accent")}</div>`;
     case "tools": return `<div class="big-code mono" data-bind="timerLeft">25:00</div><div class="stats">${stat("timer", "timerState")}${stat("calculator", "calcReady", "accent")}</div>`;
@@ -220,6 +228,14 @@ function values() {
     btcPrice: btc ? fmtMoney(btc.price) : "—",
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
+    workTools: 6,
+    workLast: Object.keys(work.out).length ? t("wk_" + Object.keys(work.out).at(-1)) : "—",
+    pjCount: projectStats().count,
+    pjOpen: projectStats().open,
+    pjDone: projectStats().done,
+    mnYears: (() => { const m = monthsToGoal(money.start, money.monthly, money.rate, money.target); return m == null ? "100+" : `${Math.ceil(m / 12)} ${t("mn_yearsU")}`; })(),
+    mnGoal: new Intl.NumberFormat(getLang(), { notation: "compact", maximumFractionDigits: 1 }).format(money.target),
+    hbStreak: `${streak()} ${t("hb_days")}`,
     newsTopics: 9,
     newsSource: news.items.length ? String(news.items.length) : "WEB",
     wxTemp: weather.data ? `${Math.round(weather.data.current.temperature_2m)}°` : "—",
@@ -254,6 +270,7 @@ function updateCards() {
       const id = k.slice(7);
       const live = id === "core" || id === "chat" || id === "homework" ? brain.apiKey
         : id === "news" ? navigator.onLine
+        : id === "work" || id === "projects" || id === "money" ? true
         : id === "settings" ? Boolean(gestures?.running)
         : id === "markets" ? Boolean(market.live.BTCUSDT)
         : id === "music" ? true
@@ -376,32 +393,103 @@ const PANEL = {
     ];
     const short = (v) => v.name.replace(/^(Microsoft|Google|Apple)\s*/i, "").replace(/\s*-\s*.*$/, "");
     const quality = (v) => ["", "★", "★★", "★★★"][voiceQuality(v)];
+    const hasKey = Boolean(store.get("elevenKey", ""));
+    const custom = !PREMIUM_VOICES.some((v) => v.id === settings.premiumVoice);
     body.innerHTML = `
-      <div class="tiles">${["female", "male", "any"].map((g) => tile(esc(t("gender_" + g)), esc(t("gender").toUpperCase()), settings.gender === g ? "on" : "")).join("")}</div>
-      <div class="tiles">${presets.map(([k]) => tile(esc(t("preset_" + k)), esc(t("presets").toUpperCase()))).join("")}</div>
+      <div class="readout pv-box ${settings.premiumOn && hasKey ? "live" : ""}">
+        <div class="k">${esc(t("pv_title").toUpperCase())} · ${settings.premiumOn && hasKey ? "● " + esc(t("on")) : esc(t("off"))}</div>
+        <p class="muted">${esc(t("pv_intro"))}</p>
+        ${hasKey ? "" : `<ol class="steps">
+          <li>${esc(t("pv_step1"))} <a class="key-link" href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener" data-target>elevenlabs.io</a></li>
+          <li>${esc(t("pv_step2"))}</li><li>${esc(t("pv_step3"))}</li></ol>`}
+        <div class="key-row">
+          <input id="pvKey" type="password" autocomplete="off" spellcheck="false" placeholder="${hasKey ? "••••••••  ✓ " + esc(t("keySaved")) : "sk_…"}">
+          <button class="tile" data-target id="pvSave"><span class="t-main">${esc(t("saveKey"))}</span></button>
+          ${hasKey ? `<button class="tile" data-target id="pvDel"><span class="t-main">${esc(t("deleteKey"))}</span></button>` : ""}
+        </div>
+        <div class="tiles pv-toggle">
+          ${tile(esc(settings.premiumOn ? t("pv_turnOff") : t("pv_turnOn")), esc(t("pv_title").toUpperCase()), settings.premiumOn ? "on" : "")}
+          ${tile(esc(t("pv_fx")), settings.premiumFx ? esc(t("on")) : esc(t("off")), settings.premiumFx ? "on" : "")}
+          ${tile(esc(t("pv_fast")), "FLASH 2.5", settings.premiumModel === "eleven_flash_v2_5" ? "on" : "")}
+          ${tile(esc(t("pv_best")), "MULTILINGUAL V2", settings.premiumModel === "eleven_multilingual_v2" ? "on" : "")}
+        </div>
+        <div class="tiles wide pv-voices">${PREMIUM_VOICES.map((v) => tile(`${esc(v.name)}${v.tag === "jarvis" ? " ★" : ""}`, `${esc(t("pvt_" + v.tag))} · ${v.gender === "male" ? "♂" : "♀"} ${v.accent}`, settings.premiumVoice === v.id ? "on" : "")).join("")}</div>
+        <div class="key-row">
+          <input id="pvCustom" autocomplete="off" spellcheck="false" placeholder="${esc(t("pv_customPh"))}" value="${custom ? esc(settings.premiumVoice) : ""}">
+          <button class="tile" data-target id="pvUseCustom"><span class="t-main">${esc(t("pv_useCustom"))}</span></button>
+          <button class="tile action" data-target id="pvTest"><span class="t-main">${icon("speaker")} ${esc(t("test"))}</span></button>
+        </div>
+        <p class="muted" id="pvResult">${esc(t("pv_note"))}</p>
+      </div>
+      <div class="k mono pv-sep">${esc(t("pv_system").toUpperCase())}</div>
+      <div class="tiles sys-gender">${["female", "male", "any"].map((g) => tile(esc(t("gender_" + g)), esc(t("gender").toUpperCase()), settings.gender === g ? "on" : "")).join("")}</div>
+      <div class="tiles sys-presets">${presets.map(([k]) => tile(esc(t("preset_" + k)), esc(t("presets").toUpperCase()))).join("")}</div>
       <div class="tiles wide voice-list">${all.map((v) => tile(esc(short(v)), `${esc(v.lang)} · ${quality(v)}${voiceGender(v) === "female" ? " · ♀" : voiceGender(v) === "male" ? " · ♂" : ""}`, v === current ? "on" : "")).join("") || `<p class="muted">${esc(t("noVoices"))}</p>`}</div>
       ${stepper(t("rate"), settings.rate.toFixed(2) + "×")}
       ${stepper(t("pitch"), settings.pitch.toFixed(2))}
-      <div class="tiles">${tile(`${icon("speaker")}<br>${esc(t("test"))}`, "", "action")}</div>
+      <div class="tiles sys-test">${tile(`${icon("speaker")}<br>${esc(t("test"))}`, "", "action")}</div>
       <p class="muted">${esc(t("bestVoiceTip"))}</p>`;
-    const groups = body.querySelectorAll(".tiles");
-    groups[0].querySelectorAll(".tile").forEach((el, i) => el.addEventListener("click", () => {
+
+    // ---- voz premium ----
+    const result = body.querySelector("#pvResult");
+    const sample = () => (settings.premiumVoice === PREMIUM_VOICES[0].id || settings.premiumVoice === PREMIUM_VOICES[1].id ? t("pv_sampleJarvis") : t("voiceSample"));
+    const test = async () => {
+      const key = store.get("elevenKey", "");
+      if (!key) { result.textContent = t("pv_needKey"); return; }
+      result.textContent = t("thinking");
+      const err = await testPremium({ key, voiceId: settings.premiumVoice, model: settings.premiumModel, fx: settings.premiumFx }, sample(), LANGS[getLang()].speech);
+      result.textContent = err ? premiumErrorText(err) : t("pv_ok");
+    };
+    const change = (fn) => { fn(); saveSettings(); applyVoice(); refreshPanel(); };
+    body.querySelector("#pvSave").onclick = () => {
+      const v = body.querySelector("#pvKey").value.trim();
+      if (!v) return;
+      store.set("elevenKey", v);
+      settings.premiumOn = true;
+      saveSettings(); applyVoice(); refreshPanel();
+      setTimeout(() => body.querySelector("#pvTest")?.click(), 50);
+    };
+    body.querySelector("#pvDel")?.addEventListener("click", () => change(() => { localStorage.removeItem("nikolai.elevenKey"); settings.premiumOn = false; }));
+    const [onT, fxT, fastT, bestT] = body.querySelectorAll(".pv-toggle .tile");
+    onT.onclick = () => change(() => { settings.premiumOn = !settings.premiumOn; });
+    fxT.onclick = () => change(() => { settings.premiumFx = !settings.premiumFx; });
+    fastT.onclick = () => change(() => { settings.premiumModel = "eleven_flash_v2_5"; });
+    bestT.onclick = () => change(() => { settings.premiumModel = "eleven_multilingual_v2"; });
+    body.querySelectorAll(".pv-voices .tile").forEach((el, i) => el.addEventListener("click", () => {
+      change(() => { settings.premiumVoice = PREMIUM_VOICES[i].id; settings.premiumOn = true; });
+      setTimeout(() => ui.panelBody.querySelector("#pvTest")?.click(), 50);
+    }));
+    body.querySelector("#pvUseCustom").onclick = () => {
+      const v = body.querySelector("#pvCustom").value.trim();
+      if (!/^[A-Za-z0-9]{10,40}$/.test(v)) { result.textContent = t("pv_errVoice"); return; }
+      change(() => { settings.premiumVoice = v; settings.premiumOn = true; });
+    };
+    body.querySelector("#pvTest").onclick = test;
+
+    // ---- voces del sistema ----
+    body.querySelectorAll(".sys-gender .tile").forEach((el, i) => el.addEventListener("click", () => {
       settings.gender = ["female", "male", "any"][i];
       settings.voiceName = "";
       saveSettings(); applyVoice(); refreshPanel(); speakOnce(t("voiceSample"));
     }));
-    groups[1].querySelectorAll(".tile").forEach((el, i) => el.addEventListener("click", () => {
+    body.querySelectorAll(".sys-presets .tile").forEach((el, i) => el.addEventListener("click", () => {
       [, settings.rate, settings.pitch] = presets[i];
-      saveSettings(); applyVoice(); refreshPanel(); speakOnce(t("voiceSample"));
+      // Estilo JARVIS: la mejor voz masculina disponible, más grave y pausada.
+      if (presets[i][0] === "jarvis") {
+        settings.gender = "male";
+        const best = voicesFor(LANGS[getLang()].speech, "male")[0];
+        settings.voiceName = best ? best.name : "";
+      }
+      saveSettings(); applyVoice(); refreshPanel(); speakOnce(presets[i][0] === "jarvis" ? t("pv_sampleJarvis") : t("voiceSample"));
     }));
-    groups[2].querySelectorAll(".tile").forEach((el, i) => el.addEventListener("click", () => {
+    body.querySelectorAll(".voice-list .tile").forEach((el, i) => el.addEventListener("click", () => {
       settings.voiceName = all[i].name;
       saveSettings(); applyVoice(); refreshPanel(); speakOnce(t("voiceSample"));
     }));
     const [rateStep, pitchStep] = body.querySelectorAll(".stepper");
     bindStepper(rateStep, (d) => { settings.rate = clamp(settings.rate + d * 0.05, 0.6, 1.8); saveSettings(); applyVoice(); refreshPanel(); });
     bindStepper(pitchStep, (d) => { settings.pitch = clamp(settings.pitch + d * 0.05, 0.5, 1.6); saveSettings(); applyVoice(); refreshPanel(); });
-    body.querySelector(".tile.action").onclick = () => speakOnce(t("voiceSample"));
+    body.querySelector(".sys-test .tile").onclick = () => speakOnce(t("voiceSample"));
   },
 
   chat(body) {
@@ -541,6 +629,18 @@ const PANEL = {
 
   news(body) {
     renderNews(body, moduleCtx());
+  },
+
+  work(body) {
+    renderWork(body, { ...moduleCtx(), speakIfVoice: (txt) => settings.chatSpeak && speakOnce(txt) });
+  },
+
+  projects(body) {
+    renderProjects(body, { ...moduleCtx(), onChange: updateCards });
+  },
+
+  money(body) {
+    renderMoney(body, { ...moduleCtx(), onChange: updateCards });
   },
 
   weather(body) {
@@ -914,6 +1014,11 @@ const saveHistory = () => store.set("history", history.slice(-40));
 
 function applyVoice() {
   speaker.voiceName = settings.voiceName;
+  speaker.gender = settings.gender === "any" ? "female" : settings.gender;
+  const elevenKey = store.get("elevenKey", "");
+  speaker.premium = settings.premiumOn && elevenKey
+    ? { key: elevenKey, voiceId: settings.premiumVoice, model: settings.premiumModel, fx: settings.premiumFx }
+    : null;
   speaker.rate = settings.rate;
   speaker.pitch = settings.pitch;
   speaker.lang = LANGS[getLang()].speech;
@@ -1136,6 +1241,16 @@ function afterSpeech() {
 }
 speaker.onStart = () => { if (state === "thinking") setState("speaking"); };
 speaker.onWatchdog = () => vlog("ttsStuck");
+let premiumWarned = 0;
+speaker.onPremiumError = (e) => {
+  vlog("premiumError", e.status || e.message);
+  // Avisa una vez por minuto como mucho y sigue con la voz del sistema.
+  if (Date.now() - premiumWarned > 60_000) { premiumWarned = Date.now(); ui.heard.textContent = premiumErrorText(e); }
+};
+function premiumErrorText(e) {
+  const st = e?.status;
+  return st === 401 ? t("pv_errKey") : st === 402 || /quota|credit/i.test(e?.message) ? t("pv_errQuota") : st === 404 || st === 400 ? t("pv_errVoice") : `${t("pv_errOther")} (${st || e?.message || "?"})`;
+}
 speaker.onIdle = () => { if (state === "speaking" || state === "thinking") afterSpeech(); };
 
 const ACTIONS = {
@@ -1663,6 +1778,7 @@ $("#mpClose").addEventListener("click", hidePlayer);
 ["pointerdown", "keydown"].forEach((ev) => addEventListener(ev, () => {
   if (userGestured) return;
   userGestured = true;
+  unlockAudio();
   startClaps();
   if (sleeping) startWakeListening();
   // Precarga la canción del aplauso para que pueda sonar sin otro toque.
