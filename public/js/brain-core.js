@@ -280,6 +280,7 @@ export function parseRequest(body) {
       ? body.memories.filter((m) => typeof m === "string").slice(0, 80).map((m) => m.slice(0, 400))
       : [],
     symbol: str(body.symbol, 40),
+    followUp: body.followUp === true,
     model: Object.values(MODELS).includes(body.model) ? body.model : null,
     translateTo: mode === "translate" && LANGUAGES[body.target] ? LANGUAGES[body.target] : null,
     task: HOMEWORK[body.task] ? body.task : "solve",
@@ -342,12 +343,15 @@ function plan(request, webSearch, effort) {
   if (mode === "news") {
     return {
       system: [
-        "Eres NIKOLAI, editora de noticias. Usa la búsqueda web para encontrar las noticias más recientes (de hoy o de los últimos dos días).",
+        "Eres NIKOLAI, editora de noticias. Usa la búsqueda web para encontrar las noticias más recientes (de hoy o de los últimos dos días). Nunca inventes noticias ni cifras.",
         `Escribe en ${LANGUAGES[lang] || "español"}. Formato Markdown: para cada noticia, el titular en negrita, una o dos frases de contexto y la fuente como enlace [Medio](url).`,
-        "Entre 6 y 8 noticias, de la más importante a la menos. Sin introducciones largas.",
+        request.followUp
+          ? "El usuario pregunta sobre las noticias que le diste antes: responde su pregunta de forma clara y breve (busca más datos si hace falta) y cita las fuentes."
+          : "Entre 6 y 8 noticias, de la más importante a la menos (si te piden varias regiones, usa un encabezado ## por región y 3 o 4 noticias en cada una). Sin introducciones largas.",
+        "Si el tema es la bolsa, empieza con una línea de cómo cerraron o van los índices principales (con cifra y porcentaje) y después las noticias que mueven al mercado. Termina con: «*Información, no asesoría financiera.*»",
         `Fecha y hora local del usuario: ${request.now}.`,
       ].join("\n"),
-      tools: webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }] : [],
+      tools: webSearch ? [{ type: "web_search_20260209", name: "web_search", max_uses: 8 }] : [],
       effort: "low",
     };
   }

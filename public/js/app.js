@@ -219,7 +219,7 @@ function values() {
     btcPrice: btc ? fmtMoney(btc.price) : "—",
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: t("newsCardDesc"),
-    newsTopics: 8,
+    newsTopics: 9,
     newsSource: "WEB",
     wxTemp: weather.data ? `${Math.round(weather.data.current.temperature_2m)}°` : "—",
     wxDesc: weather.data ? t("wx_" + wmo(weather.data.current.weather_code)[0]) : "—",
@@ -745,7 +745,7 @@ let chatBusy = false;
 /** Lo que necesitan los módulos externos para pintar y hablar. */
 function moduleCtx() {
   return {
-    t, esc, tile, icon, stream, errorText,
+    t, esc, tile, icon, stream, errorText, lang: getLang(),
     speak: (text, lang) => speakOnce(text, lang),
     dictate: dictateInto,
     open: openPanel,

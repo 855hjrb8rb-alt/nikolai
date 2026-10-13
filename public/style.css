@@ -694,3 +694,12 @@ body.lowpower .card, body.lowpower .panel { box-shadow: none; }
 .clap-sens .up { color: var(--green); } .clap-sens .down { color: var(--ice-dim); }
 .speed-tiles .tile { flex: 1; }
 @media (max-width: 560px) { .wx-wind { flex-direction: column; } .wx-dayrow { grid-template-columns: 64px 28px 1fr auto; } }
+
+/* ---------- Noticias ---------- */
+.nw-label { font-size: 11px; letter-spacing: .14em; color: var(--ice-dim); margin: 4px 0 -2px; }
+.nw-actions { margin-top: 4px; }
+.nw-actions .tile.on { border-color: var(--gold); }
+.nw-indices { height: 82px; border: 1px solid var(--line-faint); border-radius: 12px; overflow: hidden; }
+.nw-live { height: min(55vh, 440px); border: 1px solid var(--line-faint); border-radius: 12px; overflow: hidden; }
+.nw-ask { margin-top: 6px; }
+#nwOut h2 { font-size: 18px; color: var(--gold); margin: 16px 0 6px; }
