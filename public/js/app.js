@@ -12,7 +12,7 @@ import { renderInto, speakable } from "./md.js";
 import { renderHomework, study } from "./study.js";
 import {
   spotify, renderMusic, handleRedirect, isConnected as spotifyConnected, refreshNow, control as spotifyControl,
-  search as spotifySearch, playItem, setEmbed, presetFor, PRESETS, playInEmbed, hidePlayer, player as miniPlayer,
+  search as spotifySearch, playItem, setEmbed, presetFor, PRESETS, playInEmbed, hidePlayer, player as miniPlayer, preloadEmbed,
 } from "./spotify.js";
 import { offline, localAnswer, isOffline, addPending, takePending, removePending, markPrepared } from "./offline.js";
 import { watchOpeningBell, ringBell, exchangeStatus, EXCHANGES } from "./wallstreet.js";
@@ -35,7 +35,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    bell: true, lowPower: false, clap: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -346,12 +346,20 @@ const PANEL = {
         ${tile(esc(t("modeConversation")), t("mode").toUpperCase(), settings.mode === "conversation" ? "on" : "")}
         ${tile(esc(t("modeWake")), t("mode").toUpperCase(), settings.mode === "wake" ? "on" : "")}
       </div>
+      <div class="readout"><div class="k">${esc(t("aiSpeed").toUpperCase())}</div>
+        <div class="tiles speed-tiles">${["fast", "balanced", "max"].map((k) => tile(esc(t("speed_" + k)), esc(t("speedSub_" + k)), settings.aiSpeed === k ? "on" : "")).join("")}</div>
+        <p class="muted">${esc(t("aiSpeedNote"))}</p></div>
       ${Brain.getMode() === "direct" ? keyForm() : ""}
       ${readout(t("heardLabel"), lastHeard || "—", true)}
       ${readout("NIKOLAI", lastReply || t("greeting"))}
       <div class="readout"><div class="k">${esc(t("vlogTitle").toUpperCase())}</div><div class="vlog" id="voiceLog">${voiceLogHtml()}</div></div>
       <p class="muted">${esc(t("voiceHelp"))}</p>`;
     bindKeyForm(body);
+    body.querySelectorAll(".speed-tiles .tile").forEach((el, i) => el.addEventListener("click", () => {
+      settings.aiSpeed = ["fast", "balanced", "max"][i];
+      saveSettings();
+      refreshPanel();
+    }));
     const [toggle, conv, wake] = body.querySelectorAll(".tiles .tile");
     toggle.onclick = () => { toggleVoice(); refreshPanel(); };
     conv.onclick = () => { settings.mode = "conversation"; saveSettings(); updateHint(); refreshPanel(); };
@@ -1055,6 +1063,7 @@ function listenNow() {
     onFinal: handleFinal,
     onEnd: (got) => {
       if (got || state !== "listening") return;
+      if (sleeping && isMobile && settings.clap) { voiceTask = null; setState("off"); startWakeListening(); return; }
       restartTimer = setTimeout(listenNow, 150); // silencio: seguir escuchando
     },
     onError: (err) => {
@@ -1074,6 +1083,7 @@ function handleFinal(text) {
   voiceTask = null;
   if (task?.kind === "wake") {
     if (WAKE_RE.test(text)) wake("voice");
+    else if (isMobile && settings.clap) { setState("off"); startWakeListening(); } // vuelve a escuchar aplausos
     else { voiceTask = task; listenNow(); } // sigue en reposo esperando «despierta»
     return;
   }
@@ -1167,7 +1177,8 @@ function dropOrphan(msg) {
 
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
-  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), ...payload }, handlers);
+  const model = { max: "claude-opus-5-5", balanced: "claude-sonnet-5-5", fast: "claude-haiku-5-5" }[settings.aiSpeed];
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, ...payload }, handlers);
 }
 
 /** Pide a NIKOLAI una descripción corta de una foto para guardarla como recuerdo. */
@@ -1585,10 +1596,20 @@ timer.onDone = () => { speakOnce(t("timerDone")); updateCards(); if (openId === 
 // =====================================================================
 // Doble aplauso → canción (por defecto «Should I Stay or Should I Go»)
 // =====================================================================
+const CLAP_SENS = [0.6, 0.8, 1, 1.3, 1.7];
 const claps = new ClapDetector({
-  onClap: () => {},
-  onDouble: () => { playClapSong(); if (sleeping) wake("claps"); },
+  onClap: () => vlog("clap"),
+  onDouble: () => { vlog("clapDouble"); playClapSong(); if (sleeping) wake("claps"); },
+  // En el celular, en reposo, el micrófono escucha aplausos y, si oye hablar,
+  // pasa al reconocimiento de voz para entender «despierta».
+  onVoice: () => {
+    if (!(isMobile && sleeping && speechSupported)) return;
+    claps.stop();
+    voiceTask = { kind: "wake" };
+    listenNow();
+  },
 });
+claps.counter.sensitivity = CLAP_SENS[settings.clapSens - 1] || 1;
 // No escuchar aplausos mientras NIKOLAI habla (su propia voz podría parecer un golpe).
 claps.muted = () => speaker.speaking;
 
@@ -1600,6 +1621,13 @@ function playClapSong() {
   const item = { type: song.type, id: song.id, uri: `spotify:${song.type}:${song.id}`, title: song.title };
   if (spotifyConnected()) playItem(item).catch(() => playInEmbed(song.type, song.id, song.title));
   else playInEmbed(song.type, song.id, song.title);
+  // Si el navegador bloqueó el sonido automático, se avisa para tocar ▶.
+  setTimeout(() => {
+    if (!miniPlayer.playing && !spotifyConnected()) {
+      vlog("musicBlocked");
+      ui.reply.textContent = t("musicBlocked");
+    }
+  }, 4000);
 }
 
 let userGestured = false;
@@ -1616,6 +1644,9 @@ function clapCtx() {
     enabled: settings.clap,
     songTitle: settings.clapSong.title,
     toggle: () => { settings.clap = !settings.clap; saveSettings(); settings.clap ? startClaps() : claps.stop(); },
+    sens: settings.clapSens,
+    setSens: (n) => { settings.clapSens = Math.min(5, Math.max(1, n)); saveSettings(); claps.counter.sensitivity = CLAP_SENS[settings.clapSens - 1]; },
+    listening: () => claps.running,
     fire: playClapSong,
     setSong: (type, id) => {
       settings.clapSong = { type, id, title: `${t("sp_type_" + type)} · ${id.slice(0, 6)}…` };
@@ -1632,6 +1663,8 @@ $("#mpClose").addEventListener("click", hidePlayer);
   userGestured = true;
   startClaps();
   if (sleeping) startWakeListening();
+  // Precarga la canción del aplauso para que pueda sonar sin otro toque.
+  if (settings.clap && !spotifyConnected()) preloadEmbed(settings.clapSong.type, settings.clapSong.id);
 }));
 
 // =====================================================================
@@ -1644,8 +1677,12 @@ let pendingSleep = false;
 const visit = store.get("visit", { count: 0, last: 0 });
 
 function startWakeListening() {
-  if (!sleeping || !speechSupported) return;
+  if (!sleeping) return;
   $("#sleepHint").textContent = t("sleepReadyHint");
+  // Celular con aplausos activados: el micrófono escucha aplausos y salta al
+  // reconocimiento de voz cuando oye hablar (no se pueden usar los dos a la vez).
+  if (isMobile && settings.clap) { voiceTask = null; listener.stop(); startClaps(); return; }
+  if (!speechSupported) return;
   voiceTask = { kind: "wake" };
   listenNow();
 }

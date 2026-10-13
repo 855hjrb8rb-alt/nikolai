@@ -294,13 +294,19 @@ export class ClapCounter {
    */
   process(peak, rms, t, flat = 0.5) {
     let event = null;
-    if (this.pending && t - this.pending.t >= 70) {
-      // ¿Se apagó rápido? Entonces era un aplauso.
-      if (rms < this.pending.rms * 0.45) event = this.#clap(this.pending.t);
+    if (this.pending && t - this.pending.t >= 110) {
+      // ¿Se apagó rápido? Entonces era un aplauso (se tolera el eco de un cuarto).
+      if (rms < this.pending.rms * 0.6) event = this.#clap(this.pending.t);
+      // Sonido sostenido (voz, música, ruido): no buscar aplausos hasta que se calle.
+      else this.quietBelow = this.pending.rms * 0.35;
       this.pending = null;
     }
+    if (this.quietBelow) {
+      if (rms < this.quietBelow) this.quietBelow = 0;
+      else return event;
+    }
     const s = this.sensitivity;
-    const onset = rms > 0.06 / s && rms > this.bg * 5 && peak > 0.25 / s && flat > 0.3 && t - this.lastOnset > 140;
+    const onset = rms > 0.03 / s && rms > this.bg * 4 && peak > 0.15 / s && flat > 0.3 && t - this.lastOnset > 140;
     if (!this.pending && onset && t >= this.cooldownUntil) {
       this.pending = { t, rms };
       this.lastOnset = t;
@@ -312,7 +318,7 @@ export class ClapCounter {
 
   #clap(t) {
     const gap = t - this.lastClap;
-    if (gap >= 150 && gap <= 900) {
+    if (gap >= 150 && gap <= 1200) {
       this.lastClap = -1e9;
       this.cooldownUntil = t + 2500;
       return "double";
@@ -323,9 +329,11 @@ export class ClapCounter {
 }
 
 export class ClapDetector {
-  constructor({ onClap, onDouble }) {
+  constructor({ onClap, onDouble, onVoice }) {
     this.onClap = onClap;
     this.onDouble = onDouble;
+    this.onVoice = onVoice; // alguien habla (sonido tonal sostenido)
+    this.voiceSince = 0;
     this.counter = new ClapCounter();
     this.stream = null;
     this.ctx = null;
@@ -373,7 +381,13 @@ export class ClapDetector {
       }
       const n = hi - lo;
       const flat = Math.exp(logSum / n) / (powSum / n || 1);
-      const ev = this.counter.process(peak, Math.sqrt(sum / buf.length), performance.now(), flat);
+      const rmsNow = Math.sqrt(sum / buf.length), now = performance.now();
+      const ev = this.counter.process(peak, rmsNow, now, flat);
+      // Voz: sonido tonal (planitud baja) por encima del fondo durante más de 0,3 s.
+      if (rmsNow > 0.02 && rmsNow > this.counter.bg * 3 && flat < 0.25) {
+        this.voiceSince ||= now;
+        if (now - this.voiceSince > 300) { this.voiceSince = 0; this.onVoice?.(); }
+      } else this.voiceSince = 0;
       if (ev === "clap") this.onClap?.();
       else if (ev === "double") this.onDouble?.();
     }, 20);

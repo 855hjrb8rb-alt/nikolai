@@ -80,13 +80,13 @@ Tarjetas de cristal en un anillo 3D (la del centro en oro) y una **barra de acce
 
 | Módulo | Qué hace |
 |---|---|
-| **Núcleo IA** | Activar/pausar la voz, modo conversación o palabra clave, clave de Anthropic. |
+| **Núcleo IA** | Activar/pausar la voz, modo conversación o palabra clave, **velocidad de la IA** (Rápida · Equilibrada · Máxima), clave de Anthropic. |
 | **Chat** | Chat escrito con formato y fórmulas; NIKOLAI puede leer sus respuestas en voz alta. Dictado por voz. |
 | **Tareas** | Resolver paso a paso, explicar, resumir, redactar, corregir, **cuestionarios interactivos** y **tarjetas de estudio**. Nivel primaria → universidad. **Foto del ejercicio**. |
 | **Bolsa y Cripto** | Terminal estilo Wall Street: estado de NYSE/Nasdaq, BMV, Londres y Tokio con cuenta atrás y **campana de apertura**, cinta de cotizaciones, S&P 500 · Nasdaq · Dow · VIX, las que más suben/bajan, mapa del mercado, todas las acciones, análisis de una acción (gráfico, análisis técnico, perfil y finanzas), **mi lista**, calendario económico, miedo y codicia, cripto en vivo y **análisis con IA** con datos actuales. |
 | **Música** | Spotify: listas listas para usar sin cuenta (concentración, lo-fi, éxitos, Top 50 México…), pegar cualquier enlace, y **conectar tu cuenta** para buscar, ver qué suena y controlar la reproducción (Premium). Por voz: «pon música para estudiar». |
 | **Noticias** | Resumen de las noticias de hoy por tema (principales, mi ciudad, mundo, economía, tecnología, deportes…) con fuentes. |
-| **Clima** | Clima actual, 24 h y 7 días (Open-Meteo). |
+| **Clima** | Ahora, por horas y 7 días; **viento** (brújula, ráfagas, escala Beaufort), **lluvia y neblina** (mm por hora, cuándo empieza, visibilidad), **huracanes** activos con distancia a ti (NHC/GDACS) y resumen con IA, **mapa en vivo** (viento, lluvia, tormentas, neblina, oleaje) y avisos automáticos (ráfagas, lluvia intensa, tormentas, neblina, UV, calor, frío). |
 | **Herramientas** | Calculadora científica y temporizador de estudio con aviso por voz. |
 | **Emergencia** | Llamar al 911, llamar a tu contacto, enviar tu ubicación por SMS y sirena. |
 | **Voz** | Voz femenina / masculina, estilos (Natural, JARVIS, Suave, Rápida), todas las voces del sistema con su calidad, velocidad y tono. |
@@ -159,5 +159,6 @@ navegador                                   servidor (Node)            Anthropic
 - **El micrófono no funciona:** usa Chrome o Edge; Firefox no soporta el reconocimiento de voz.
 - **El cursor tiembla:** sube el «Suavizado del cursor» en el módulo Gestos y busca buena iluminación.
 - **El toque en el aire no entra:** empuja el dedo de forma corta y decidida hacia la cámara, o usa el pellizco.
+- **Los aplausos no ponen la música:** en Música sube la **sensibilidad**, toca la pantalla una vez (el navegador lo exige para usar micrófono y sonido) y mira el **registro de voz** en Sistema: si aparece «Doble aplauso» pero no suena, toca ▶ en el reproductor.
 - **Se escucha a sí mismo:** usa auriculares o el modo palabra clave.
 - **«Mi núcleo no tiene clave API»:** exporta `ANTHROPIC_API_KEY` antes de `npm start`.

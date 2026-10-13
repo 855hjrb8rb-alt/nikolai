@@ -250,6 +250,20 @@ export async function playInEmbed(type, id, title = "") {
   }
 }
 
+/** Carga la canción en el reproductor (oculto) para que después suene al instante. */
+export async function preloadEmbed(type, id) {
+  const uri = `spotify:${type}:${id}`;
+  try {
+    const c = await getController(uri);
+    if (loadedUri !== uri) { c.loadUri(uri); loadedUri = uri; }
+    return true;
+  } catch {
+    apiPromise = null;
+    controllerReady = null;
+    return false;
+  }
+}
+
 export function hidePlayer() {
   controller?.pause();
   player.visible = false;
@@ -287,6 +301,13 @@ export function renderMusic(body, ctx) {
             ${tile(esc(ctx.clap.enabled ? t("clapOff") : t("clapOn")), "", ctx.clap.enabled ? "on" : "")}
             ${tile(esc(t("clapTest")), "", "")}
             ${tile(esc(t("clapUseLink")), "", "")}
+          </div>
+          <div class="clap-sens">
+            <span class="mono">${esc(t("clapSens").toUpperCase())}</span>
+            <button class="tile" data-target data-sens="-1"><span class="t-main">−</span></button>
+            <b class="mono">${ctx.clap.sens} / 5</b>
+            <button class="tile" data-target data-sens="1"><span class="t-main">+</span></button>
+            <span class="mono ${ctx.clap.listening() ? "up" : "down"}">● ${esc(ctx.clap.listening() ? t("clapListening") : t("clapIdle"))}</span>
           </div>
           <p class="muted">${esc(t("clapNote"))}</p>
         </div>
@@ -334,7 +355,8 @@ export function renderMusic(body, ctx) {
     <p class="muted" id="spMsg"></p>`;
 
   const msg = body.querySelector("#spMsg");
-  const [clapToggle, clapTest, clapLink] = body.querySelectorAll(".clap-box .tile");
+  const [clapToggle, clapTest, clapLink] = body.querySelectorAll(".clap-box .tiles .tile");
+  body.querySelectorAll("[data-sens]").forEach((b) => b.addEventListener("click", () => { ctx.clap.setSens(ctx.clap.sens + Number(b.dataset.sens)); ctx.clap.sens = Math.min(5, Math.max(1, ctx.clap.sens + Number(b.dataset.sens))); renderMusic(body, ctx); }));
   clapToggle.addEventListener("click", () => { ctx.clap.toggle(); renderMusic(body, ctx); });
   clapTest.addEventListener("click", () => ctx.clap.fire());
   clapLink.addEventListener("click", () => {

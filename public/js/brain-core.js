@@ -3,6 +3,8 @@
 // se comportan igual.
 
 export const DEFAULT_MODEL = "claude-opus-5-5";
+// Modelos que el usuario puede elegir en «Velocidad de la IA».
+export const MODELS = { max: "claude-opus-5-5", balanced: "claude-sonnet-5-5", fast: "claude-haiku-5-5" };
 // Esfuerzo bajo = respuestas rápidas, ideal para un asistente por voz.
 export const DEFAULT_EFFORT = "low";
 const MAX_ROUNDS = 6;
@@ -278,6 +280,7 @@ export function parseRequest(body) {
       ? body.memories.filter((m) => typeof m === "string").slice(0, 80).map((m) => m.slice(0, 400))
       : [],
     symbol: str(body.symbol, 40),
+    model: Object.values(MODELS).includes(body.model) ? body.model : null,
     translateTo: mode === "translate" && LANGUAGES[body.target] ? LANGUAGES[body.target] : null,
     task: HOMEWORK[body.task] ? body.task : "solve",
     level: LEVELS[body.level] ? body.level : "secondary",
@@ -375,6 +378,9 @@ function withImages(messages, images) {
  */
 export async function runChat({ client, Anthropic, request, send, signal, isAborted = () => signal?.aborted ?? false, model = DEFAULT_MODEL, effort = DEFAULT_EFFORT, webSearch = true }) {
   const { system, tools, effort: chosenEffort, format } = plan(request, webSearch, effort);
+  model = request.model || model;
+  // Haiku no tiene «fallback» del servidor: solo se pide en Opus y Sonnet.
+  const fallback = model === MODELS.fast ? {} : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" };
   const messages = withImages(request.messages, request.images);
 
   try {
@@ -387,8 +393,7 @@ export async function runChat({ client, Anthropic, request, send, signal, isAbor
         ...(tools.length ? { tools } : {}),
         messages,
         // Si un filtro de seguridad rechaza la petición, la API reintenta con otro modelo.
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
+        ...fallback,
       }, signal ? { signal } : undefined);
 
       for await (const event of stream) {
