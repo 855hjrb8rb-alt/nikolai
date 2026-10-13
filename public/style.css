@@ -788,3 +788,48 @@ body.lowpower .card, body.lowpower .panel { box-shadow: none; }
   .mn-item { grid-template-columns: 1fr auto auto; } .mn-item > span:nth-child(2) { display: none; }
   .hb-dots { display: none; } .hb-item { grid-template-columns: 40px 1fr auto; }
 }
+
+/* ---------- Personalidades ---------- */
+.persona-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.persona-card { --pc: var(--cyan); display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--glass); }
+.persona-card.lawyer { --pc: var(--gold); } .persona-card.friend { --pc: #ff9ad5; }
+.persona-card.on { border-color: var(--pc); box-shadow: 0 0 24px color-mix(in srgb, var(--pc) 30%, transparent); }
+.pc-head { display: flex; gap: 12px; align-items: center; }
+.pc-head b { display: block; font-size: 17px; color: #fff; } .pc-head small { font-size: 10px; color: var(--pc); letter-spacing: .1em; }
+.pc-ico { width: 46px; height: 46px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--pc); color: var(--pc); font-size: 22px; box-shadow: 0 0 14px color-mix(in srgb, var(--pc) 40%, transparent); }
+.persona-card p { margin: 0; font-size: 14px; color: var(--ice); flex: 1; }
+.pc-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.pc-quick .nw-mini { font-size: 12px; padding: 5px 10px; text-align: left; }
+.persona-code { font-size: 34px !important; }
+body[data-persona="friend"] .brand span { color: #ff9ad5; }
+body[data-persona="lawyer"] .brand span { color: var(--gold); }
+
+/* ---------- Videollamada ---------- */
+.call { position: fixed; inset: 0; z-index: 80; display: flex; flex-direction: column; align-items: center; background: radial-gradient(ellipse at 50% 40%, #1b1866 0%, #070820 70%); color: var(--ice); animation: callIn .5s ease; }
+@keyframes callIn { from { opacity: 0; transform: scale(1.03); } }
+body.in-call #cursor { z-index: 90; }
+.call-top { width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px 20px; }
+.call-live { color: var(--danger); font-size: 12px; letter-spacing: .12em; animation: pulse 1.6s infinite; }
+.call-name { font-size: 18px; color: #fff; }
+.call-time { margin-left: auto; color: var(--ice-dim); }
+.call-avatar { flex: 1; width: min(100%, 900px); min-height: 0; }
+.call-state { height: 18px; font-size: 12px; letter-spacing: .2em; color: var(--ice-dim); }
+.call-caption { min-height: 2.8em; max-width: min(92vw, 820px); padding: 4px 16px 10px; text-align: center; font-size: clamp(16px, 2.2vw, 22px); color: #fff; text-shadow: 0 2px 12px #000; }
+.call-self { position: absolute; right: 20px; top: 70px; width: clamp(130px, 22vw, 260px); aspect-ratio: 3 / 4; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #000; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+.call-self video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); transition: transform .3s; }
+.call-self.off video { display: none; }
+.call-nocam { position: absolute; inset: 0; display: none; place-items: center; font-size: 11px; color: var(--ice-dim); }
+.call-self.off .call-nocam { display: grid; }
+.call-self.flash::after { content: ""; position: absolute; inset: 0; background: #fff; animation: flash .5s forwards; }
+@keyframes flash { to { opacity: 0; } }
+.call-zoom { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px; background: rgba(0, 0, 0, .5); border-radius: 99px; padding: 3px; font-size: 11px; }
+.call-zoom button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: var(--glass); color: #fff; font-size: 18px; cursor: pointer; }
+.call-bar { display: flex; gap: 10px; padding: 12px 16px 22px; flex-wrap: wrap; justify-content: center; }
+.call-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 76px; padding: 10px 8px; border-radius: 18px; border: 1px solid var(--line); background: var(--glass); color: var(--ice); font: 600 11px var(--font-display); cursor: pointer; }
+.call-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.call-btn:hover, .call-btn.hot { background: var(--glass-hi); }
+.call-btn.on { border-color: var(--gold); color: var(--gold); }
+.call-btn.off { color: var(--danger); border-color: rgba(255, 122, 144, .5); }
+.call-btn.end { background: #d63a55; border-color: #ff7a90; color: #fff; }
+.call-btn.end svg { transform: rotate(135deg); }
+@media (max-width: 640px) { .call-self { top: 64px; right: 10px; width: 104px; } .call-zoom button { width: 24px; height: 24px; font-size: 14px; } .call-btn { min-width: 58px; padding: 8px 4px; font-size: 10px; } .call-bar { gap: 6px; } }

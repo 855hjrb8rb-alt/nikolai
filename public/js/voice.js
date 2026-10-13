@@ -305,11 +305,30 @@ function impulse(ctx) {
  * Reproduce el audio. Con fx activo le da el toque de asistente holográfico:
  * graves limpios, más presencia, compresión y un eco corto de sala metálica.
  */
+let analyser = null, levelData = null;
+function outNode(ctx) {
+  if (!analyser) {
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    levelData = new Uint8Array(analyser.fftSize);
+    analyser.connect(ctx.destination);
+  }
+  return analyser;
+}
+/** Volumen de la voz premium que suena ahora (0–1), para animar el avatar. */
+export function outputLevel() {
+  if (!analyser) return 0;
+  analyser.getByteTimeDomainData(levelData);
+  let sum = 0;
+  for (const v of levelData) sum += ((v - 128) / 128) ** 2;
+  return Math.min(1, Math.sqrt(sum / levelData.length) * 4);
+}
+
 function playBuffer(buf, fx) {
   const ctx = unlockAudio();
   const src = ctx.createBufferSource();
   src.buffer = buf;
-  if (!fx) { src.connect(ctx.destination); src.start(); return src; }
+  if (!fx) { src.connect(outNode(ctx)); src.start(); return src; }
   const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 85;
   const low = ctx.createBiquadFilter(); low.type = "lowshelf"; low.frequency.value = 180; low.gain.value = 2.5;
   const pres = ctx.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 3200; pres.Q.value = 0.9; pres.gain.value = 3.5;
@@ -323,7 +342,7 @@ function playBuffer(buf, fx) {
   comp.connect(out);
   comp.connect(delay); delay.connect(dGain); dGain.connect(out);
   comp.connect(verb); verb.connect(vGain); vGain.connect(out);
-  out.connect(ctx.destination);
+  out.connect(outNode(ctx));
   src.start();
   return src;
 }

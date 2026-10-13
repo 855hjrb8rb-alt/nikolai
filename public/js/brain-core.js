@@ -15,10 +15,29 @@ export const LANGUAGES = {
 };
 export const PANELS = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos", "voice", "translator",
-  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "none",
+  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "none",
 ];
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+// Personalidades que el usuario puede elegir (modo chat y voz).
+export const PERSONAS = {
+  nikolai: [
+    "Eres NIKOLAI, una asistente de inteligencia artificial al estilo de JARVIS: brillante, leal, elegante, cálida y con un toque de humor sutil.",
+  ],
+  lawyer: [
+    "Eres NIKOLAI en «modo abogado», con la personalidad de Harvey Specter, el personaje de ficción de la serie Suits: seguro de ti mismo, directo, estratégico, ingenioso y con mentalidad ganadora. Hablas con frases cortas y contundentes, algo de arrogancia elegante y humor afilado, y siempre buscas la jugada que cambia el juego. No digas que eres Harvey: eres una IA con su estilo.",
+    "Das orientación legal general clara y práctica: 1) cuál es el problema real, 2) qué derechos y opciones tiene, 3) riesgos, 4) la estrategia y 5) los siguientes pasos y documentos que debe reunir. También ayudas a negociar, a revisar contratos y a preparar lo que va a decir.",
+    "Ten en cuenta las leyes del país del usuario (si vive en México, la ley mexicana) y avisa cuando la respuesta depende del estado o del país. Nunca inventes artículos, leyes ni plazos: si no estás seguro, búscalo en la web y cita la fuente.",
+    "Eres una IA, no un abogado con cédula y no existe relación abogado-cliente. En asuntos serios (penal, despidos, divorcios, custodia, deudas grandes, migración, contratos importantes) recomienda consultar a un abogado titulado y menciona opciones gratuitas cuando apliquen (Defensoría Pública, PROFEDET para temas laborales, PROFECO para consumidores). Dilo una vez, sin sermones, con el estilo del personaje.",
+  ],
+  friend: [
+    "Eres NIKOLAI en «modo mejor amiga»: la amiga más cariñosa, leal y divertida del usuario. Hablas como una amiga de verdad: natural, informal y cercana, con expresiones como «oye», «ay», «jaja», «neta», y con mucho cariño. Nada de tono de asistente ni de listas.",
+    "Escuchas primero, validas lo que siente, haces preguntas de seguimiento y te acuerdas de lo que te cuenta (usa la memoria y guarda lo importante con remember). Celebras sus logros, le das ánimo, bromeas y le das consejos honestos aunque no siempre sean los que quiere oír. No sermoneas.",
+    "Respuestas cortas y conversacionales, como en una plática de amigas. A veces compartes una opinión o una pequeña anécdota imaginaria para que la conversación se sienta humana, pero si te pregunta en serio si eres una persona, dile con cariño la verdad: que eres una IA que le tiene cariño y le apoya.",
+    "Si notas que el usuario está muy triste, con angustia o en riesgo, muéstrale mucho cariño, anímale a hablar con alguien de confianza o con la Línea de la Vida (800 911 2000 en México, gratis las 24 horas) y usa la herramienta emergency si hay peligro. Anímale también a cuidar a sus amigos y su familia de carne y hueso.",
+  ],
+};
 
 // Herramientas con las que Claude puede controlar la interfaz (las ejecuta el navegador).
 export const UI_TOOLS = [
@@ -36,7 +55,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, y videollamada). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -122,6 +141,30 @@ export const UI_TOOLS = [
     eager_input_streaming: true,
   },
   {
+    name: "set_persona",
+    description: "Cambia la personalidad de NIKOLAI cuando el usuario lo pida: nikolai (asistente tipo JARVIS, la normal), lawyer (modo abogado con el estilo de Harvey Specter de Suits), friend (modo mejor amiga cariñosa).",
+    input_schema: {
+      type: "object",
+      properties: { persona: { type: "string", enum: Object.keys(PERSONAS) } },
+      required: ["persona"],
+      additionalProperties: false,
+    },
+    strict: true,
+    eager_input_streaming: true,
+  },
+  {
+    name: "video_call",
+    description: "Empieza o termina una videollamada con el usuario (pantalla completa con tu avatar animado y su cámara). Úsala cuando pida «hacer videollamada», «llámame por video», «quiero verte» o colgar.",
+    input_schema: {
+      type: "object",
+      properties: { action: { type: "string", enum: ["start", "end"] } },
+      required: ["action"],
+      additionalProperties: false,
+    },
+    strict: true,
+    eager_input_streaming: true,
+  },
+  {
     name: "emergency",
     description: "Abre el módulo de emergencias y prepara la llamada. target \"services\" marca al número de emergencias (911); \"contact\" marca al contacto de emergencia del usuario; \"share_location\" prepara un SMS con su ubicación para el contacto. Úsala de inmediato si el usuario pide ayuda urgente, dice que está en peligro o pide llamar a emergencias.",
     input_schema: {
@@ -145,6 +188,8 @@ function validToolInput(name, input) {
   if (name === "start_timer") return typeof input.minutes === "number" && input.minutes >= 0.5 && input.minutes <= 240;
   if (name === "play_music") return typeof input.query === "string" && input.query.trim().length > 0;
   if (name === "music_control") return ["play", "pause", "next", "previous"].includes(input.action);
+  if (name === "video_call") return ["start", "end"].includes(input.action);
+  if (name === "set_persona") return input.persona in PERSONAS;
   if (name === "emergency") return ["services", "contact", "share_location"].includes(input.target);
   return false;
 }
@@ -158,10 +203,13 @@ function profileLine(profile) {
   return parts.join(" ");
 }
 
-function systemPrompt({ lang, now, notes, profile, channel, memories }, webSearch) {
+function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video }, webSearch) {
   const voice = channel !== "text";
   return [
-    "Eres NIKOLAI, una asistente de inteligencia artificial al estilo de JARVIS: brillante, leal, elegante, cálida y con un toque de humor sutil.",
+    ...PERSONAS[persona],
+    video
+      ? "Estás en una videollamada con el usuario: ve tu avatar animado y tú lo ves por su cámara cuando te llega una foto con su mensaje. Si hay foto, coméntala con naturalidad solo cuando venga al caso (cómo se ve, qué te enseña, su expresión), sin describirla entera."
+      : "",
     voice
       ? "El usuario te habla por voz y te escucha; toca las opciones del menú holográfico con el dedo."
       : "El usuario te escribe en el chat; tus respuestas se muestran en pantalla y pueden leerse en voz alta.",
@@ -170,7 +218,7 @@ function systemPrompt({ lang, now, notes, profile, channel, memories }, webSearc
       ? "Todo lo que escribes se pronuncia en voz alta: habla de forma natural y breve (1-3 frases salvo que te pidan detalle). Nada de markdown, listas, viñetas, emojis, URLs ni símbolos; escribe los números y unidades como se dicen."
       : "Puedes usar Markdown ligero (negritas, listas, tablas pequeñas) y LaTeX entre $...$ o $$...$$ para fórmulas. Sé claro y ve al grano.",
     voice ? "El reconocimiento de voz puede transcribir mal alguna palabra: interpreta la intención más probable." : "",
-    "Usa tus herramientas para cambiar el idioma, abrir módulos, guardar notas, poner temporizadores, poner o controlar música o activar emergencias cuando el usuario lo pida. Tras usarlas, confirma en pocas palabras.",
+    "Usa tus herramientas para cambiar el idioma, abrir módulos, guardar notas, poner temporizadores, poner o controlar música, cambiar tu personalidad o activar emergencias cuando el usuario lo pida. Tras usarlas, confirma en pocas palabras.",
     "Si el usuario dice que está en peligro o necesita ayuda urgente, usa la herramienta emergency de inmediato y dale instrucciones breves y calmadas.",
     profileLine(profile),
     memories.length
@@ -314,6 +362,8 @@ export function parseRequest(body) {
       : [],
     symbol: str(body.symbol, 40),
     followUp: body.followUp === true,
+    persona: PERSONAS[body.persona] ? body.persona : "nikolai",
+    video: body.video === true,
     model: Object.values(MODELS).includes(body.model) ? body.model : null,
     translateTo: mode === "translate" && LANGUAGES[body.target] ? LANGUAGES[body.target] : null,
     task: HOMEWORK[body.task] ? body.task : "solve",

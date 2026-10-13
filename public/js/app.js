@@ -5,8 +5,9 @@ import { LANGS, t, setLang, getLang, detectBrowserLang } from "./i18n.js";
 import {
   Listener, Speaker, MicMeter, voicesFor, voiceGender, voiceQuality, stripWakeWord, speechSupported,
   isMobile, isIOS, inAppBrowser, isBrave, ClapDetector, prepareOfflineSpeech, offlineSpeechSupported, offlineSpeechReady,
-  PREMIUM_VOICES, unlockAudio, testPremium,
+  PREMIUM_VOICES, unlockAudio, testPremium, outputLevel,
 } from "./voice.js";
+import { CallView } from "./call.js";
 import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -38,7 +39,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, lowPower: false, clap: true, clapSens: 3, aiSpeed: "max", persona: "nikolai", personaVoice: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -79,15 +80,64 @@ const ICON = {
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
   work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
   projects: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
+  persona: '<circle cx="8" cy="9" r="3.2"/><path d="M2.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="7.5" r="2.7"/><path d="M14.5 12.6c.6-.2 1.3-.3 2-.3 2.4 0 4.3 1.6 4.9 4.4"/>',
   money: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.6-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3.2 6 1.8 6 5 0 1.4-1.3 2.4-3 2.4-1.3 0-2.6-.6-3.2-1.6M12 5.5v13"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 
+document.body.dataset.persona = settings.persona;
+const LOOK_RE = /\b(m[ií]rame|me ves|c[oó]mo me veo|qu[eé] ves|ves esto|mira esto|mira lo que|look at me|what do you see|how do i look)\b/i;
+
+// ---------- Personalidades y videollamada ----------
+const PERSONA_VOICE = { lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 } };
+function setPersona(p, announce) {
+  if (!["nikolai", "lawyer", "friend"].includes(p)) return;
+  settings.persona = p;
+  saveSettings();
+  document.body.dataset.persona = p;
+  applyVoice();
+  updateCards();
+  call.refresh();
+  if (openId === "persona") refreshPanel();
+  if (announce) speakOnce(t("persona_hello_" + p).replace("{name}", profile.name ? " " + profile.name : ""));
+}
+const call = new CallView({
+  t, esc, icon,
+  getState: () => state,
+  speakLevel: () => outputLevel(),
+  micLevel: () => Math.min(1, mic.level() * 3),
+  persona: () => settings.persona,
+  title: (p) => t("persona_" + p),
+  caption: () => ui.reply.textContent.slice(-180),
+  micOn: () => voiceOn,
+  onMic: () => toggleVoice(),
+  onEnd: () => endCall(),
+  seeAlways: () => settings.callSees,
+  onSeeAlways: () => { settings.callSees = !settings.callSees; saveSettings(); },
+  onLook: () => ask(t("call_lookPrompt"), { look: true }),
+  onPersona: () => { const P = ["nikolai", "lawyer", "friend"]; setPersona(P[(P.indexOf(settings.persona) + 1) % 3], true); },
+});
+async function startCall() {
+  if (call.active) return;
+  closePanel();
+  unlockAudio();
+  await call.start();
+  if (!voiceOn) toggleVoice();
+  call.refresh();
+  updateCards();
+}
+function endCall() {
+  call.stop();
+  updateCards();
+  if (openId === "persona") refreshPanel();
+}
+
+
 const MODULES = [
-  "core", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
+  "core", "chat", "persona", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
-const WIDE = new Set(["chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
+const WIDE = new Set(["persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -131,6 +181,7 @@ function cardBody(id) {
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
+    case "persona": return `<div class="big-code persona-code" data-bind="personaName">—</div><div class="stats">${stat("call_title", "callState")}${stat("ps_voice", "personaVoice", "accent")}</div>`;
     case "work": return `<p class="desc" style="flex:1">${esc(t("workCardDesc"))}</p><div class="stats">${stat("wk_tools", "workTools")}${stat("wk_last", "workLast", "accent")}</div>`;
     case "projects": return `<div class="big-code" data-bind="pjCount">0</div><div class="stats">${stat("pj_open", "pjOpen")}${stat("pj_doneN", "pjDone", "accent")}</div>`;
     case "money": return `<div class="big-code mono" data-bind="mnYears">—</div><div class="stats">${stat("mn_toMillion", "mnGoal")}${stat("hb_streak", "hbStreak", "accent")}</div>`;
@@ -228,6 +279,9 @@ function values() {
     btcPrice: btc ? fmtMoney(btc.price) : "—",
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
+    personaName: t("personaShort_" + settings.persona),
+    callState: call.active ? t("call_live") : "—",
+    personaVoice: settings.personaVoice ? t("on") : t("off"),
     workTools: 6,
     workLast: Object.keys(work.out).length ? t("wk_" + Object.keys(work.out).at(-1)) : "—",
     pjCount: projectStats().count,
@@ -270,7 +324,7 @@ function updateCards() {
       const id = k.slice(7);
       const live = id === "core" || id === "chat" || id === "homework" ? brain.apiKey
         : id === "news" ? navigator.onLine
-        : id === "work" || id === "projects" || id === "money" ? true
+        : id === "work" || id === "projects" || id === "money" || id === "persona" ? true
         : id === "settings" ? Boolean(gestures?.running)
         : id === "markets" ? Boolean(market.live.BTCUSDT)
         : id === "music" ? true
@@ -629,6 +683,40 @@ const PANEL = {
 
   news(body) {
     renderNews(body, moduleCtx());
+  },
+
+  persona(body) {
+    const P = ["nikolai", "lawyer", "friend"];
+    body.innerHTML = `
+      <div class="persona-cards">${P.map((p) => `
+        <div class="persona-card ${p} ${settings.persona === p ? "on" : ""}">
+          <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", lawyer: "⚖", friend: "♥" }[p]}</span>
+            <div><b>${esc(t("persona_" + p))}</b><small class="mono">${esc(t("personaSub_" + p))}</small></div></div>
+          <p>${esc(t("personaDesc_" + p))}</p>
+          ${p !== "nikolai" ? `<div class="pc-quick">${[1, 2, 3, 4].map((i) => `<button class="nw-mini" data-target data-q="${p}:${i}">${esc(t(`pq_${p}${i}`))}</button>`).join("")}</div>` : ""}
+          <button class="tile ${settings.persona === p ? "on" : "action"}" data-target data-persona="${p}"><span class="t-main">${esc(settings.persona === p ? t("ps_active") : t("ps_use"))}</span></button>
+        </div>`).join("")}</div>
+      <div class="readout call-promo">
+        <div class="k">${esc(t("call_title").toUpperCase())}</div>
+        <p>${esc(t("call_desc"))}</p>
+        <div class="tiles">
+          ${tile(`${icon("phone")}<br>${esc(call.active ? t("call_end") : t("call_start"))}`, "", "action call-go")}
+          ${tile(esc(t("call_seeAlways")), settings.callSees ? esc(t("on")) : esc(t("off")), settings.callSees ? "on" : "")}
+          ${tile(esc(t("ps_voice")), settings.personaVoice ? esc(t("on")) : esc(t("off")), settings.personaVoice ? "on" : "")}
+        </div>
+        <p class="muted">${esc(t("call_privacy"))}</p>
+      </div>
+      <p class="muted">${esc(t("ps_note"))}</p>`;
+    body.querySelectorAll("[data-persona]").forEach((b) => b.addEventListener("click", () => setPersona(b.dataset.persona, true)));
+    body.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => {
+      const [p, i] = b.dataset.q.split(":");
+      if (settings.persona !== p) setPersona(p, false);
+      ask(t(`pq_${p}${i}`));
+    }));
+    const [go, sees, pv] = body.querySelectorAll(".call-promo .tile");
+    go.onclick = () => (call.active ? endCall() : startCall());
+    sees.onclick = () => { settings.callSees = !settings.callSees; saveSettings(); refreshPanel(); };
+    pv.onclick = () => { settings.personaVoice = !settings.personaVoice; saveSettings(); applyVoice(); refreshPanel(); updateCards(); };
   },
 
   work(body) {
@@ -1021,6 +1109,13 @@ function applyVoice() {
     : null;
   speaker.rate = settings.rate;
   speaker.pitch = settings.pitch;
+  // Cada personalidad con su voz (se puede desactivar en Personalidades).
+  const pv = settings.personaVoice && PERSONA_VOICE[settings.persona];
+  if (pv) {
+    if (speaker.gender !== pv.gender) { speaker.gender = pv.gender; speaker.voiceName = ""; }
+    speaker.pitch = clamp(settings.pitch * pv.pitch, 0.5, 1.6);
+    if (speaker.premium && PREMIUM_VOICES.some((v) => v.id === settings.premiumVoice)) speaker.premium = { ...speaker.premium, voiceId: pv.premium, fx: settings.persona === "lawyer" && speaker.premium.fx };
+  }
   speaker.lang = LANGS[getLang()].speech;
   listener.lang = LANGS[getLang()].speech;
 }
@@ -1254,6 +1349,8 @@ function premiumErrorText(e) {
 speaker.onIdle = () => { if (state === "speaking" || state === "thinking") afterSpeech(); };
 
 const ACTIONS = {
+  set_persona: ({ persona }) => setPersona(persona, false),
+  video_call: ({ action }) => (action === "start" ? startCall() : endCall()),
   set_language: ({ code }) => applyLanguage(code),
   open_panel: ({ panel }) => (panel === "none" ? closePanel() : openPanel(panel)),
   save_note: ({ text }) => { addNote(text); if (openId === "notes") refreshPanel(); },
@@ -1295,7 +1392,7 @@ function dropOrphan(msg) {
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
   const model = { max: "claude-opus-5-5", balanced: "claude-sonnet-5-5", fast: "claude-haiku-5-5" }[settings.aiSpeed];
-  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, ...payload }, handlers);
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: settings.persona, video: call.active, ...payload }, handlers);
 }
 
 /** Pide a NIKOLAI una descripción corta de una foto para guardarla como recuerdo. */
@@ -1324,7 +1421,9 @@ function errorText(err) {
  * Pregunta al cerebro. Por voz (por defecto) habla mientras llega la respuesta;
  * desde el chat (channel "text") pinta la respuesta y la lee solo si speak es true.
  */
-async function ask(text, { channel = "voice", speak = true, onText, onDone } = {}) {
+async function ask(text, { channel = "voice", speak = true, onText, onDone, look = false } = {}) {
+  // En videollamada, NIKOLAI te ve si se lo pides («mírame») o si activaste «que me vea siempre».
+  const photo = call.active && (look || settings.callSees || LOOK_RE.test(text)) ? call.snapshot() : null;
   if (isOffline()) { vlog("offline", text); answerOffline(text, { speak, onText, onDone }); return; }
   stopAll();
   const userMsg = { role: "user", content: text };
@@ -1340,7 +1439,7 @@ async function ask(text, { channel = "voice", speak = true, onText, onDone } = {
   let reply = "", first = true, err = null;
   try {
     err = await stream(
-      { messages: history.slice(-20), notes: notes.map((n) => n.text), channel },
+      { messages: history.slice(-20), notes: notes.map((n) => n.text), channel, ...(photo ? { images: [{ media_type: "image/jpeg", data: photo }] } : {}) },
       {
         signal: ctl.signal,
         onText: (delta) => {
