@@ -2,6 +2,7 @@
 // caminan y con las que puedes platicar. Desde ahí, la puerta al Hotel en la playa:
 // turistas, mar, palmeras y una computadora con trabajo (recepción del hotel y bolsa de trabajo).
 import { renderInto } from "./md.js";
+import { I, PALM, UMBRELLA, CASTLE, BALL, PLANT, LAMP, BOTTLES, LOTUS, CANDLE, LAPTOP, COFFEE, elevatorHtml, roomHtml, bunkerHtml } from "./hotel-art.js";
 
 export const CITIES = [
   ["Ciudad de México", "America/Mexico_City", "🇲🇽"], ["Los Mochis", "America/Mazatlan", "🇲🇽"], ["Culiacán", "America/Mazatlan", "🇲🇽"],
@@ -102,6 +103,8 @@ export function openLobby(ctx, scene = "lobby") {
 export function closeLobby() {
   clearInterval(timer); ticks.length = 0;
   stopAmbient();
+  if (player?.el?._key) { removeEventListener("keydown", player.el._key, true); removeEventListener("keyup", player.el._key, true); }
+  player = null;
   root?.remove(); root = null;
   document.body.classList.remove("in-lobby");
   removeEventListener("keydown", onKey, true);
@@ -143,23 +146,32 @@ function drawLobby() {
   root.className = "lb lb-lobby";
   root.innerHTML = `
     <svg width="0" height="0" style="position:absolute"><defs><radialGradient id="brass" cx="35%" cy="30%"><stop offset="0" stop-color="#f7dc8a"/><stop offset=".6" stop-color="#b8892f"/><stop offset="1" stop-color="#6b4a14"/></radialGradient></defs></svg>
-    ${topBar(t("lb_title"), muteBtn() + notebookBtn() + `<span class="lb-key mono">${hotel.key ? `🔑 ${hotel.key.room}${hotel.key.suite ? " ✨" : ""}` : "🔑 —"}</span>`)}
+    ${topBar(t("lb_title"), avatarBtn() + muteBtn() + uniformBtn() + notebookBtn() + `<span class="lb-key mono">${I.key} ${hotel.key ? `${hotel.key.room}${hotel.key.suite ? " · SUITE" : ""}` : "—"}</span>`)}
     <div class="lb-wall">
       <div class="lb-clocks">${lobby.clocks.map((n, i) => `<button class="lb-clock" data-target data-clock="${i}">${clockSvg()}<span class="lb-plate"><b>${esc(city(n)[2])} ${esc(n)}</b><i class="mono" data-dig="${i}"></i></span></button>`).join("")}
         ${lobby.clocks.length < 8 ? `<button class="lb-clock add" data-target data-add>＋<span class="lb-plate"><b>${esc(t("lb_addClock"))}</b></span></button>` : ""}</div>
       <div class="lb-lamp l"></div><div class="lb-lamp r"></div>
     </div>
     <div class="lb-floor">
-      <button class="lb-desk" data-target data-recep><span>🛎 RECEPCIÓN · ${esc(t("ht_askKey").toUpperCase())}</span></button>
-      <button class="lb-elev e1" data-target data-elev><span class="mono">${hotel.floor || "L"}</span><i></i><i></i><b>🛗</b></button>
-      <button class="lb-elev e2" data-target data-elev><span class="mono">▲▼</span><i></i><i></i><b>🛗</b></button>
-      <button class="lb-stairs-door" data-target data-stairs><span class="exit">EXIT</span>🚨<b>${esc(t("ht_stairs"))}</b></button>
-      <button class="lb-place bar" data-target data-place="bar">🍹<b>${esc(t("pl_bar"))}</b></button>
-      <button class="lb-place spa" data-target data-place="spa">💆<b>${esc(t("pl_spa"))}</b></button>
-      <div class="lb-chair c1"></div><div class="lb-chair c2"></div><div class="lb-chair c3"></div><div class="lb-table">☕</div>
-      <div class="lb-plant l">🪴</div><div class="lb-plant r">🪴</div>
+      <button class="lb-desk" data-target data-recep><span>${I.bell} RECEPCIÓN · ${esc(t("ht_askKey").toUpperCase())}</span></button>
+      <button class="lb-elev e1" data-target data-elev>${elevatorHtml("L", "A")}</button>
+      <button class="lb-elev e2" data-target data-elev>${elevatorHtml("L", "B")}</button>
+      <button class="lb-stairs-door" data-target data-stairs><span class="exit">EXIT</span>${I.stairs}<b>${esc(t("ht_stairs"))}</b></button>
+      <button class="lb-place bar" data-target data-place="bar">${I.glass}<b>${esc(t("pl_bar"))}</b></button>
+      <button class="lb-place spa" data-target data-place="spa">${I.spa}<b>${esc(t("pl_spa"))}</b></button>
+      <div class="lb-vend-spot">
+        <button class="lb-hidden-door ${hotel.vendMoved ? "show" : ""}" data-target data-secret><i></i><span>${esc(t("vd_door"))}</span></button>
+        <button class="lb-staff-door" data-target data-staff><span class="mono">SOLO PERSONAL</span><i class="cam"></i></button>
+      <button class="npc lb-guard" data-target data-staff aria-label="${esc(t("sec_guard"))}"><span class="npc-body">${person({ skin: "#a9714a", shirt: "#1f2a44", pants: "#1f2a44", hair: "#111", hat: "cap" })}</span><span class="npc-name">${esc(t("sec_guard"))}</span></button>
+      <button class="lb-vend ${hotel.vendMoved ? "moved" : ""}" data-target data-vend>
+          <span class="vd-top mono">SNACKS · BEBIDAS</span><span class="vd-glass">${Array.from({ length: 12 }, (_, i) => `<i style="--c:${["#e53935", "#fdd835", "#43a047", "#1e88e5", "#fb8c00", "#8e24aa"][i % 6]}"></i>`).join("")}</span>
+          <span class="vd-pad"><i></i><i></i><i></i><i></i></span><span class="vd-slot"></span>
+        </button>
+      </div>
+      <div class="lb-chair c1"></div><div class="lb-chair c2"></div><div class="lb-chair c3"></div><div class="lb-table">${COFFEE}</div>
+      <div class="lb-plant l">${PLANT}</div><div class="lb-plant r">${PLANT}</div>
       <div class="lb-sofa"></div>
-      <button class="lb-door" data-target data-go="beach"><span>🏖</span><b>${esc(t("lb_toBeach"))}</b></button>
+      <button class="lb-door" data-target data-go="beach"><span>${I.sun}</span><b>${esc(t("lb_toBeach"))}</b></button>
       ${npcHtml(LOBBY_NPCS)}
     </div>
     <div class="lb-picker" hidden></div>
@@ -173,6 +185,9 @@ function drawLobby() {
   root.querySelectorAll("[data-elev]").forEach((b) => b.addEventListener("click", elevator));
   root.querySelector("[data-stairs]").addEventListener("click", () => drawStairs(0));
   root.querySelectorAll("[data-place]").forEach((b) => b.addEventListener("click", () => drawPlace(b.dataset.place)));
+  root.querySelector("[data-vend]").addEventListener("click", vending);
+  root.querySelector("[data-staff]").addEventListener("click", staffDoor);
+  root.querySelector("[data-secret]").addEventListener("click", () => { if (!hotel.vendMoved) return; toast(t("ht_goingDown")); drawStairs(-1); });
   const tick = () => {
     lobby.clocks.forEach((n, i) => {
       const el = root?.querySelector(`[data-clock="${i}"]`);
@@ -185,7 +200,7 @@ function drawLobby() {
       el.querySelector(".h-s").setAttribute("transform", `rotate(${s * 6} 50 50)`);
       const day = h >= 7 && h < 19;
       el.classList.toggle("night", !day);
-      root.querySelector(`[data-dig="${i}"]`).textContent = `${new Date().toLocaleTimeString(ctxRef.lang || "es", { timeZone: tz, hour: "2-digit", minute: "2-digit" })} ${day ? "☀" : "☾"} · ${new Date().toLocaleDateString(ctxRef.lang || "es", { timeZone: tz, weekday: "short" })}`;
+      root.querySelector(`[data-dig="${i}"]`).textContent = `${new Date().toLocaleTimeString(ctxRef.lang || "es", { timeZone: tz, hour: "2-digit", minute: "2-digit" })} ${day ? "día" : "noche"} · ${new Date().toLocaleDateString(ctxRef.lang || "es", { timeZone: tz, weekday: "short" })}`;
     });
   };
   ticks.push(tick); tick();
@@ -201,7 +216,7 @@ function picker(i) {
     <b>${esc(i < 0 ? t("lb_addClock") : t("lb_changeClock"))}</b>
     <input class="field" placeholder="${esc(t("lb_searchCity"))}">
     <div class="lb-cities">${CITIES.map(([n, , f]) => `<button class="nw-mini" data-target data-city="${esc(n)}">${f} ${esc(n)}</button>`).join("")}</div>
-    <div class="lb-row">${i >= 0 && lobby.clocks.length > 1 ? `<button class="nw-mini" data-target data-rm>🗑 ${esc(t("remove"))}</button>` : ""}<button class="nw-mini" data-target data-close>${esc(t("lb_cancel"))}</button></div>
+    <div class="lb-row">${i >= 0 && lobby.clocks.length > 1 ? `<button class="nw-mini" data-target data-rm>${I.trash} ${esc(t("remove"))}</button>` : ""}<button class="nw-mini" data-target data-close>${esc(t("lb_cancel"))}</button></div>
   </div>`;
   const input = box.querySelector("input");
   input.addEventListener("input", () => box.querySelectorAll("[data-city]").forEach((b) => { b.hidden = !b.dataset.city.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").includes(input.value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")); }));
@@ -218,14 +233,14 @@ function drawBeach() {
   const { t } = ctxRef;
   root.className = "lb lb-beach";
   root.innerHTML = `
-    ${topBar(t("lb_beachTitle"), `<button class="nw-mini" data-target data-go="lobby">← ${esc(t("lb_toLobby"))}</button>` + muteBtn() + notebookBtn())}
+    ${topBar(t("lb_beachTitle"), `<button class="nw-mini" data-target data-go="lobby">← ${esc(t("lb_toLobby"))}</button>` + avatarBtn() + muteBtn() + uniformBtn() + notebookBtn())}
     <div class="bc-sky"><div class="bc-sun"></div><div class="bc-cloud c1"></div><div class="bc-cloud c2"></div><div class="bc-cloud c3"></div><div class="bc-cloud c4"></div><div class="bc-cloud c5"></div><div class="bc-cloud c6"></div><span class="bc-bird b1">〰</span><span class="bc-bird b2">〰</span></div>
     <div class="bc-hotel"><div class="bc-tower"></div><div class="bc-tower t2"></div><span>NIKOLAI BEACH RESORT</span></div>
     <div class="bc-sea"><i class="wave w1"></i><i class="wave w2"></i><i class="wave w3"></i></div>
     <div class="bc-sand">
-      <span class="bc-palm p1">🌴</span><span class="bc-palm p2">🌴</span><span class="bc-palm p3">🌴</span>
-      <span class="bc-umb u1">⛱</span><span class="bc-umb u2">⛱</span><span class="bc-castle">🏰</span><span class="bc-ball">🏐</span>
-      <button class="bc-pc" data-target data-pc><span class="bc-monitor">💻</span><b>${esc(t("lb_computer"))}</b></button>
+      <span class="bc-palm p1">${PALM}</span><span class="bc-palm p2">${PALM}</span><span class="bc-palm p3">${PALM}</span>
+      <span class="bc-umb u1">${UMBRELLA}</span><span class="bc-umb u2">${UMBRELLA}</span><span class="bc-castle">${CASTLE}</span><span class="bc-ball">${BALL}</span>
+      <button class="bc-pc" data-target data-pc><span class="bc-monitor">${LAPTOP}</span><b>${esc(t("lb_computer"))}</b></button>
       ${npcHtml(BEACH_NPCS)}
     </div>
     <div class="lb-chat" hidden></div>
@@ -240,6 +255,7 @@ function drawBeach() {
 }
 
 function bindCommon(list, place) {
+  setTimeout(mountPlayer, 0);
   root.querySelector(".lb-exit").addEventListener("click", closeLobby);
   root.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => { ticks.length = 0; b.dataset.go === "beach" ? drawBeach() : drawLobby(); }));
   root.querySelectorAll("[data-npc]").forEach((b) => b.addEventListener("click", () => openChat(list.find((n) => n.id === b.dataset.npc), place)));
@@ -311,14 +327,14 @@ function openComputer() {
   box.hidden = false;
   const desk = () => {
     box.innerHTML = `<div class="pc-frame"><div class="pc-screen">
-      <div class="pc-bar"><b>NIKOLAI OS · ${esc(t("lb_hotelPc"))}</b><span class="mono" data-pcclock></span><button class="nw-mini" data-target data-off>⏻</button></div>
+      <div class="pc-bar"><b>NIKOLAI OS · ${esc(t("lb_hotelPc"))}</b><span class="mono" data-pcclock></span><button class="nw-mini" data-target data-off>${I.power}</button></div>
       <div class="pc-desk">
-        <button class="pc-app" data-target data-app="recep"><span>🛎</span>${esc(t("pc_recep"))}</button>
-        <button class="pc-app" data-target data-app="tasks"><span>🧹</span>${esc(t("pc_tasks"))}</button>
-        <button class="pc-app" data-target data-app="mysteries"><span>🔍</span>${esc(t("pc_mysteries"))}</button>
-        <button class="pc-app" data-target data-app="jobs"><span>💼</span>${esc(t("pc_jobs"))}</button>
-        <button class="pc-app" data-target data-app="work"><span>📄</span>${esc(t("pc_myWork"))}</button>
-        <div class="pc-stats mono">💵 $${lobby.job.money.toLocaleString()} · 🧳 ${lobby.job.served} · ⭐ ${lobby.job.served ? (lobby.job.stars / lobby.job.served).toFixed(1) : "—"}</div>
+        <button class="pc-app" data-target data-app="recep"><span>${I.bell}</span>${esc(t("pc_recep"))}</button>
+        <button class="pc-app" data-target data-app="tasks"><span>${I.tasks}</span>${esc(t("pc_tasks"))}</button>
+        <button class="pc-app" data-target data-app="mysteries"><span>${I.search}</span>${esc(t("pc_mysteries"))}</button>
+        <button class="pc-app" data-target data-app="jobs"><span>${I.case}</span>${esc(t("pc_jobs"))}</button>
+        <button class="pc-app" data-target data-app="work"><span>${I.doc}</span>${esc(t("pc_myWork"))}</button>
+        <div class="pc-stats mono">${I.money} $${lobby.job.money.toLocaleString()} · ${esc(t("pc_served"))} ${lobby.job.served} · ${I.star} ${lobby.job.served ? (lobby.job.stars / lobby.job.served).toFixed(1) : "—"}</div>
       </div>
       <div class="pc-win" hidden></div>
     </div></div>`;
@@ -370,7 +386,7 @@ function openComputer() {
       el.innerHTML = `<div class="rc-guest"><span class="rc-flag">${flag}</span><div><b>${esc(name)}</b><p>«${esc(t(rq))}»</p></div></div>
         <div class="rc-patience"><i></i></div>
         <div class="rc-opts">${opts.map((o, j) => `<button class="nw-mini" data-target data-o="${j}">${esc(o)}</button>`).join("")}</div>
-        <p class="muted mono">${esc(t("rc_guest"))} ${shift.i + 1} / 6 · 💵 $${shift.earned}</p>`;
+        <p class="muted mono">${esc(t("rc_guest"))} ${shift.i + 1} / 6 · $${shift.earned}</p>`;
       const bar = el.querySelector(".rc-patience i");
       const pat = setInterval(() => { const p = 1 - (Date.now() - born) / 20000; if (!bar.isConnected) return clearInterval(pat); bar.style.width = `${Math.max(0, p * 100)}%`; if (p <= 0) { clearInterval(pat); answer(-1); } }, 200);
       const answer = (j) => {
@@ -382,7 +398,7 @@ function openComputer() {
         shift.earned += tip;
         Object.assign(lobby.job, { money: lobby.job.money + tip, served: lobby.job.served + 1, stars: lobby.job.stars + stars });
         save("nikolai.hotelJob", lobby.job);
-        el.querySelector(".rc-opts").innerHTML = `<p class="${right ? "rc-ok" : "rc-bad"}">${right ? `✓ ${esc(t("rc_good"))} +$${tip}` : j < 0 ? `⌛ ${esc(t("rc_slow"))}` : `✕ ${esc(t("rc_bad"))} «${esc(opts[ok])}»`} ${"⭐".repeat(stars)}</p>`;
+        el.querySelector(".rc-opts").innerHTML = `<p class="${right ? "rc-ok" : "rc-bad"}">${right ? `✓ ${esc(t("rc_good"))} +$${tip}` : j < 0 ? esc(t("rc_slow")) : `✕ ${esc(t("rc_bad"))} «${esc(opts[ok])}»`} <span class="stars">${I.star.repeat(stars)}</span></p>`;
         shift.i++;
         setTimeout(next, 1600);
       };
@@ -397,7 +413,7 @@ function openComputer() {
 // Hotel: llave, elevadores, escaleras, pisos, habitaciones, tareas y misterios
 // =====================================================================
 export const hotel = Object.assign(
-  { key: null, floor: 0, tasks: [], mystery: null, solved: [], found: [] },
+  { key: null, floor: 0, tasks: [], mystery: null, solved: [], found: [], avatar: null },
   load("nikolai.hotel", {}),
 );
 const saveHotel = () => save("nikolai.hotel", hotel);
@@ -429,6 +445,20 @@ function ambient(kind) {
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const s = ctx.createBufferSource(); s.buffer = b; s.loop = true; s.start(); amb.nodes.push(s); return s;
     };
+    if (kind === "bunker") {
+      // Zumbido eléctrico y goteo en el refugio.
+      const hum = ctx.createOscillator(); hum.type = "sawtooth"; hum.frequency.value = 60;
+      const hl = ctx.createBiquadFilter(); hl.type = "lowpass"; hl.frequency.value = 180;
+      const hg = ctx.createGain(); hg.gain.value = 0.03;
+      hum.connect(hl); hl.connect(hg); hg.connect(master); hum.start(); amb.nodes.push(hum, hl, hg);
+      amb.chordTimer = setInterval(() => {
+        const now = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.setValueAtTime(1400 + Math.random() * 600, now); o.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+        g.gain.setValueAtTime(0.08, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+        o.connect(g); g.connect(master); o.start(now); o.stop(now + 0.25);
+      }, 1700 + Math.random() * 1500);
+      return;
+    }
     if (kind === "beach") {
       // Olas: ruido filtrado que sube y baja.
       const n = noise(), lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 600;
@@ -465,12 +495,12 @@ function ding() {
   });
 }
 function stopAmbient() { if (!amb) return; clearInterval(amb.chordTimer); try { amb.ctx.close(); } catch { /* cerrada */ } amb = null; }
-function muteBtn() { return `<button class="nw-mini" data-target data-mute>${hotel.muted ? "🔇" : "🔊"}</button>`; }
+function muteBtn() { return `<button class="nw-mini" data-target data-mute>${hotel.muted ? I.mute : I.sound}</button>`; }
 function bindMute() {
   root.querySelector("[data-mute]")?.addEventListener("click", (e) => {
     hotel.muted = !hotel.muted; saveHotel();
     if (amb) amb.master.gain.value = hotel.muted ? 0 : 0.5;
-    e.currentTarget.textContent = hotel.muted ? "🔇" : "🔊";
+    e.currentTarget.innerHTML = hotel.muted ? I.mute : I.sound;
   });
 }
 
@@ -493,6 +523,7 @@ function staffRooms() {
 function canEnter(room) { return hotel.key?.room === room || staffRooms().has(room); }
 function canReach(floor) {
   if (floor === 0) return true;
+  if (floor < 0) return Boolean(hotel.bunkerKey);
   if (!SUITE_FLOORS.includes(floor)) return Boolean(hotel.key) || [...staffRooms()].some((r) => +String(r)[0] === floor) || mysteryStep()?.floor === floor;
   return hotel.key?.suite || [...staffRooms()].some((r) => +String(r)[0] === floor) || mysteryStep()?.floor === floor;
 }
@@ -513,12 +544,12 @@ function reception() {
   box.hidden = false;
   const draw = () => {
     box.innerHTML = `<div class="lb-card">
-      <b>🛎 ${esc(t("ht_reception"))}</b>
+      <b>${I.bell} ${esc(t("ht_reception"))}</b>
       <p>${hotel.key ? esc(t("ht_youHave").replace("{room}", hotel.key.room)) + ` · ${esc(t("rt_" + hotel.key.type))}` : esc(t("ht_noKey"))}</p>
       <div class="rt-list">${["standard", "balcony", "suite"].map((k) => `<button class="rt" data-target data-k="${k}">
-        <span>${{ standard: "🛏", balcony: "🌅", suite: "✨" }[k]}</span><b>${esc(t("rt_" + k))}</b><small>${esc(t("rt_" + k + "Desc"))}</small><em class="mono">$${PRICES[k]} / ${esc(t("rt_night"))}</em></button>`).join("")}</div>
-      ${hotel.key ? `<div class="lb-row"><button class="nw-mini" data-target data-k="return">↩ ${esc(t("ht_return"))}</button></div>` : ""}
-      <p class="muted mono">💵 ${esc(t("rt_balance"))}: $${lobby.job.money.toLocaleString()} · ${esc(t("ht_moneyHint"))}</p>
+        <span>${{ standard: I.bed, balcony: I.balcony, suite: I.crown }[k]}</span><b>${esc(t("rt_" + k))}</b><small>${esc(t("rt_" + k + "Desc"))}</small><em class="mono">$${PRICES[k]} / ${esc(t("rt_night"))}</em></button>`).join("")}</div>
+      ${hotel.key ? `<div class="lb-row"><button class="nw-mini" data-target data-k="return">${esc(t("ht_return"))}</button></div>` : ""}
+      <p class="muted mono">${I.money} ${esc(t("rt_balance"))}: $${lobby.job.money.toLocaleString()} · ${esc(t("ht_moneyHint"))}</p>
       <div class="lb-row"><button class="nw-mini" data-target data-close>${esc(t("lb_cancel"))}</button></div>
     </div>`;
     box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; });
@@ -538,12 +569,12 @@ function reception() {
 }
 function refreshKey() {
   const el = root?.querySelector(".lb-key");
-  if (el) el.textContent = hotel.key ? `🔑 ${hotel.key.room}${hotel.key.suite ? " ✨" : hotel.key.type === "balcony" ? " 🌅" : ""}` : "🔑 —";
+  if (el) el.innerHTML = `${I.key} ${hotel.key ? `${hotel.key.room}${hotel.key.suite ? " · SUITE" : hotel.key.type === "balcony" ? " · BALCÓN" : ""}` : "—"}`;
 }
 
 // ---------- Bar y spa ----------
-const BAR_MENU = [["margarita", "🍹", 80], ["michelada", "🍺", 60], ["mojito", "🍸", 85], ["horchata", "🥛", 40], ["coco", "🥥", 50], ["nachos", "🧀", 70]];
-const SPA_MENU = [["relax", "💆", 250], ["stones", "🪨", 350], ["facial", "🧖", 200], ["feet", "🦶", 150]];
+const BAR_MENU = [["margarita", "", 80], ["michelada", "", 60], ["mojito", "", 85], ["horchata", "", 40], ["coco", "", 50], ["nachos", "", 70]];
+const SPA_MENU = [["relax", "", 250], ["stones", "", 350], ["facial", "", 200], ["feet", "", 150]];
 function drawPlace(kind) {
   const { t } = ctxRef;
   ticks.length = 0;
@@ -558,11 +589,11 @@ function drawPlace(kind) {
   const menu = bar ? BAR_MENU : SPA_MENU;
   root.innerHTML = `
     ${topBar(t(bar ? "pl_barTitle" : "pl_spaTitle"), `<button class="nw-mini" data-target data-go="lobby">← ${esc(t("lb_toLobby"))}</button>` + muteBtn())}
-    <div class="pl-back">${bar ? `<div class="bar-shelf">🍾🥃🍷🍸🍾🥃🍷🍹🍾</div><div class="bar-neon">BAR · LA OLA</div>` : `<div class="spa-plants">🎋 🪷 🕯 🪷 🎋</div><div class="spa-sign">SPA · ARENA</div>`}</div>
-    <div class="pl-floor">${bar ? `<div class="bar-counter"></div><div class="bar-stools"><i></i><i></i><i></i><i></i><i></i></div>` : `<div class="spa-bed b1"></div><div class="spa-bed b2"></div><div class="spa-pool">💧</div>`}
+    <div class="pl-back">${bar ? `<div class="bar-shelf">${BOTTLES}</div><div class="bar-neon">BAR · LA OLA</div>` : `<div class="spa-plants">${CANDLE}${LOTUS}${CANDLE}${LOTUS}${CANDLE}</div><div class="spa-sign">SPA · ARENA</div>`}</div>
+    <div class="pl-floor">${bar ? `<div class="bar-counter"></div><div class="bar-stools"><i></i><i></i><i></i><i></i><i></i></div>` : `<div class="spa-bed b1"></div><div class="spa-bed b2"></div><div class="spa-pool"></div>`}
       ${npcHtml(staff)}</div>
-    <div class="pl-menu"><b>${esc(t(bar ? "pl_menu" : "pl_services"))}</b>${menu.map(([k, ic, p]) => `<button class="nw-mini" data-target data-buy="${k}">${ic} ${esc(t("pm_" + k))} · $${p}</button>`).join("")}
-      <span class="mono muted">💵 $<span data-money>${lobby.job.money.toLocaleString()}</span></span></div>
+    <div class="pl-menu"><b>${esc(t(bar ? "pl_menu" : "pl_services"))}</b>${menu.map(([k, ic, p]) => `<button class="nw-mini" data-target data-buy="${k}">${esc(t("pm_" + k))} · $${p}</button>`).join("")}
+      <span class="mono muted">${I.money} $<span data-money>${lobby.job.money.toLocaleString()}</span></span></div>
     ${!bar ? `<div class="spa-relax"><span>${esc(t("pl_relax"))}</span><i><i style="width:${hotel.relax || 0}%"></i></i></div>` : ""}
     <div class="lb-picker" hidden></div><div class="lb-chat" hidden></div>`;
   ambient(bar ? "lobby" : "stairs");
@@ -575,80 +606,279 @@ function drawPlace(kind) {
     lobby.job.money -= item[2]; save("nikolai.hotelJob", lobby.job);
     root.querySelector("[data-money]").textContent = lobby.job.money.toLocaleString();
     if (!bar) { hotel.relax = Math.min(100, (hotel.relax || 0) + item[2] / 5); saveHotel(); const bar2 = root.querySelector(".spa-relax i i"); if (bar2) bar2.style.width = `${hotel.relax}%`; }
-    toast(`${item[1]} ${t("pm_" + item[0] + "_done")}`, 4000);
+    toast(t("pm_" + item[0] + "_done"), 4000);
   }));
 }
 
 // ---------- Elevador ----------
+const floorLabel = (f) => (f === 0 ? "L" : f < 0 ? `S${-f}` : String(f));
 function elevator() {
   const { t } = ctxRef;
   const box = root.querySelector(".lb-picker");
+  // Primero se abren las puertas del elevador del lobby (si estamos ahí).
+  root.querySelectorAll(".lb-elev").forEach((e) => e.classList.add("open"));
   box.hidden = false;
-  box.innerHTML = `<div class="lb-card elev">
-    <b>🛗 ${esc(t("ht_elevator"))}</b>
-    <p class="muted">${esc(hotel.key ? t("ht_tapCard") : t("ht_needKey"))}</p>
-    <div class="elev-pad">${[8, 7, 6, 5, 4, 3, 2, 1, 0].map((f) => `<button class="elev-btn ${SUITE_FLOORS.includes(f) ? "suite" : ""} ${canReach(f) ? "" : "locked"}" data-target data-floor="${f}">${f === 0 ? "L" : f}${SUITE_FLOORS.includes(f) ? "<small>SUITE</small>" : ""}</button>`).join("")}</div>
-    <div class="lb-row"><button class="nw-mini" data-target data-close>${esc(t("lb_cancel"))}</button></div>
+  const floors = [8, 7, 6, 5, 4, 3, 2, 1, 0, ...(hotel.bunkerKey ? [-3] : [])];
+  box.innerHTML = `<div class="cab">
+    <div class="cab-wall l"></div><div class="cab-wall r"></div>
+    <div class="cab-mirror"></div><div class="cab-rail"></div><div class="cab-light"></div>
+    <div class="cab-panel">
+      <div class="cab-screen mono"><span class="ev-arrow">${I.up}</span><b>${floorLabel(hotel.floor)}</b></div>
+      <div class="cab-reader ${hotel.key ? (hotel.key.suite ? "suite" : "ok") : ""}"><i></i><span>${esc(hotel.key ? (hotel.key.suite ? t("ht_cardSuite") : t("ht_cardOk")) : t("ht_cardNone"))}</span></div>
+      <div class="cab-btns">${floors.map((f) => `<button class="cab-btn ${SUITE_FLOORS.includes(f) ? "suite" : ""} ${f < 0 ? "secret" : ""} ${canReach(f) ? "" : "locked"} ${f === hotel.floor ? "here" : ""}" data-target data-floor="${f}"><b>${floorLabel(f)}</b></button>`).join("")}</div>
+      <div class="cab-plate mono">NIKOLAI · 1000 KG · 13 PERS.</div>
+      <button class="cab-btn open-btn" data-target data-close>${esc(t("ht_exitCab"))}</button>
+    </div>
   </div>`;
-  box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; });
+  box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; root.querySelectorAll(".lb-elev").forEach((e) => e.classList.remove("open")); });
   box.querySelectorAll("[data-floor]").forEach((b) => b.addEventListener("click", () => {
     const f = Number(b.dataset.floor);
-    if (!canReach(f)) { toast(SUITE_FLOORS.includes(f) ? t("ht_suiteOnly") : t("ht_needKey")); return; }
-    box.hidden = true;
+    if (!canReach(f)) { toast(SUITE_FLOORS.includes(f) ? t("ht_suiteOnly") : t("ht_needKey")); b.classList.add("deny"); setTimeout(() => b.classList.remove("deny"), 500); return; }
+    b.classList.add("lit");
     ride(hotel.floor, f);
   }));
 }
 function ride(from, to) {
-  const { t } = ctxRef;
-  const box = root.querySelector(".lb-picker");
-  box.hidden = false;
-  box.innerHTML = `<div class="elev-ride"><div class="elev-doors"><i></i><i></i></div><b class="mono elev-num">${from || "L"}</b><span>${esc(t("ht_going"))}</span></div>`;
-  const num = box.querySelector(".elev-num");
+  const cab = root.querySelector(".cab");
+  if (!cab || from === to) { root.querySelector(".lb-picker").hidden = true; goFloor(to); return; }
+  cab.classList.add("moving");
+  const screen = cab.querySelector(".cab-screen b"), arrow = cab.querySelector(".cab-screen .ev-arrow");
+  arrow.innerHTML = to > from ? I.up : I.down;
+  arrow.classList.add("blink");
+  cab.insertAdjacentHTML("beforeend", `<div class="cab-doors"><i></i><i></i></div>`);
   let f = from;
   const step = setInterval(() => {
     f += Math.sign(to - f);
-    num.textContent = f || "L";
+    screen.textContent = floorLabel(f);
     if (f === to) {
       clearInterval(step);
       ding();
-      setTimeout(() => { box.hidden = true; goFloor(to); }, 700);
+      arrow.classList.remove("blink");
+      cab.classList.add("arrived");
+      setTimeout(() => { root.querySelector(".lb-picker").hidden = true; goFloor(to); }, 900);
     }
-  }, 550);
-  if (from === to) { clearInterval(step); box.hidden = true; goFloor(to); }
+  }, 600);
 }
 function goFloor(f) {
   hotel.floor = f; saveHotel(); ticks.length = 0;
-  if (f === 0) drawLobby(); else drawFloor(f);
+  if (f === 0) drawLobby(); else if (f < 0) drawBunker(-f); else drawFloor(f);
 }
 
-// ---------- Escaleras de emergencia ----------
+// ---------- Escaleras de emergencia (con subniveles) ----------
 function drawStairs(f) {
   const { t } = ctxRef;
   ticks.length = 0;
   hotel.floor = f; saveHotel();
-  root.className = "lb lb-stairs";
+  const under = f < 0;
+  root.className = `lb lb-stairs ${under ? "rusty" : ""}`;
   root.innerHTML = `
-    ${topBar(t("ht_stairsTitle"), muteBtn() + notebookBtn())}
-    <div class="st-wall"><div class="st-sign">🚪 ${f === 0 ? "LOBBY" : `${t("ht_floor").toUpperCase()} ${f}`}</div><div class="st-exit">EXIT ⇢</div>
-      <div class="st-steps">${Array.from({ length: 9 }, (_, i) => `<i style="--i:${i}"></i>`).join("")}</div><div class="st-rail"></div></div>
+    ${topBar(t("ht_stairsTitle"), avatarBtn() + muteBtn() + uniformBtn() + notebookBtn())}
+    <div class="st-wall"><div class="st-sign">${floorLabel(f) === "L" ? "LOBBY" : under ? `${t("ht_sub")} S${-f}` : `${t("ht_floor").toUpperCase()} ${f}`}</div><div class="st-exit">EXIT</div>
+      <div class="st-steps">${Array.from({ length: 9 }, (_, i) => `<i style="--i:${i}"></i>`).join("")}</div><div class="st-rail"></div>
+</div>
     <div class="st-ctrl">
-      <button class="tile" data-target data-st="up" ${f >= FLOORS ? "disabled" : ""}><span class="t-main">▲ ${esc(t("ht_up"))}</span></button>
-      <button class="tile action" data-target data-st="door"><span class="t-main">🚪 ${esc(f === 0 ? t("ht_toLobby") : t("ht_toHall").replace("{f}", f))}</span></button>
-      <button class="tile" data-target data-st="down" ${f <= 0 ? "disabled" : ""}><span class="t-main">▼ ${esc(t("ht_down"))}</span></button>
+      <button class="tile" data-target data-st="up" ${f >= FLOORS ? "disabled" : ""}><span class="t-main">${I.up} ${esc(f === -1 ? t("ht_upSecret") : t("ht_up"))}</span></button>
+      <button class="tile action" data-target data-st="door"><span class="t-main">${I.door} ${esc(f === 0 ? t("ht_toLobby") : under ? t("ht_toSub").replace("{s}", -f) : t("ht_toHall").replace("{f}", f))}</span></button>
+      <button class="tile" data-target data-st="down" ${f <= -3 || f === 0 ? "disabled" : ""}><span class="t-main">${I.down} ${esc(t("ht_down"))}</span></button>
     </div>
     ${clueHtml({ stairs: f })}
     <div class="lb-picker" hidden></div>
-    <p class="lb-hint mono">${esc(t("ht_stairsHint"))}</p>`;
-  ambient("stairs");
+    <p class="lb-hint mono">${esc(under ? t("ht_subHint") : t("ht_stairsHint"))}</p>`;
+  ambient(under ? "bunker" : "stairs");
   bindHotelCommon();
   root.querySelectorAll("[data-st]").forEach((b) => b.addEventListener("click", () => {
     const a = b.dataset.st;
-    if (a === "up") drawStairs(Math.min(FLOORS, f + 1));
-    else if (a === "down") drawStairs(Math.max(0, f - 1));
+    if (a === "up") { if (f === -1) { ticks.length = 0; drawLobby(); toast(t("ht_backSecret")); } else drawStairs(Math.min(FLOORS, f + 1)); }
+    else if (a === "down") drawStairs(Math.max(-3, f - 1));
     else if (f === 0) { ticks.length = 0; drawLobby(); }
+    else if (under) drawBunker(-f);
     else if (SUITE_FLOORS.includes(f) && !canReach(f)) toast(t("ht_suiteDoor"));
     else drawFloor(f);
   }));
+}
+
+// ---------- Puerta de personal, seguridad y sótano ----------
+function staffDoor() {
+  const { t } = ctxRef;
+  if (hotel.wearing) { drawBasement(); return; }
+  const box = root.querySelector(".lb-picker");
+  box.hidden = false;
+  box.innerHTML = `<div class="lb-card">
+    <b>${esc(t("sec_doorTitle"))}</b>
+    <p>${esc(hotel.uniform ? t("sec_haveUniform") : t("sec_needUniform"))}</p>
+    <div class="lb-row">${hotel.uniform ? `<button class="nw-mini" data-target data-wear>${esc(t("sec_putOn"))}</button>` : `<button class="nw-mini" data-target data-sneak>${esc(t("sec_sneak"))}</button>`}<button class="nw-mini" data-target data-close>${esc(t("lb_cancel"))}</button></div>
+  </div>`;
+  box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; });
+  box.querySelector("[data-wear]")?.addEventListener("click", () => { hotel.wearing = true; saveHotel(); box.hidden = true; toast(t("sec_nowStaff")); drawLobby(); });
+  box.querySelector("[data-sneak]")?.addEventListener("click", () => { box.hidden = true; drawHeist(); });
+}
+
+// Minigama de sigilo: toma el uniforme del carrito de lavandería cuando el guardia no mira y la cámara apunta a otro lado.
+function drawHeist() {
+  const { t } = ctxRef;
+  ticks.length = 0;
+  root.className = "lb lb-heist";
+  root.innerHTML = `
+    ${topBar(t("sec_heistTitle"), muteBtn())}
+    <div class="hx-room">
+      <div class="hx-cam"><i class="hx-cam-body"></i><i class="hx-cone"></i></div>
+      <div class="hx-guard"><span class="npc-body">${person({ skin: "#a9714a", shirt: "#1f2a44", pants: "#1f2a44", hair: "#111", hat: "cap" })}</span></div>
+      <div class="hx-cart" data-target data-grab><i class="wheel a"></i><i class="wheel b"></i><i class="basket"></i><i class="uniform"></i></div>
+      <div class="hx-shelf"></div>
+    </div>
+    <div class="hx-status mono"><span class="hx-eye">${esc(t("sec_watching"))}</span></div>
+    <div class="hl-ends"><button class="tile" data-target data-leave><span class="t-main">${I.back} ${esc(t("sec_leave"))}</span></button></div>
+    <p class="lb-hint mono">${esc(t("sec_heistHint"))}</p>`;
+  ambient("bunker");
+  bindHotelCommon();
+  const cam = root.querySelector(".hx-cam"), guard = root.querySelector(".hx-guard"), eye = root.querySelector(".hx-eye"), cart = root.querySelector(".hx-cart");
+  const state = { caught: false, done: false };
+  // El guardia mira a los lados; la cámara barre. "Seguro" cuando ninguno te ve.
+  const tick = () => {
+    if (state.done) return;
+    const tt = performance.now() / 1000;
+    const guardLook = Math.sin(tt * 0.9) > 0.3 ? 1 : Math.sin(tt * 0.9) < -0.3 ? -1 : 0; // 1=derecha(hacia el carrito),0=frente,-1=izq
+    const camAng = Math.sin(tt * 0.6 + 1) * 40; // grados
+    guard.style.setProperty("--look", guardLook);
+    guard.classList.toggle("sus", guardLook === 1);
+    cam.style.setProperty("--ang", camAng + "deg");
+    const camOnCart = camAng > 12; // cámara apunta al carrito
+    const safe = guardLook !== 1 && !camOnCart;
+    root.classList.toggle("safe", safe);
+    eye.textContent = safe ? t("sec_clear") : t("sec_watching");
+    cart.dataset.safe = safe ? "1" : "0";
+  };
+  ticks.push(tick); tick();
+  cart.addEventListener("click", () => {
+    if (state.done) return;
+    if (cart.dataset.safe === "1") {
+      state.done = true; ticks.length = 0;
+      hotel.uniform = true; saveHotel(); ding();
+      cart.classList.add("taken");
+      toast(t("sec_gotUniform"), 4500);
+      setTimeout(() => { drawLobby(); }, 1500);
+    } else {
+      state.done = true; state.caught = true; ticks.length = 0;
+      root.classList.add("busted"); root.querySelector(".hx-flash")?.remove();
+      root.insertAdjacentHTML("beforeend", `<div class="hx-flash"></div>`);
+      toast(t("sec_caught"), 4000);
+      setTimeout(() => { drawLobby(); }, 1800);
+    }
+  });
+  root.querySelector("[data-leave]").addEventListener("click", () => { ticks.length = 0; drawLobby(); });
+}
+
+// Sótano: lavandería y sala de descanso del personal.
+function drawBasement() {
+  const { t } = ctxRef;
+  ticks.length = 0;
+  hotel.floor = "B"; saveHotel();
+  root.className = "lb lb-base";
+  root.innerHTML = `
+    ${topBar(t("sec_baseTitle"), muteBtn() + uniformBtn())}
+    <div class="bs-room">
+      <div class="bs-zone laundry">
+        <div class="bs-washers"><button class="bs-obj washer" data-target data-bs="washer"><i></i></button><button class="bs-obj washer" data-target data-bs="washer"><i></i></button><button class="bs-obj dryer" data-target data-bs="dryer"><i></i></button></div>
+        <div class="bs-cart"><i></i><i></i></div>
+        <span class="bs-label">${esc(t("sec_laundry"))}</span>
+      </div>
+      <div class="bs-zone lounge">
+        <button class="bs-obj sofa" data-target data-bs="sofa"><i></i></button>
+        <button class="bs-obj locker2" data-target data-bs="lockers"><i></i><i></i><i></i></button>
+        <button class="bs-obj board" data-target data-bs="board"><i></i></button>
+        <button class="bs-obj coffee2" data-target data-bs="coffee"><i></i></button>
+        <span class="bs-label">${esc(t("sec_lounge"))}</span>
+      </div>
+    </div>
+    <div class="hl-ends"><button class="tile" data-target data-up><span class="t-main">${I.up} ${esc(t("sec_toLobby"))}</span></button></div>
+    ${clueHtml({ base: true })}
+    <div class="lb-picker" hidden></div>
+    <p class="lb-hint mono">${esc(t("sec_baseHint"))}</p>`;
+  ambient("bunker");
+  bindHotelCommon();
+  root.querySelector("[data-up]").addEventListener("click", () => { ticks.length = 0; drawLobby(); });
+  root.querySelectorAll("[data-bs]").forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.bs;
+    showNote(t("bs_" + k + "_t"), t("bs_" + k));
+  }));
+}
+
+// ---------- Máquina expendedora (esconde la entrada al refugio) ----------
+const SNACKS = [["chips", 25], ["choco", 20], ["soda", 22], ["water", 15]];
+function vending() {
+  const { t } = ctxRef;
+  const box = root.querySelector(".lb-picker");
+  box.hidden = false;
+  box.innerHTML = `<div class="lb-card">
+    <b>${esc(t("vd_title"))}</b>
+    <div class="lb-row wrap">${SNACKS.map(([k, p]) => `<button class="nw-mini" data-target data-snack="${k}">${esc(t("vd_" + k))} · $${p}</button>`).join("")}</div>
+    <p class="muted">${esc(hotel.vendMoved ? t("vd_movedNote") : t("vd_note"))}</p>
+    <div class="lb-row"><button class="nw-mini" data-target data-push>${esc(hotel.vendMoved ? t("vd_pushBack") : t("vd_push"))}</button><button class="nw-mini" data-target data-close>${esc(t("lb_cancel"))}</button></div>
+  </div>`;
+  box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; });
+  box.querySelectorAll("[data-snack]").forEach((b) => b.addEventListener("click", () => {
+    const [k, p] = SNACKS.find((x) => x[0] === b.dataset.snack);
+    if (lobby.job.money < p) { toast(t("ht_noMoney").replace("{p}", p - lobby.job.money)); return; }
+    lobby.job.money -= p; save("nikolai.hotelJob", lobby.job);
+    toast(t("vd_bought").replace("{x}", t("vd_" + k)));
+  }));
+  box.querySelector("[data-push]").addEventListener("click", () => {
+    hotel.vendMoved = !hotel.vendMoved; saveHotel();
+    box.hidden = true;
+    root.querySelector(".lb-vend").classList.toggle("moved", hotel.vendMoved);
+    root.querySelector(".lb-hidden-door").classList.toggle("show", hotel.vendMoved);
+    if (hotel.vendMoved) { toast(t("vd_found"), 4500); if (!hotel.bunkerSeen) { hotel.bunkerSeen = true; saveHotel(); } }
+  });
+}
+
+// ---------- Subniveles: el refugio oculto ----------
+function drawBunker(level) {
+  const { t } = ctxRef;
+  ticks.length = 0;
+  hotel.floor = -level; saveHotel();
+  root.className = `lb lb-bunker l${level}`;
+  root.innerHTML = `
+    ${topBar(t("bk_title" + level), avatarBtn() + muteBtn() + uniformBtn() + notebookBtn())}
+    <div class="bk-room">${bunkerHtml(level, hotel.bunkerKey)}</div>
+    <div class="hl-ends"><button class="tile" data-target data-bkstairs><span class="t-main">${I.stairs} ${esc(t("ht_stairs"))}</span></button>
+      ${hotel.bunkerKey ? `<button class="tile" data-target data-bkelev><span class="t-main">${I.elevator} ${esc(t("bk_service"))}</span></button>` : ""}</div>
+    <div class="bk-flash"></div>
+    <div class="lb-picker" hidden></div>
+    <p class="lb-hint mono">${esc(t("bk_hint"))}</p>`;
+  ambient("bunker");
+  bindHotelCommon();
+  root.querySelector("[data-bkstairs]").addEventListener("click", () => drawStairs(-level));
+  root.querySelector("[data-bkelev]")?.addEventListener("click", elevator);
+  root.querySelectorAll("[data-bk]").forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.bk;
+    if (k === "locker" && !hotel.bunkerKey) {
+      hotel.bunkerKey = true; saveHotel(); ding();
+      showNote(t("bk_foundKeyTitle"), t("bk_foundKey"));
+      return;
+    }
+    if (k === "vault") {
+      if (!hotel.bunkerKey) { toast(t("bk_vaultLocked")); return; }
+      if (!b.classList.contains("open")) { drawBunker(3); return; }
+    }
+    if (k === "radio") radioStatic();
+    showNote(t("bk_" + k + "_t"), t("bk_" + k));
+  }));
+}
+function showNote(title, text) {
+  const box = root.querySelector(".lb-picker");
+  box.hidden = false;
+  box.innerHTML = `<div class="lb-card note"><b>${esc(title)}</b><p class="ms-text">${esc(text)}</p><div class="lb-row"><button class="nw-mini" data-target data-close>OK</button></div></div>`;
+  box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; });
+}
+function radioStatic() {
+  if (!amb || hotel.muted) return;
+  const { ctx, master } = amb;
+  const b = ctx.createBuffer(1, ctx.sampleRate * 2.5, ctx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (0.4 + 0.3 * Math.sin(i / 900));
+  const src = ctx.createBufferSource(); src.buffer = b;
+  const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1800;
+  const g = ctx.createGain(); g.gain.value = 0.15;
+  src.connect(bp); bp.connect(g); g.connect(master); src.start();
 }
 
 // ---------- Pasillo de un piso ----------
@@ -659,15 +889,15 @@ function drawFloor(f) {
   const doors = Array.from({ length: ROOMS }, (_, i) => roomNo(f, i + 1));
   const taskAt = (r) => hotel.tasks.find((x) => x.accepted && !x.done && x.room === r);
   root.innerHTML = `
-    ${topBar(`${t("ht_floor")} ${f}${SUITE_FLOORS.includes(f) ? " · SUITES" : ""}`, muteBtn() + notebookBtn())}
+    ${topBar(`${t("ht_floor")} ${f}${SUITE_FLOORS.includes(f) ? " · SUITES" : ""}`, avatarBtn() + muteBtn() + uniformBtn() + notebookBtn())}
     <div class="hl-wall"><div class="hl-doors">${doors.map((r) => {
       const mine = hotel.key?.room === r, task = taskAt(r);
-      return `<button class="hl-door ${mine ? "mine" : ""} ${task ? "task" : ""}" data-target data-door="${r}"><span class="hl-num">${r}</span>${isSuite(r) ? "<small>SUITE</small>" : hasBalcony(r) ? "<small>🌅</small>" : ""}<i class="hl-knob"></i>${mine ? `<em>🔑</em>` : task ? `<em>${task.icon}</em>` : ""}</button>`;
+      return `<button class="hl-door ${mine ? "mine" : ""} ${task ? "task" : ""}" data-target data-door="${r}"><span class="hl-num">${r}</span>${isSuite(r) ? "<small>SUITE</small>" : hasBalcony(r) ? "<small>BALCÓN</small>" : ""}<i class="hl-knob"></i>${mine ? `<em>${I.key}</em>` : task ? `<em>${task.icon}</em>` : ""}</button>`;
     }).join("")}</div></div>
     <div class="hl-carpet"></div>
     <div class="hl-ends">
-      <button class="tile" data-target data-hl="elev"><span class="t-main">🛗 ${esc(t("ht_elevator"))}</span></button>
-      <button class="tile" data-target data-hl="stairs"><span class="t-main">🚨 ${esc(t("ht_stairs"))}</span></button>
+      <button class="tile" data-target data-hl="elev"><span class="t-main">${I.elevator} ${esc(t("ht_elevator"))}</span></button>
+      <button class="tile" data-target data-hl="stairs"><span class="t-main">${I.stairs} ${esc(t("ht_stairs"))}</span></button>
     </div>
     ${clueHtml({ hall: f })}
     ${npcHtml(f % 2 ? [{ id: "maid", name: "Rosa", who: "la camarista del hotel, de Los Mochis, 45 años, trabajadora y chismosa amable; sabe todo lo que pasa en los pisos", look: { skin: "#b9805a", shirt: "#4a6a8a", pants: "#4a6a8a", hair: "#1b120b", long: false }, x: 30, walk: true, speed: 40 }] : [])}
@@ -685,42 +915,31 @@ function drawFloor(f) {
     if (canEnter(r)) { drawRoom(r); return; }
     // Tocar la puerta.
     const said = t("ht_knock").split("|");
-    toast(`🚪 ${r}: ${said[(Math.random() * said.length) | 0]}`);
+    toast(`${r}: ${said[(Math.random() * said.length) | 0]}`);
   }));
 }
 
-// ---------- Habitación ----------
-const OBJECTS = ["bed", "tv", "minibar", "window", "painting", "safe", "bath"];
+// ---------- Habitación (cama, regadera y sala) ----------
 function drawRoom(r) {
   const { t } = ctxRef;
   ticks.length = 0;
   const f = Number(String(r)[0]);
   const suite = isSuite(r);
-  root.className = `lb lb-room ${suite ? "suite" : ""}`;
+  root.className = `lb lb-room2 ${suite ? "suite" : ""}`;
   root.innerHTML = `
-    ${topBar(`${t("ht_room")} ${r}${suite ? " · SUITE" : hasBalcony(r) ? " · " + t("rt_balcony") : ""}`, muteBtn() + notebookBtn())}
-    <div class="rm-wall">
-      <button class="rm-obj rm-window" data-target data-obj="window" style="--sky:${Math.min(1, f / 8)}"><i class="rm-sea"></i></button>
-      <button class="rm-obj rm-painting" data-target data-obj="painting">🖼</button>
-      <button class="rm-obj rm-tv" data-target data-obj="tv"><i></i></button>
-      ${hasBalcony(r) ? `<button class="rm-obj rm-balcony" data-target data-obj="balcony">🌅 ${esc(t("ht_balcony"))}</button>` : ""}
-    </div>
-    <div class="rm-floor">
-      <button class="rm-obj rm-bed" data-target data-obj="bed"><i class="pillow p1"></i><i class="pillow p2"></i></button>
-      <button class="rm-obj rm-minibar" data-target data-obj="minibar">🧊</button>
-      <button class="rm-obj rm-safe" data-target data-obj="safe">🔒</button>
-      <button class="rm-obj rm-bath" data-target data-obj="bath">${suite ? "🛁" : "🚿"}</button>
-      ${suite ? `<div class="rm-sofa"></div><div class="rm-jacuzzi">♨ Jacuzzi</div>` : ""}
-    </div>
-    <div class="hl-ends"><button class="tile" data-target data-back><span class="t-main">← ${esc(t("ht_toHall").replace("{f}", f))}</span></button></div>
+    ${topBar(`${t("ht_room")} ${r}${suite ? " · SUITE" : hasBalcony(r) ? " · " + t("rt_balcony") : ""}`, avatarBtn() + muteBtn() + uniformBtn() + notebookBtn())}
+    ${roomHtml({ suite, balcony: hasBalcony(r), f })}
+    <div class="hl-ends left"><button class="tile" data-target data-back><span class="t-main">${I.back} ${esc(t("ht_toHall").replace("{f}", f))}</span></button></div>
     ${clueHtml({ room: r })}
     <div class="lb-picker" hidden></div>
     <p class="lb-hint mono">${esc(t("ht_roomHint"))}</p>`;
   ambient("hall");
   bindHotelCommon();
   root.querySelector("[data-back]").addEventListener("click", () => drawFloor(f));
-  root.querySelectorAll("[data-obj]").forEach((b) => b.addEventListener("click", () => {
+  root.querySelectorAll("[data-obj]").forEach((b) => b.addEventListener("click", (e) => {
+    e.stopPropagation();
     const o = b.dataset.obj;
+    if (o === "bath") { b.classList.add("on"); setTimeout(() => b.classList.remove("on"), 4000); }
     const task = hotel.tasks.find((x) => x.accepted && !x.done && x.room === r && x.obj === o);
     if (task) { completeTask(task); return; }
     toast(t(`ho_${o}`) + (suite ? " " + t("ho_suite") : ""));
@@ -729,13 +948,13 @@ function drawRoom(r) {
 
 // ---------- Tareas de trabajo (computadora) ----------
 const TASK_KINDS = [
-  { id: "towels", kind: "door", icon: "🧺", pay: 60 },
-  { id: "service", kind: "door", icon: "🍽", pay: 90 },
-  { id: "tv", kind: "obj", obj: "tv", icon: "📺", pay: 110 },
-  { id: "minibar", kind: "obj", obj: "minibar", icon: "🧊", pay: 70 },
-  { id: "earring", kind: "obj", obj: "bed", icon: "💍", pay: 150 },
-  { id: "ac", kind: "obj", obj: "window", icon: "❄", pay: 100 },
-  { id: "leak", kind: "obj", obj: "bath", icon: "💧", pay: 130 },
+  { id: "towels", kind: "door", icon: I.towel, pay: 60 },
+  { id: "service", kind: "door", icon: I.tray, pay: 90 },
+  { id: "tv", kind: "obj", obj: "tv", icon: I.tv, pay: 110 },
+  { id: "minibar", kind: "obj", obj: "minibar", icon: I.fridge, pay: 70 },
+  { id: "earring", kind: "obj", obj: "bed", icon: I.ring, pay: 150 },
+  { id: "ac", kind: "obj", obj: "window", icon: I.snow, pay: 100 },
+  { id: "leak", kind: "obj", obj: "bath", icon: I.drop, pay: 130 },
 ];
 function newTask() {
   const k = TASK_KINDS[(Math.random() * TASK_KINDS.length) | 0];
@@ -791,8 +1010,8 @@ function clueHtml(where) {
   if (!s) return "";
   const match = (where.room && s.room === where.room) || (where.hall && s.hall === where.hall) || (where.stairs != null && s.stairs === where.stairs && where.stairs !== 0) || (where.lobby && s.lobby) || (where.beach && s.beach);
   if (!match) return "";
-  const pos = s.obj ? { safe: "left:64%;bottom:22%", minibar: "left:46%;bottom:20%", tv: "left:62%;top:30%", window: "left:22%;top:26%" }[s.obj] : "left:40%;bottom:24%";
-  return `<button class="clue" data-target data-clue style="${pos}">🔍<span>${esc(ctxRef.t("ms_clue"))}</span></button>`;
+  const pos = s.obj ? { safe: "left:86%;bottom:30%", minibar: "left:76%;bottom:30%", tv: "left:78%;top:24%", window: "left:40%;top:20%" }[s.obj] : "left:40%;bottom:24%";
+  return `<button class="clue" data-target data-clue style="${pos}">${I.search}<span>${esc(ctxRef.t("ms_clue"))}</span></button>`;
 }
 function bindClue() {
   root.querySelector("[data-clue]")?.addEventListener("click", () => {
@@ -806,10 +1025,10 @@ function bindClue() {
     const all = hotel.found.length >= m.steps.length;
     const next = mysteryStep();
     box.innerHTML = `<div class="lb-card ms">
-      <b>🔍 ${esc(t(`ms_${m.id}_title`))} · ${esc(t("ms_clue"))} ${i + 1}/${m.steps.length}</b>
+      <b>${I.search} ${esc(t(`ms_${m.id}_title`))} · ${esc(t("ms_clue"))} ${i + 1}/${m.steps.length}</b>
       <p class="ms-text">${esc(t(`ms_${m.id}_${i}`))}</p>
-      ${all ? `<p><b>${esc(t("ms_ready"))}</b></p>` : `<p class="muted">➜ ${esc(nextHint(next))}</p>`}
-      <div class="lb-row"><button class="nw-mini" data-target data-close>${esc(t("ms_keep"))}</button>${all ? `<button class="nw-mini" data-target data-solve>⚖ ${esc(t("ms_solve"))}</button>` : ""}</div>
+      ${all ? `<p><b>${esc(t("ms_ready"))}</b></p>` : `<p class="muted">${esc(nextHint(next))}</p>`}
+      <div class="lb-row"><button class="nw-mini" data-target data-close>${esc(t("ms_keep"))}</button>${all ? `<button class="nw-mini" data-target data-solve>${I.scale} ${esc(t("ms_solve"))}</button>` : ""}</div>
     </div>`;
     box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; });
     box.querySelector("[data-solve]")?.addEventListener("click", () => solve());
@@ -825,7 +1044,12 @@ function nextHint(s) {
   if (s.stairs) return t("ms_goStairs").replace("{f}", s.stairs);
   return "";
 }
-function notebookBtn() { return hotel.mystery ? `<button class="nw-mini" data-target data-notebook>📓 ${esc(ctxRef.t("ms_notebook"))}</button>` : ""; }
+function avatarBtn() { return `<button class="nw-mini" data-target data-avatar>${ctxRef.t("pl_me")}</button>`; }
+function uniformBtn() {
+  if (!hotel.uniform) return "";
+  return `<button class="nw-mini ${hotel.wearing ? "on" : ""}" data-target data-uniform>${esc(hotel.wearing ? ctxRef.t("sec_wearing") : ctxRef.t("sec_putOn"))}</button>`;
+}
+function notebookBtn() { return hotel.mystery ? `<button class="nw-mini" data-target data-notebook>${I.book} ${esc(ctxRef.t("ms_notebook"))}</button>` : ""; }
 function notebook() {
   const { t } = ctxRef;
   const m = MYSTERIES.find((x) => x.id === hotel.mystery);
@@ -834,11 +1058,11 @@ function notebook() {
   box.hidden = false;
   const all = hotel.found.length >= m.steps.length;
   box.innerHTML = `<div class="lb-card ms">
-    <b>📓 ${esc(t(`ms_${m.id}_title`))}</b>
+    <b>${I.book} ${esc(t(`ms_${m.id}_title`))}</b>
     <p class="muted">${esc(t(`ms_${m.id}_intro`))}</p>
     <ol class="ms-list">${hotel.found.map((i) => `<li>${esc(t(`ms_${m.id}_${i}`))}</li>`).join("")}</ol>
-    ${all ? "" : `<p>➜ ${esc(nextHint(mysteryStep()))}</p>`}
-    <div class="lb-row"><button class="nw-mini" data-target data-close>${esc(t("lb_cancel"))}</button>${all ? `<button class="nw-mini" data-target data-solve>⚖ ${esc(t("ms_solve"))}</button>` : ""}<button class="nw-mini" data-target data-quit>${esc(t("ms_quit"))}</button></div>
+    ${all ? "" : `<p>${esc(nextHint(mysteryStep()))}</p>`}
+    <div class="lb-row"><button class="nw-mini" data-target data-close>${esc(t("lb_cancel"))}</button>${all ? `<button class="nw-mini" data-target data-solve>${I.scale} ${esc(t("ms_solve"))}</button>` : ""}<button class="nw-mini" data-target data-quit>${esc(t("ms_quit"))}</button></div>
   </div>`;
   box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; });
   box.querySelector("[data-solve]")?.addEventListener("click", solve);
@@ -850,7 +1074,7 @@ function solve() {
   const box = root.querySelector(".lb-picker");
   const opts = t(`ms_${m.id}_q_opts`).split("|");
   box.hidden = false;
-  box.innerHTML = `<div class="lb-card ms"><b>⚖ ${esc(t(`ms_${m.id}_q`))}</b>
+  box.innerHTML = `<div class="lb-card ms"><b>${I.scale} ${esc(t(`ms_${m.id}_q`))}</b>
     <div class="rc-opts">${opts.map((o, i) => `<button class="nw-mini" data-target data-ans="${i}">${esc(o)}</button>`).join("")}</div></div>`;
   box.querySelectorAll("[data-ans]").forEach((b) => b.addEventListener("click", () => {
     const ok = Number(b.dataset.ans) === m.answer;
@@ -859,7 +1083,7 @@ function solve() {
       if (!hotel.solved.includes(m.id)) hotel.solved.push(m.id);
       hotel.mystery = null; hotel.found = []; saveHotel(); ding();
     }
-    box.innerHTML = `<div class="lb-card ms"><b>${ok ? "🏆 " + esc(t("ms_solved")) : "✕ " + esc(t("ms_wrong"))}</b><p>${esc(ok ? t(`ms_${m.id}_end`) + ` +$${m.reward}` : t("ms_tryAgain"))}</p>
+    box.innerHTML = `<div class="lb-card ms"><b>${ok ? I.trophy + " " + esc(t("ms_solved")) : "✕ " + esc(t("ms_wrong"))}</b><p>${esc(ok ? t(`ms_${m.id}_end`) + ` +$${m.reward}` : t("ms_tryAgain"))}</p>
       <div class="lb-row"><button class="nw-mini" data-target data-close>OK</button></div></div>`;
     box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; root.querySelector("[data-notebook]")?.remove(); });
   }));
@@ -867,19 +1091,103 @@ function solve() {
 function mysteriesApp(body) {
   const { t } = ctxRef;
   body.innerHTML = `<p class="muted">${esc(t("ms_intro"))}</p>
-    <div class="tk-list">${MYSTERIES.map((m) => `<div class="tk ${hotel.mystery === m.id ? "on" : ""}"><span class="tk-ico">${hotel.solved.includes(m.id) ? "🏆" : "🔍"}</span>
+    <div class="tk-list">${MYSTERIES.map((m) => `<div class="tk ${hotel.mystery === m.id ? "on" : ""}"><span class="tk-ico">${hotel.solved.includes(m.id) ? I.trophy : I.search}</span>
       <div><b>${esc(t(`ms_${m.id}_title`))}</b><small>${esc(t(`ms_${m.id}_intro`))} · $${m.reward}</small></div>
       <button class="nw-mini" data-target data-ms="${m.id}">${hotel.mystery === m.id ? esc(t("ms_active")) : esc(t("ms_start"))}</button></div>`).join("")}</div>`;
   body.querySelectorAll("[data-ms]").forEach((b) => b.addEventListener("click", () => {
     hotel.mystery = b.dataset.ms; hotel.found = []; saveHotel();
     mysteriesApp(body);
-    toast(`🔍 ${t(`ms_${hotel.mystery}_title`)} — ${nextHint(mysteryStep())}`, 5000);
+    toast(`${t(`ms_${hotel.mystery}_title`)} — ${nextHint(mysteryStep())}`, 5000);
   }));
 }
 
 function bindHotelCommon() {
+  setTimeout(mountPlayer, 0);
+  root.querySelector("[data-avatar]")?.addEventListener("click", avatarPicker);
   root.querySelector(".lb-exit")?.addEventListener("click", closeLobby);
+  root.querySelector("[data-uniform]")?.addEventListener("click", (e) => {
+    hotel.wearing = !hotel.wearing; saveHotel();
+    e.currentTarget.classList.toggle("on", hotel.wearing);
+    e.currentTarget.textContent = hotel.wearing ? ctxRef.t("sec_wearing") : ctxRef.t("sec_putOn");
+    toast(ctxRef.t(hotel.wearing ? "sec_nowStaff" : "sec_nowGuest"));
+  });
   root.querySelector("[data-notebook]")?.addEventListener("click", notebook);
   bindMute();
   bindClue();
+}
+
+
+// =====================================================================
+// Personaje jugable: muévete de lado a lado e interactúa con lo cercano
+// =====================================================================
+const AVATARS = [
+  { id: "max", name: "Max", look: { skin: "#d6a57a", shirt: "#1e88e5", pants: "#263238", hair: "#2a1a10" } },
+  { id: "sol", name: "Sol", look: { skin: "#e3b48f", shirt: "#e91e63", pants: "#37474f", hair: "#3a2412", long: true } },
+  { id: "dan", name: "Dani", look: { skin: "#a9714a", shirt: "#43a047", pants: "#1b3a6b", hair: "#120a06", hat: "cap" } },
+  { id: "val", name: "Val", look: { skin: "#f2cfb3", shirt: "#ff8a5c", pants: "#5d4037", hair: "#e0b25a", long: true } },
+];
+const myLook = () => (AVATARS.find((a) => a.id === hotel.avatar) || AVATARS[0]).look;
+
+let player = null;
+function mountPlayer() {
+  if (!root) return;
+  const old = root.querySelector(".lb-player"); old?.remove();
+  root.querySelector(".player-ctrl")?.remove();
+  // No en pantallas de tarjeta/minijuego/cómputo.
+  if (root.classList.contains("lb-heist")) return;
+  const el = document.createElement("div");
+  el.className = "lb-player";
+  el.innerHTML = `<span class="npc-body">${person(myLook())}</span>`;
+  root.appendChild(el);
+  const ctrl = document.createElement("div");
+  ctrl.className = "player-ctrl";
+  ctrl.innerHTML = `<button class="pl-btn" data-target data-mv="-1">◀</button><button class="pl-btn act" data-target data-act>${ctxRef.t("pl_action")}</button><button class="pl-btn" data-target data-mv="1">▶</button>`;
+  root.appendChild(ctrl);
+  const st = { x: 50, dir: 1, walking: false, hold: 0, raf: 0 };
+  player = { el, st };
+  const place = () => { el.style.left = st.x + "%"; el.querySelector(".npc-body").style.transform = `scaleX(${st.dir})`; el.classList.toggle("walking", st.walking); highlight(); };
+  const move = (d) => { st.x = Math.max(4, Math.min(96, st.x + d * 1.6)); st.dir = d > 0 ? 1 : -1; st.walking = true; place(); };
+  // Objeto interactivo más cercano al personaje.
+  const targets = () => [...root.querySelectorAll("[data-target]")].filter((b) => !b.closest(".player-ctrl") && !b.classList.contains("lb-exit") && b.offsetParent && !b.closest(".lb-top"));
+  function nearest() {
+    const pr = el.getBoundingClientRect(), px = pr.left + pr.width / 2;
+    let best = null, bd = 160;
+    for (const b of targets()) { const r = b.getBoundingClientRect(); const d = Math.abs(r.left + r.width / 2 - px); if (d < bd) { bd = d; best = b; } }
+    return best;
+  }
+  function highlight() {
+    targets().forEach((b) => b.classList.remove("pl-near"));
+    nearest()?.classList.add("pl-near");
+  }
+  const act = () => { const n = nearest(); if (n) n.click(); };
+  ctrl.querySelectorAll("[data-mv]").forEach((b) => {
+    const d = Number(b.dataset.mv);
+    const down = (e) => { e.preventDefault(); st.hold = d; };
+    const up = () => { if (st.hold === d) { st.hold = 0; st.walking = false; place(); } };
+    b.addEventListener("pointerdown", down); ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => b.addEventListener(ev, up));
+  });
+  ctrl.querySelector("[data-act]").addEventListener("click", act);
+  const loop = () => { if (!el.isConnected) { cancelAnimationFrame(st.raf); return; } if (st.hold) move(st.hold); st.raf = requestAnimationFrame(loop); };
+  st.raf = requestAnimationFrame(loop);
+  // Teclado
+  el._key = (e) => {
+    if (!el.isConnected || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    const k = e.key.toLowerCase();
+    if (k === "arrowleft" || k === "a") { st.hold = e.type === "keydown" ? -1 : 0; st.walking = Boolean(st.hold); if (!st.hold) place(); }
+    else if (k === "arrowright" || k === "d") { st.hold = e.type === "keydown" ? 1 : 0; st.walking = Boolean(st.hold); if (!st.hold) place(); }
+    else if ((k === " " || k === "enter") && e.type === "keydown") { e.preventDefault(); act(); }
+  };
+  addEventListener("keydown", el._key, true); addEventListener("keyup", el._key, true);
+  place();
+}
+function avatarPicker() {
+  const { t } = ctxRef;
+  const box = root.querySelector(".lb-picker");
+  if (!box) return;
+  box.hidden = false;
+  box.innerHTML = `<div class="lb-card"><b>${esc(t("pl_choose"))}</b>
+    <div class="av-list">${AVATARS.map((a) => `<button class="av ${((hotel.avatar || "max") === a.id) ? "on" : ""}" data-target data-av="${a.id}"><span>${person(a.look)}</span><small>${esc(a.name)}</small></button>`).join("")}</div>
+    <div class="lb-row"><button class="nw-mini" data-target data-close>OK</button></div></div>`;
+  box.querySelector("[data-close]").addEventListener("click", () => { box.hidden = true; });
+  box.querySelectorAll("[data-av]").forEach((b) => b.addEventListener("click", () => { hotel.avatar = b.dataset.av; saveHotel(); box.hidden = true; mountPlayer(); }));
 }

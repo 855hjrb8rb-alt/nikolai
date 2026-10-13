@@ -1209,3 +1209,272 @@ body.in-lobby #dock, body.in-lobby .hud-top { visibility: hidden; }
 .lb-place.bar { left: 66%; } .lb-place.spa { left: 75%; }
 .lb-sofa { left: 2%; } .lb-plant.l { left: 1%; bottom: 34%; } .lb-plant.r { display: none; }
 @media (max-width: 640px) { .lb-desk { width: 30vw; } .lb-elev.e1 { left: 6%; } .lb-elev.e2 { left: 17%; } .lb-stairs-door { left: 29%; } .lb-place.bar { left: 64%; } .lb-place.spa { left: 76%; } }
+
+/* ===== Hotel sin emojis: iconos, decoración, muebles ===== */
+.lb .ic { width: 1.1em; height: 1.1em; vertical-align: -0.18em; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.lb-top .ic, .tile .ic { width: 20px; height: 20px; }
+.lb-key .ic { width: 15px; height: 15px; }
+.lb-desk .ic { width: 22px; height: 22px; color: #f7dc8a; }
+.lb-place .ic { width: 34px; height: 34px; }
+.lb-door span .ic { width: 42px; height: 42px; color: #3a2a10; }
+.pc-app .ic { width: 32px; height: 32px; }
+.pc-stats .ic, .lb-card .ic { width: 15px; height: 15px; vertical-align: -0.2em; }
+.rt span .ic { width: 28px; height: 28px; }
+.tk-ico .ic { width: 26px; height: 26px; color: #37474f; }
+.hl-door em .ic { width: 24px; height: 24px; color: #f7dc8a; }
+.stars .ic { width: 14px; height: 14px; color: #ffc107; }
+.deco { width: 100%; height: 100%; display: block; }
+.lb-plant .deco { width: auto; height: 100%; }
+.lb-table .deco { width: 38px; height: 34px; }
+.bc-palm .deco { width: auto; height: 100%; }
+.bc-umb .deco, .bc-castle .deco, .bc-ball .deco { width: auto; height: 100%; }
+.bc-monitor .deco { width: 46px; height: auto; }
+.bar-shelf .deco { width: 80%; height: auto; } .spa-plants .deco { width: 40px; height: auto; vertical-align: middle; }
+
+/* ===== Elevadores (puertas de acero) en el lobby ===== */
+.lb-elev { background: #1c1c1e; border: 5px solid #caa24a; border-radius: 4px; overflow: visible; }
+.lb-elev .ev-frame { position: absolute; inset: 0; display: block; }
+.ev-display { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; background: #0c0c0c; border: 1px solid #caa24a; border-radius: 3px; padding: 1px 7px; color: #ff7a2f; font: 700 13px var(--font-mono); }
+.ev-display .ic { width: 13px; height: 13px; color: #ff7a2f; }
+.ev-doors { position: absolute; inset: 6px; display: flex; overflow: hidden; background: #111; }
+.ev-door { width: 50%; height: 100%; background: linear-gradient(90deg, #8c8c90, #d6d6da 45%, #a2a2a6 55%, #c8c8cc); border-right: 1px solid #5a5a5e; transition: transform .6s ease; }
+.ev-door.l { border-right: 2px solid #3a3a3e; } .ev-door.r { background: linear-gradient(90deg, #c8c8cc, #a2a2a6 45%, #d6d6da 55%, #8c8c90); }
+.ev-cab { position: absolute; inset: 6px; background: linear-gradient(#3a3d44, #23252b); z-index: -1; }
+.ev-cab .ev-rail { position: absolute; left: 10%; right: 10%; top: 55%; height: 3px; background: #caa24a; }
+.ev-cab .ev-mirror { position: absolute; right: 12%; top: 12%; width: 24%; height: 40%; background: linear-gradient(135deg, #aeb6c2, #e7edf5); opacity: .5; }
+.lb-elev.open .ev-door.l { transform: translateX(-100%); } .lb-elev.open .ev-door.r { transform: translateX(100%); }
+.ev-call { position: absolute; right: -22px; top: 54%; display: flex; flex-direction: column; gap: 4px; }
+.ev-call i { width: 12px; height: 12px; border-radius: 50%; background: #333; border: 1px solid #caa24a; }
+.lb-elev:hover .ev-call i, .lb-elev.hot .ev-call i { background: #ffb300; box-shadow: 0 0 6px #ffb300; }
+.ev-plate { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #caa24a; }
+
+/* Cabina por dentro */
+.cab { position: relative; width: min(360px, 94vw); height: min(560px, 82vh); background: linear-gradient(#4a4e57, #2b2e35); border: 10px solid #1a1a1c; border-radius: 6px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.cab-wall { position: absolute; top: 0; bottom: 0; width: 26%; background: repeating-linear-gradient(90deg, #42454d 0 14px, #363942 14px 16px); } .cab-wall.l { left: 0; } .cab-wall.r { right: 0; }
+.cab-mirror { position: absolute; left: 28%; right: 28%; top: 6%; height: 34%; background: linear-gradient(135deg, #9aa3b2 0%, #e8eef7 40%, #b9c2d0 60%, #dde4ee); opacity: .5; border: 3px solid #70737a; }
+.cab-rail { position: absolute; left: 6%; right: 6%; top: 46%; height: 5px; background: #caa24a; border-radius: 3px; box-shadow: 0 3px 4px rgba(0,0,0,.4); }
+.cab-light { position: absolute; top: 0; left: 20%; right: 20%; height: 8px; background: #fff6d8; box-shadow: 0 6px 30px 10px rgba(255,240,190,.4); }
+.cab-panel { position: absolute; right: 4%; top: 48%; width: 40%; background: #d8d8dc; border: 3px solid #9a9a9e; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.cab-screen { display: flex; align-items: center; justify-content: center; gap: 6px; background: #0c0c0c; color: #ff7a2f; border-radius: 4px; padding: 4px; font: 800 26px var(--font-mono); }
+.cab-screen .ic { width: 18px; height: 18px; color: #ff7a2f; } .cab-screen .ev-arrow.blink { animation: pulse .7s infinite; }
+.cab-reader { display: flex; align-items: center; gap: 6px; font: 600 9px var(--font-mono); color: #555; background: #ececed; border-radius: 4px; padding: 3px 5px; }
+.cab-reader i { width: 16px; height: 10px; border-radius: 2px; background: #c62828; }
+.cab-reader.ok i { background: #2e7d32; } .cab-reader.suite i { background: #f5c542; }
+.cab-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.cab-btn { aspect-ratio: 1; border-radius: 50%; border: 2px solid #8a8a8e; background: radial-gradient(#f4f4f6, #c6c6ca); color: #222; font: 800 13px var(--font-mono); cursor: pointer; display: grid; place-items: center; }
+.cab-btn.here { box-shadow: inset 0 0 0 2px #ff7a2f; } .cab-btn.lit, .cab-btn:hover { background: radial-gradient(#ffe7a0, #f5c542); }
+.cab-btn.suite { border-color: #f5c542; } .cab-btn.secret { border-color: #7a3b2f; background: radial-gradient(#6b4a3a, #3a2418); color: #e8c8a8; }
+.cab-btn.locked { opacity: .4; } .cab-btn.deny { animation: shake .4s; background: radial-gradient(#ffb3b3, #e53935); }
+.cab-plate { font: 600 8px var(--font-mono); color: #555; text-align: center; }
+.cab-btn.open-btn { aspect-ratio: auto; border-radius: 6px; padding: 6px; font-size: 11px; grid-column: 1 / -1; }
+.cab-doors { position: absolute; inset: 0; display: flex; z-index: 5; pointer-events: none; }
+.cab-doors i { width: 50%; background: linear-gradient(90deg, #8c8c90, #c8c8cc 50%, #9a9a9e); border-right: 2px solid #4a4a4e; animation: cabClose .5s forwards; }
+.cab-doors i:last-child { transform: scaleX(-1); }
+.cab.arrived .cab-doors i { animation: cabOpen .6s forwards; }
+@keyframes cabClose { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes cabClose { from { } } .cab-doors i { transform: translateX(-100%); } .cab-doors i:last-child { transform: translateX(100%) scaleX(-1); }
+.cab.moving .cab-doors i { transition: transform .5s; transform: translateX(0); } .cab.moving .cab-doors i:last-child { transform: translateX(0) scaleX(-1); }
+.cab.arrived .cab-doors i { transform: translateX(-100%); } .cab.arrived .cab-doors i:last-child { transform: translateX(100%) scaleX(-1); }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+
+/* ===== Habitación nueva (cama, regadera, sala) ===== */
+.lb-room2 { background: #d8c3a0; }
+.rm2-wall { position: absolute; inset: 0 0 20% 0; display: flex; }
+.rm2-wall.suite { filter: saturate(1.1); }
+.rm2-zone { position: relative; height: 100%; border-right: 2px solid rgba(0,0,0,.08); }
+.rm2-zone.bath { flex: 0 0 24%; background: linear-gradient(#e6eef0, #cfdbdd); }
+.rm2-zone.sleep { flex: 1; background: linear-gradient(#efe2c8, #e2d0ac); }
+.rm2-zone.living { flex: 0 0 34%; background: linear-gradient(#ece0cc, #ddc9a8); }
+.lb-room2.suite .rm2-zone.sleep { background: linear-gradient(#34506b, #223span); } .lb-room2.suite .rm2-zone.sleep { background: linear-gradient(#3a506b, #243445); }
+.lb-room2.suite .rm2-zone.living { background: linear-gradient(#2f4458, #1f2d3a); }
+.rm2-label { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font: 600 10px var(--font-mono); color: rgba(0,0,0,.4); letter-spacing: .05em; }
+.lb-room2.suite .rm2-label { color: rgba(255,255,255,.5); }
+.rm2-zone button, .rm2-window, .rm2-painting, .rm2-bed, .rm2-tv, .rm2-sofa, .rm2-minibar, .rm2-safe, .rm2-balcony { position: absolute; border: 0; padding: 0; cursor: pointer; background: none; }
+.rm2-zone button:hover { filter: brightness(1.08) drop-shadow(0 0 8px rgba(247,220,138,.6)); }
+/* baño */
+.rm2-tiles { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0 22px, rgba(0,0,0,.05) 22px 23px), repeating-linear-gradient(90deg, transparent 0 22px, rgba(0,0,0,.05) 22px 23px); }
+.rm2-shower { position: absolute; left: 12%; top: 14%; width: 60%; height: 64%; }
+.rm2-shower .glass { position: absolute; inset: 0; background: rgba(180,220,230,.35); border: 3px solid #cfd8dc; border-radius: 4px; }
+.rm2-shower .head { position: absolute; top: 2%; left: 50%; width: 22px; height: 10px; border-radius: 4px 4px 2px 2px; background: #b0bec5; }
+.rm2-shower .pipe { position: absolute; top: 0; left: calc(50% + 9px); width: 4px; height: 20%; background: #90a4ae; }
+.rm2-shower .rain { position: absolute; top: 14%; left: 42%; width: 16%; height: 70%; background: repeating-linear-gradient(0deg, rgba(120,180,210,.5) 0 3px, transparent 3px 8px); opacity: 0; }
+.rm2-shower .tray { position: absolute; bottom: 0; left: 4%; right: 4%; height: 8%; background: #cfd8dc; border-radius: 3px; }
+.rm2-zone.bath button.on .rain { opacity: 1; animation: rain .5s linear infinite; }
+@keyframes rain { to { background-position: 0 8px; } }
+.rm2-sink { position: absolute; bottom: 8%; left: 10%; width: 26%; height: 14%; }
+.rm2-sink i { position: absolute; inset: 0; background: #eceff1; border-radius: 40% 40% 8px 8px; border: 2px solid #b0bec5; }
+.rm2-mirror { position: absolute; top: 6%; left: 10%; width: 26%; height: 20%; background: linear-gradient(135deg, #cfe0e6, #eef5f7); border: 3px solid #b0bec5; }
+/* dormir */
+.rm2-window { left: 8%; top: 12%; width: 32%; height: 48%; background: linear-gradient(rgb(calc(120 + 70*var(--sky)), 205, 255), #bfe9ff 58%, #1e88e5 58%); border: 8px solid #fff; box-shadow: inset 0 0 0 3px #cfd8dc; overflow: hidden; }
+.rm2-window .sea { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; background: repeating-linear-gradient(0deg, #1565c0 0 5px, #42a5f5 5px 8px); animation: wave 5s ease-in-out infinite alternate; }
+.rm2-window .curtain { position: absolute; top: -8px; bottom: -8px; width: 16%; background: linear-gradient(90deg, rgba(180,140,90,.9), rgba(140,100,60,.9)); } .rm2-window .curtain.l { left: -8px; } .rm2-window .curtain.r { right: -8px; }
+.rm2-painting { left: 48%; top: 14%; width: 14%; height: 20%; background: linear-gradient(#ffcc80, #ef6c00); border: 5px solid #5a3a1a; }
+.rm2-painting i { position: absolute; left: 10%; right: 10%; bottom: 0; height: 40%; background: #4a2d12; clip-path: polygon(0 100%, 30% 40%, 55% 70%, 80% 20%, 100% 55%, 100% 100%); }
+.rm2-bed { left: 22%; bottom: 0; width: 56%; height: 42%; }
+.rm2-bed .headboard { position: absolute; top: -18%; left: 0; right: 0; height: 28%; background: linear-gradient(#7a5536, #5a3c22); border-radius: 10px 10px 0 0; }
+.rm2-bed .mattress { position: absolute; bottom: 0; left: 0; right: 0; height: 76%; background: linear-gradient(#fafafa, #e4e4e4); border-radius: 6px; box-shadow: 0 8px 16px rgba(0,0,0,.25); }
+.rm2-bed .duvet { position: absolute; bottom: 0; left: 0; right: 0; height: 40%; background: linear-gradient(#e8edf2, #cfd8e0); border-radius: 0 0 6px 6px; }
+.lb-room2.suite .rm2-bed .duvet { background: linear-gradient(#c9a84a, #a8862f); }
+.rm2-bed .pillow { position: absolute; top: 14%; width: 26%; height: 22%; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,.15); } .rm2-bed .pillow.a { left: 10%; } .rm2-bed .pillow.b { right: 10%; }
+.rm2-bed .runner { position: absolute; bottom: 10%; left: 0; right: 0; height: 12%; background: #7a1e2b; } .lb-room2.suite .rm2-bed .runner { background: #4a1420; }
+.rm2-night { position: absolute; bottom: 8%; width: 9%; height: 16%; background: #6a4a2c; } .rm2-night.l { left: 20%; } .rm2-night.r { right: 22%; }
+.rm2-night .lampshade { position: absolute; top: -40%; left: 10%; right: 10%; height: 40%; background: #ffe6a0; border-radius: 40% 40% 4px 4px; box-shadow: 0 0 16px rgba(255,220,140,.6); }
+/* sala */
+.rm2-tv { left: 10%; top: 12%; width: 52%; height: 34%; background: #111; border: 5px solid #222; border-radius: 4px; }
+.rm2-tv i { position: absolute; inset: 7%; background: linear-gradient(135deg, #1e88e5, #8e24aa); opacity: .8; }
+.rm2-sofa { left: 8%; bottom: 2%; width: 56%; height: 34%; }
+.rm2-sofa .back { position: absolute; top: 0; left: 0; right: 0; height: 55%; background: #455a64; border-radius: 10px 10px 0 0; }
+.lb-room2.suite .rm2-sofa .back { background: #5d4037; }
+.rm2-sofa .seat { position: absolute; bottom: 10%; left: 0; right: 0; height: 45%; background: #546e7a; border-radius: 6px; } .lb-room2.suite .rm2-sofa .seat { background: #6d4c41; }
+.rm2-sofa .arm { position: absolute; bottom: 10%; width: 12%; height: 60%; background: #37474f; border-radius: 8px; } .rm2-sofa .arm.l { left: -4%; } .rm2-sofa .arm.r { right: -4%; }
+.rm2-sofa .cushion { position: absolute; bottom: 30%; left: 20%; width: 22%; height: 26%; background: #90a4ae; border-radius: 6px; transform: rotate(-8deg); }
+.rm2-table { position: absolute; left: 20%; bottom: 0; width: 30%; height: 8%; background: #4e342e; border-radius: 4px; }
+.rm2-minibar { right: 18%; bottom: 2%; width: 14%; height: 26%; background: #37474f; border-radius: 4px; }
+.rm2-minibar i { position: absolute; inset: 14% 20%; background: #263238; border: 1px solid #546e7a; }
+.rm2-safe { right: 4%; bottom: 4%; width: 11%; height: 14%; background: #455a64; border-radius: 3px; }
+.rm2-safe i { position: absolute; right: 18%; top: 30%; width: 22%; height: 40%; border: 2px solid #90a4ae; border-radius: 50%; }
+.rm2-balcony { right: 2%; top: 10%; width: 14%; height: 70%; background: linear-gradient(#bfe9ff 60%, #ffe0a3); border: 5px solid #fff; }
+.rm2-balcony .rail { position: absolute; bottom: 10%; left: 0; right: 0; height: 30%; background: repeating-linear-gradient(90deg, #888 0 3px, transparent 3px 10px); border-top: 3px solid #888; border-bottom: 3px solid #888; }
+.rm2-jacuzzi { position: absolute; right: 2%; bottom: 2%; width: 20%; height: 20%; border-radius: 50%; background: radial-gradient(#4fc3f7, #0277bd); box-shadow: inset 0 0 0 4px #b3e5fc; }
+.rm2-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 20%; background: repeating-linear-gradient(100deg, #b08a5a 0 50px, #a07a4c 50px 54px); }
+.rm2-floor.suite { background: repeating-linear-gradient(100deg, #6a4a2c 0 50px, #5a3e24 50px 54px); }
+.lb-room2 .hl-ends.left { left: 3%; right: auto; }
+
+/* ===== Máquina expendedora + puerta oculta ===== */
+.lb-vend-spot { position: absolute; left: 44%; bottom: 10%; width: 96px; height: 150px; z-index: 6; }
+.lb-vend { position: absolute; inset: 0; background: linear-gradient(#b71c1c, #7f0000); border: 4px solid #4a0000; border-radius: 8px; cursor: pointer; transition: transform .8s ease; display: flex; flex-direction: column; padding: 6px; gap: 4px; z-index: 2; }
+.lb-vend.moved { transform: translateX(-88px) rotate(-3deg); }
+.vd-top { font-size: 7px; color: #fff; text-align: center; background: #000; border-radius: 2px; padding: 1px; }
+.vd-glass { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: #111; padding: 4px; border-radius: 3px; }
+.vd-glass i { background: var(--c); border-radius: 2px; }
+.vd-pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; } .vd-pad i { height: 6px; background: #333; border-radius: 1px; }
+.vd-slot { height: 10px; background: #000; border-radius: 2px; }
+.lb-hidden-door { position: absolute; left: 0; bottom: 0; width: 78px; height: 150px; background: linear-gradient(#3a2a1a, #221509); border: 4px solid #1a0f06; border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .8s; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #b58a5a; }
+.lb-hidden-door.show { opacity: 1; }
+.lb-hidden-door i { width: 60%; height: 55%; border: 3px solid #5a3f22; border-radius: 3px; background: repeating-linear-gradient(0deg, #2a1c0e 0 6px, #3a2814 6px 7px); box-shadow: inset 0 0 20px #000; }
+.lb-hidden-door span { font: 600 9px var(--font-mono); }
+
+/* ===== Puerta de personal + guardia ===== */
+.lb-staff-door { position: absolute; left: 37%; bottom: 10%; width: 70px; height: 150px; background: linear-gradient(#546e7a, #37474f); border: 4px solid #263238; border-radius: 3px; cursor: pointer; z-index: 6; display: flex; align-items: flex-start; justify-content: center; }
+.lb-staff-door span { margin-top: 10px; font: 700 8px var(--font-mono); color: #cfd8dc; background: #000a; padding: 1px 4px; border-radius: 2px; }
+.lb-staff-door .cam { position: absolute; top: -16px; right: -6px; width: 22px; height: 12px; background: #222; border-radius: 3px; }
+.lb-staff-door .cam::after { content: ""; position: absolute; left: -6px; top: 3px; width: 8px; height: 6px; background: #444; border-radius: 2px; }
+.lb-guard { bottom: 10% !important; z-index: 7; }
+.lb-guard .npc-name { background: #1f2a44; }
+
+/* ===== Minijuego de sigilo (lavandería) ===== */
+.lb-heist { background: #2a2a2e; }
+.hx-room { position: absolute; inset: 60px 0 90px; background: linear-gradient(#3a3a40, #222); overflow: hidden; }
+.hx-room::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 60px, transparent 60px 64px); }
+.hx-cam { position: absolute; top: 20px; left: 50%; transform-origin: top center; --ang: 0deg; transform: translateX(-50%) rotate(var(--ang)); }
+.hx-cam-body { display: block; width: 36px; height: 20px; background: #111; border-radius: 4px; margin: 0 auto; }
+.hx-cone { display: block; width: 0; height: 0; margin: 0 auto; border-left: 70px solid transparent; border-right: 70px solid transparent; border-top: 260px solid rgba(255,80,80,.18); }
+.lb-heist.safe .hx-cone { border-top-color: rgba(80,255,120,.12); }
+.hx-guard { position: absolute; bottom: 14%; left: 18%; --look: 0; }
+.hx-guard .npc-body { width: 80px; display: block; transform: scaleX(calc(1 - 2 * max(0, calc(0 - var(--look))))); }
+.hx-guard.sus::after { content: "!"; position: absolute; top: -24px; left: 50%; transform: translateX(-50%); color: #ff5252; font: 800 24px sans-serif; animation: pulse .5s infinite; }
+.hx-cart { position: absolute; bottom: 12%; right: 20%; width: 90px; height: 90px; cursor: pointer; }
+.hx-cart .wheel { position: absolute; bottom: 0; width: 14px; height: 14px; border-radius: 50%; background: #222; } .hx-cart .wheel.a { left: 10px; } .hx-cart .wheel.b { right: 10px; }
+.hx-cart .basket { position: absolute; left: 0; right: 0; top: 10px; bottom: 16px; background: repeating-linear-gradient(90deg, #90a4ae 0 4px, #607d8b 4px 8px); border-radius: 4px; }
+.hx-cart .uniform { position: absolute; left: 20%; top: 6px; width: 60%; height: 40%; background: linear-gradient(#7a1e2b, #5a1420); border-radius: 6px 6px 0 0; box-shadow: 0 0 0 2px #fff inset; }
+.lb-heist.safe .hx-cart .uniform { box-shadow: 0 0 0 2px #fff inset, 0 0 14px #7dffb2; }
+.hx-cart.taken { opacity: .3; } .hx-cart.taken .uniform { display: none; }
+.hx-status { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 5; }
+.hx-eye { background: #c62828; color: #fff; padding: 4px 14px; border-radius: 99px; font-size: 13px; font-weight: 700; }
+.lb-heist.safe .hx-eye { background: #2e7d32; }
+.hx-flash { position: absolute; inset: 0; background: #fff; animation: flash .5s forwards; z-index: 20; } .lb-heist.busted { animation: shake .4s; }
+
+/* ===== Sótano del personal ===== */
+.lb-base { background: #2e2a26; }
+.bs-room { position: absolute; inset: 60px 0 80px; display: flex; }
+.bs-zone { position: relative; flex: 1; border-right: 3px solid #1a1613; }
+.bs-zone.laundry { background: linear-gradient(#5a5650, #3e3b36); } .bs-zone.lounge { background: linear-gradient(#4a4036, #322a22); }
+.bs-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font: 700 12px var(--font-mono); color: #e0d6c2; background: #000a; padding: 2px 10px; border-radius: 4px; letter-spacing: .1em; }
+.bs-obj { position: absolute; border: 0; cursor: pointer; background: none; } .bs-obj:hover { filter: brightness(1.15); }
+.bs-washers { position: absolute; bottom: 10%; left: 8%; right: 8%; display: flex; gap: 8%; }
+.bs-washers button { position: relative; flex: 1; height: 90px; background: #cfd8dc; border: 4px solid #90a4ae; border-radius: 6px; }
+.bs-washers button i { position: absolute; inset: 14px; border-radius: 50%; background: radial-gradient(#263238, #0d1316); border: 3px solid #607d8b; }
+.bs-washers .dryer i { animation: spin 2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.bs-cart { position: absolute; top: 24%; left: 30%; width: 70px; height: 50px; background: repeating-linear-gradient(90deg, #b0bec5 0 4px, #78909c 4px 8px); border-radius: 4px; }
+.bs-cart i { position: absolute; bottom: -8px; width: 10px; height: 10px; border-radius: 50%; background: #222; } .bs-cart i:first-child { left: 6px; } .bs-cart i:last-child { right: 6px; }
+.bs-obj.sofa { bottom: 10%; left: 8%; width: 42%; height: 26%; background: #5d4037; border-radius: 10px 10px 4px 4px; }
+.bs-obj.sofa i { position: absolute; bottom: 0; left: 6%; right: 6%; height: 50%; background: #795548; border-radius: 6px; }
+.bs-obj.locker2 { top: 18%; right: 8%; width: 30%; height: 50%; display: flex; gap: 4px; }
+.bs-obj.locker2 i { flex: 1; background: linear-gradient(#78909c, #546e7a); border: 2px solid #37474f; border-radius: 3px; }
+.bs-obj.board { top: 20%; left: 12%; width: 20%; height: 24%; background: #2e7d32; border: 5px solid #5d4037; }
+.bs-obj.coffee2 { bottom: 14%; right: 10%; width: 12%; height: 18%; background: #37474f; border-radius: 4px; }
+.bs-obj.coffee2 i { position: absolute; inset: 20% 24%; background: #6d4c41; }
+
+/* ===== Refugio oxidado (subniveles) ===== */
+.lb-bunker { background: #1c1813; }
+.lb-bunker .bk-room { position: absolute; inset: 60px 0 80px; background:
+  radial-gradient(ellipse at 50% 20%, rgba(120,90,40,.25), transparent 60%),
+  repeating-linear-gradient(90deg, #3a2f22 0 50px, #332920 50px 52px),
+  linear-gradient(#2a2219, #181209); overflow: hidden; }
+.lb-bunker .bk-room::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,.15) 0 4px, transparent 4px 10px), radial-gradient(circle at 20% 30%, rgba(90,50,20,.3) 0 30px, transparent 40px), radial-gradient(circle at 70% 60%, rgba(70,40,15,.3) 0 40px, transparent 50px); mix-blend-mode: multiply; }
+.bk-pipe { position: absolute; background: linear-gradient(#5a4a30, #3a2e1c); border-radius: 4px; box-shadow: inset 0 2px 2px rgba(255,200,120,.1); }
+.bk-pipe.p1 { top: 8%; left: 0; right: 0; height: 12px; } .bk-pipe.p2 { top: 0; bottom: 0; left: 14%; width: 10px; } .bk-pipe.p3 { top: 20%; left: 0; right: 40%; height: 8px; }
+.bk-valve { position: absolute; top: 18%; left: 12%; width: 30px; height: 30px; border: 5px solid #6a5230; border-radius: 50%; background: #2a2015; }
+.bk-light { position: absolute; top: 2%; left: 50%; width: 60px; height: 10px; background: #d8c070; box-shadow: 0 0 40px 10px rgba(200,170,90,.25); animation: flicker 4s infinite; }
+@keyframes flicker { 0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.3} 95%{opacity:1} 97%{opacity:.5} }
+.bk-drip { position: absolute; width: 4px; height: 4px; background: #9fd8ff; border-radius: 50%; animation: drip 3s linear infinite; } .bk-drip.d1 { top: 20%; left: 30%; } .bk-drip.d2 { top: 20%; left: 62%; animation-delay: 1.4s; }
+@keyframes drip { 0%{top:20%;opacity:0} 10%{opacity:1} 80%{top:70%;opacity:1} 100%{top:72%;opacity:0} }
+.bk-puddle { position: absolute; bottom: 4%; left: 28%; width: 80px; height: 10px; background: radial-gradient(rgba(120,160,180,.4), transparent 70%); border-radius: 50%; }
+.bk-obj { position: absolute; border: 0; cursor: pointer; background: none; filter: sepia(.4) brightness(.85); } .bk-obj:hover { filter: sepia(.2) brightness(1.1); }
+.bk-boiler { bottom: 14%; left: 8%; width: 90px; height: 50%; }
+.bk-boiler i { position: absolute; bottom: 0; width: 40px; height: 100%; border-radius: 20px 20px 4px 4px; background: linear-gradient(#6a5436, #3a2c18); box-shadow: inset -6px 0 10px rgba(0,0,0,.4); } .bk-boiler i:first-child { left: 0; } .bk-boiler i:last-child { left: 46px; }
+.bk-generator { bottom: 14%; left: 42%; width: 80px; height: 40%; background: linear-gradient(#5a4a30, #2e2416); border: 3px solid #3a2e1c; border-radius: 4px; }
+.bk-generator .fan { position: absolute; top: 10%; left: 20%; width: 50%; height: 40%; border-radius: 50%; background: conic-gradient(#222 0 25%, #4a3a22 25% 50%, #222 50% 75%, #4a3a22 75%); animation: spin 1.2s linear infinite; }
+.bk-panel { bottom: 40%; right: 10%; width: 70px; height: 90px; background: #3a2e1c; border: 4px solid #241b10; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px; }
+.bk-panel i { background: #6a5230; border-radius: 2px; } .bk-panel i:first-child { background: #7a3b2f; }
+.bk-shelf { bottom: 14%; left: 10%; width: 140px; height: 50%; background: repeating-linear-gradient(0deg, transparent 0 40px, #4a3a22 40px 46px); border: 3px solid #3a2e1c; }
+.bk-shelf i { position: absolute; width: 20px; height: 26px; background: #6a5230; } .bk-shelf i:nth-child(1){left:10px;bottom:52px} .bk-shelf i:nth-child(2){left:40px;bottom:52px} .bk-shelf i:nth-child(3){left:20px;bottom:6px} .bk-shelf i:nth-child(4){left:70px;bottom:6px}
+.bk-locker { bottom: 14%; right: 12%; width: 100px; height: 54%; display: flex; gap: 4px; }
+.bk-locker i { flex: 1; background: linear-gradient(#5a4a30, #352a18); border: 2px solid #241b10; border-radius: 2px; box-shadow: inset 0 0 20px rgba(0,0,0,.5); }
+.bk-crates { bottom: 12%; left: 44%; width: 90px; height: 70px; }
+.bk-crates i { position: absolute; width: 42px; height: 42px; background: linear-gradient(#7a5a34, #4a3620); border: 3px solid #2e2010; } .bk-crates i:nth-child(1){left:0;bottom:0} .bk-crates i:nth-child(2){left:46px;bottom:0} .bk-crates i:nth-child(3){left:22px;bottom:44px}
+.bk-vault { bottom: 20%; left: 50%; transform: translateX(-50%); width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(#4a3a22, #241b10); border: 10px solid #352a18; box-shadow: inset 0 0 30px rgba(0,0,0,.7), 0 0 0 4px #1a120a; }
+.bk-vault .wheel { position: absolute; top: 50%; left: 50%; width: 60px; height: 60px; margin: -30px; border-radius: 50%; border: 8px solid #6a5230; background: conic-gradient(#3a2e1c 0 10%, transparent 10% 15%, #3a2e1c 15% 35%, transparent 35% 40%, #3a2e1c 40% 60%, transparent 60% 65%, #3a2e1c 65% 85%, transparent 85% 90%, #3a2e1c 90%); }
+.bk-vault.open { box-shadow: inset 0 0 60px #000, 0 0 30px rgba(120,90,40,.3); background: radial-gradient(#1a140c, #000); }
+.bk-vault.open .wheel { transform: rotate(40deg); opacity: .6; }
+.bk-bunks { bottom: 14%; left: 6%; width: 120px; height: 55%; }
+.bk-bunks i { position: absolute; left: 0; right: 0; height: 16px; background: #5a4a30; border: 2px solid #352a18; } .bk-bunks i:first-child { top: 10%; } .bk-bunks i:last-child { top: 55%; }
+.bk-radio { bottom: 16%; right: 8%; width: 70px; height: 44px; background: linear-gradient(#5a4a30, #352a18); border: 3px solid #241b10; border-radius: 4px; }
+.bk-radio .dial { position: absolute; top: 20%; left: 10%; width: 12px; height: 12px; border-radius: 50%; background: #7a3b2f; } .bk-radio .grill { position: absolute; top: 20%; right: 10%; width: 40%; height: 60%; background: repeating-linear-gradient(0deg, #2a2015 0 3px, #4a3a22 3px 5px); }
+.bk-map { top: 26%; left: 16%; width: 80px; height: 60px; background: linear-gradient(#8a7450, #6a5436); border: 3px solid #3a2e1c; }
+.bk-map i { position: absolute; top: 40%; left: 30%; width: 6px; height: 6px; border-radius: 50%; background: #c62828; box-shadow: 14px 6px 0 #c62828, -8px 10px 0 #c62828; }
+.bk-journal { bottom: 40%; left: 40%; width: 36px; height: 46px; background: #6a5436; border: 2px solid #3a2e1c; transform: rotate(-6deg); }
+.bk-journal i { position: absolute; inset: 18% 14%; background: repeating-linear-gradient(0deg, transparent 0 5px, rgba(0,0,0,.2) 5px 6px); }
+.bk-cans { bottom: 14%; right: 16%; width: 80px; height: 40px; }
+.bk-cans i { position: absolute; bottom: 0; width: 16px; height: 22px; border-radius: 2px; background: linear-gradient(#8a7450, #5a4630); } .bk-cans i:nth-child(1){left:0} .bk-cans i:nth-child(2){left:20px} .bk-cans i:nth-child(3){left:40px} .bk-cans i:nth-child(4){left:60px;height:30px}
+.bk-stencil { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font: 700 13px var(--font-mono); color: #c89a4a; letter-spacing: .2em; opacity: .7; }
+.bk-flash { position: absolute; inset: 0; pointer-events: none; }
+.lb-card.note .ms-text { font-size: 15px; line-height: 1.55; }
+@media (max-width: 640px) { .cab { height: 78vh; } .bs-room, .hx-room, .bk-room { inset: 54px 0 74px; } .rm2-zone.bath { flex-basis: 20%; } .rm2-zone.living { flex-basis: 30%; } }
+
+/* ===== Personaje jugable ===== */
+.lb-player { position: absolute; bottom: 7%; left: 50%; width: clamp(50px, 6vw, 76px); transform: translateX(-50%); z-index: 9; transition: left .12s linear; pointer-events: none; }
+.lb-player .npc-body { display: block; width: 100%; filter: drop-shadow(0 6px 5px rgba(0,0,0,.45)); }
+.lb-player.walking .npc-body { animation: npcLeg .4s ease-in-out infinite alternate; }
+.lb-hall .lb-player, .lb-base .lb-player, .lb-bunker .lb-player { bottom: 4%; }
+.lb-room2 .lb-player { bottom: 2%; }
+.player-ctrl { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 40; display: flex; gap: 10px; align-items: center; }
+.pl-btn { width: 60px; height: 56px; border-radius: 14px; border: 2px solid rgba(255,255,255,.4); background: rgba(10,10,20,.6); color: #fff; font-size: 22px; cursor: pointer; touch-action: none; display: grid; place-items: center; backdrop-filter: blur(4px); }
+.pl-btn.act { width: 92px; font: 700 14px var(--font-display); background: rgba(255,204,92,.85); color: #1a1205; border-color: #ffcc5c; }
+.pl-btn:active { transform: scale(.94); }
+[data-target].pl-near { outline: 3px solid #ffcc5c; outline-offset: 2px; box-shadow: 0 0 20px rgba(255,204,92,.8) !important; }
+.av-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.av { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border: 2px solid var(--line); border-radius: 12px; background: var(--glass); color: inherit; cursor: pointer; }
+.av span { width: 100%; } .av span svg { width: 100%; height: auto; } .av.on { border-color: var(--gold); box-shadow: 0 0 16px rgba(255,204,92,.4); }
+@media (max-width: 640px) { .player-ctrl { bottom: 8px; } .pl-btn { width: 52px; height: 50px; } .pl-btn.act { width: 80px; } .av-list { grid-template-columns: repeat(2, 1fr); } }
+
+/* Reacomodo lobby: puerta de personal, guardia y máquina sin encimarse */
+.lb-staff-door { left: 4% !important; }
+.lb-guard { left: 10% !important; bottom: 10% !important; z-index: 7; }
+.lb-guard .npc-name { background: #1f2a44; }
+.lb-vend-spot { left: 56% !important; }
+/* Limpieza de la zona del lobby para que todo se vea */
+.lb-sofa { display: none; }
+.lb-chair.c1 { left: 42%; } .lb-chair.c2 { display: none; } .lb-chair.c3 { left: 48%; } .lb-table { left: 45%; bottom: 8%; }
+.lb-guard { left: 11% !important; }
