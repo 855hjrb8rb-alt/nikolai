@@ -3,6 +3,7 @@
 // radar de lluvia, cámaras PÚBLICAS, medición, objetivos marcados y análisis con IA.
 // Solo usa datos públicos y abiertos.
 import { renderInto } from "./md.js";
+import { Heli } from "./heli.js";
 
 const LEAFLET = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist";
 const BASES = {
@@ -93,6 +94,7 @@ export async function renderMap(body, ctx) {
           <button class="nw-mini" data-target data-act="pin">◎ ${esc(t("map_pin"))}</button>
           <button class="nw-mini" data-target data-act="street">🚶 ${esc(t("map_street"))}</button>
           <button class="nw-mini" data-target data-act="camsweb">📹 ${esc(t("map_camsNear"))}</button>
+          <button class="nw-mini heli-btn" data-target data-act="heli">🚁 ${esc(t("heli_fly"))}</button>
           <button class="nw-mini" data-target data-act="full">⛶ ${esc(t("map_full"))}</button>
         </div>
       </div>
@@ -121,10 +123,16 @@ export async function renderMap(body, ctx) {
   map.on("moveend", () => {
     const c = map.getCenter();
     tac.lat = +c.lat.toFixed(5); tac.lon = +c.lng.toFixed(5); tac.zoom = map.getZoom();
-    persist();
-    if (tac.layers.includes("grid")) drawGrid();
-    if (tac.layers.includes("flights")) loadFlights();
-    if (tac.layers.includes("cams")) loadCams();
+    // Volando, el mapa se mueve en cada fotograma: las capas pesadas se refrescan con calma.
+    const now = Date.now();
+    const flying = heli?.active;
+    if (!flying || now - lastHeavy > 15_000) {
+      lastHeavy = now;
+      persist();
+      if (tac.layers.includes("flights")) loadFlights();
+      if (tac.layers.includes("cams")) loadCams();
+    }
+    if (tac.layers.includes("grid") && (!flying || now - lastGrid > 600)) { lastGrid = now; drawGrid(); }
     updateHud();
   });
   map.on("click", onClick);
@@ -134,8 +142,9 @@ export async function renderMap(body, ctx) {
   setTimeout(() => map?.invalidateSize(), 200);
 }
 
-let fullHome = null;
+let fullHome = null, heli = null, lastHeavy = 0, lastGrid = 0;
 export function destroy() {
+  heli?.stop(); heli = null;
   // Si estaba a pantalla completa, el mapa vive en el <body>: se quita.
   if (document.body.classList.contains("tac-fullscreen")) document.querySelector("body > #tacWrap")?.remove();
   timers.forEach(clearInterval); timers = [];
@@ -362,6 +371,16 @@ function bindUi(body) {
       window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${c.lat},${c.lng}`, "_blank", "noopener");
     } else if (a === "camsweb") {
       window.open(`https://www.windy.com/-Webcams/webcams?${c.lat.toFixed(3)},${c.lng.toFixed(3)},${Math.max(8, map.getZoom())}`, "_blank", "noopener");
+    } else if (a === "heli") {
+      if (heli?.active) { heli.onExit(); return; }
+      heli = new Heli(map, body.querySelector(".tac-map-box") || document.querySelector(".tac-map-box"), (k) => esc(t(k)));
+      // Para volar, el mapa pasa a pantalla completa (y vuelve como estaba al salir).
+      const fullBtn = (body.querySelector('[data-act="full"]') || document.querySelector('#tacWrap [data-act="full"]'));
+      const wasFull = document.body.classList.contains("tac-fullscreen");
+      if (!wasFull) fullBtn?.click();
+      heli.onExit = () => { heli.stop(); b.classList.remove("on"); if (!wasFull && document.body.classList.contains("tac-fullscreen")) fullBtn?.click(); };
+      setTimeout(() => heli?.start(), wasFull ? 0 : 300);
+      b.classList.add("on");
     } else if (a === "full") {
       // El panel tiene transformaciones 3D: para ocupar toda la pantalla, el mapa se mueve al <body>.
       const wrap = body.querySelector("#tacWrap") || document.querySelector("#tacWrap");

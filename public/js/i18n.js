@@ -18,6 +18,9 @@ export const LANGS = {
 
 const T = {
   es: {
+    heli_fly: "Volar UH-1", heli_spd: "VEL", heli_alt: "ALT", heli_fuel: "COMB", heli_up: "Subir", heli_down: "Bajar", heli_autoZoom: "Zoom automático", heli_exit: "Salir",
+    heli_startup: "ARRANCANDO ROTOR", heli_ground: "EN TIERRA · LISTO", heli_flying: "EN VUELO", heli_noFuel: "SIN COMBUSTIBLE · AUTORROTACIÓN",
+    heli_help: "W/↑ adelante · S/↓ frenar · A/D ← → girar · Q/Espacio subir · E/Shift bajar — en el celular usa el joystick y ▲▼. Aterriza para recargar combustible.",
     map: "Mapa táctico", map_title: "Mapa táctico", map_layers: "Capas", map_targets: "Objetivos",
     map_search: "Buscar lugar, dirección o coordenadas…", mapb_sat: "Satélite", mapb_hybrid: "Satélite + nombres", mapb_dark: "Oscuro", mapb_topo: "Topográfico", mapb_street: "Calles",
     mapf_none: "Normal", mapf_nvg: "Visión nocturna", mapf_thermal: "Térmica", mapf_mono: "Monocromo",
@@ -424,6 +427,9 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    heli_fly: "Fly UH-1", heli_spd: "SPD", heli_alt: "ALT", heli_fuel: "FUEL", heli_up: "Up", heli_down: "Down", heli_autoZoom: "Auto zoom", heli_exit: "Exit",
+    heli_startup: "ROTOR SPOOL-UP", heli_ground: "ON GROUND · READY", heli_flying: "IN FLIGHT", heli_noFuel: "NO FUEL · AUTOROTATION",
+    heli_help: "W/↑ forward · S/↓ brake · A/D ← → turn · Q/Space climb · E/Shift descend — on phone use the joystick and ▲▼. Land to refuel.",
     map: "Tactical map", map_title: "Tactical map", map_layers: "Layers", map_targets: "Targets",
     map_search: "Search place, address or coordinates…", mapb_sat: "Satellite", mapb_hybrid: "Satellite + labels", mapb_dark: "Dark", mapb_topo: "Topographic", mapb_street: "Streets",
     mapf_none: "Normal", mapf_nvg: "Night vision", mapf_thermal: "Thermal", mapf_mono: "Monochrome",
