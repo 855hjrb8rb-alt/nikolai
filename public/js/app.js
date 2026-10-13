@@ -349,6 +349,7 @@ const PANEL = {
       ${Brain.getMode() === "direct" ? keyForm() : ""}
       ${readout(t("heardLabel"), lastHeard || "—", true)}
       ${readout("NIKOLAI", lastReply || t("greeting"))}
+      <div class="readout"><div class="k">${esc(t("vlogTitle").toUpperCase())}</div><div class="vlog" id="voiceLog">${voiceLogHtml()}</div></div>
       <p class="muted">${esc(t("voiceHelp"))}</p>`;
     bindKeyForm(body);
     const [toggle, conv, wake] = body.querySelectorAll(".tiles .tile");
@@ -614,6 +615,7 @@ const PANEL = {
         ${tile(`${icon("speaker")}<br>${esc(t("test"))}`, "", "action")}
       </div>
       <p class="muted" id="diagOut">${esc(t("diagHint"))}</p>
+      <div class="readout"><div class="k">${esc(t("vlogTitle").toUpperCase())}</div><div class="vlog" id="voiceLog">${voiceLogHtml()}</div></div>
       <div class="readout"><div class="k">${esc(t("micLevel"))}</div><div class="meter"><i id="sysMeter"></i></div></div>
       ${brain.model ? `<p class="muted mono">MODEL · ${esc(brain.model)}</p>` : ""}`;
     const live = body.querySelector("#sysLive");
@@ -888,6 +890,17 @@ let restartTimer = null;
 // Historial de conversación: se guarda en este navegador para recordar entre visitas.
 const history = store.get("history", []);
 const saveHistory = () => store.set("history", history.slice(-40));
+// Repara un historial guardado que haya quedado desordenado (dos preguntas seguidas, etc.).
+(() => {
+  const fixed = [];
+  for (const m of history) {
+    if (!m || typeof m.content !== "string" || !m.content.trim()) continue;
+    if (fixed.length && fixed[fixed.length - 1].role === m.role) fixed[fixed.length - 1] = m; // se queda la más reciente
+    else fixed.push(m);
+  }
+  while (fixed.length && fixed[0].role !== "user") fixed.shift();
+  if (fixed.length !== history.length) { history.splice(0, history.length, ...fixed); saveHistory(); }
+})();
 
 function applyVoice() {
   speaker.voiceName = settings.voiceName;
@@ -959,6 +972,22 @@ function showMicError(code) {
   }
 }
 let lastMicError = "";
+
+// Registro de voz: qué oyó, qué envió y qué pasó (para encontrar dónde se corta).
+const voiceLog = [];
+function vlog(kind, text = "") {
+  const last = voiceLog[voiceLog.length - 1];
+  // «Escuchando» repetido (silencio) se cuenta en una sola línea.
+  if (last && last.kind === kind && kind === "listen") { last.at = new Date(); last.n = (last.n || 1) + 1; last.text = `×${last.n}`; }
+  else voiceLog.push({ at: new Date(), kind, text: String(text).slice(0, 140) });
+  if (voiceLog.length > 12) voiceLog.shift();
+  const el = document.querySelector("#voiceLog");
+  if (el) el.innerHTML = voiceLogHtml();
+}
+function voiceLogHtml() {
+  if (!voiceLog.length) return `<p class="muted">${esc(t("vlogEmpty"))}</p>`;
+  return voiceLog.slice().reverse().map((e) => `<div class="vlog-row ${e.kind}"><span class="mono">${e.at.toLocaleTimeString(getLang(), { hour12: false })}</span><b>${esc(t("vlog_" + e.kind))}</b><span>${esc(e.text)}</span></div>`).join("");
+}
 /** Nivel del micrófono para el medidor (en el celular solo hay señal mientras se detecta voz). */
 function meterLevel() {
   if (mic.analyser) return mic.level();
@@ -1019,6 +1048,7 @@ function listenNow() {
   lastListenAt = performance.now();
   listener.lang = LANGS[getLang()].speech;
   setState("listening");
+  vlog("listen");
   const ok = listener.listen({
     onInterim: (text) => { speechActive = true; ui.heard.innerHTML = `<b>›</b> ${esc(text)}`; },
     onSound: (on) => { speechActive = on; },
@@ -1029,6 +1059,7 @@ function listenNow() {
     },
     onError: (err) => {
       if (err === "no-speech" || err === "aborted") return; // silencio: se vuelve a escuchar
+      vlog("micError", err);
       showMicError(err);
     },
   });
@@ -1036,6 +1067,7 @@ function listenNow() {
 }
 
 function handleFinal(text) {
+  vlog("heard", text);
   lastHeard = text;
   ui.heard.innerHTML = `<b>${esc(t("you").toUpperCase())} ›</b> ${esc(text)}`;
   const task = voiceTask;
@@ -1047,9 +1079,9 @@ function handleFinal(text) {
   }
   if (!task && SLEEP_RE.test(text)) { goToSleep(); return; }
   // Con música sonando solo hace caso si la llamas por su nombre (para no reaccionar a la letra).
-  if (!task && miniPlayer.playing && settings.mode !== "wake") {
+  if (!task && miniPlayer.playing && miniPlayer.visible && settings.mode !== "wake") {
     const command = stripWakeWord(text);
-    if (command === null) { listenNow(); return; }
+    if (command === null) { vlog("ignoredMusic", text); listenNow(); return; }
     if (command) { ask(command); return; }
   }
   if (task?.kind === "dictate") {
@@ -1069,7 +1101,7 @@ function handleFinal(text) {
   }
   if (settings.mode === "wake") {
     const command = stripWakeWord(text);
-    if (command === null) { listenNow(); return; } // no era para mí
+    if (command === null) { vlog("ignoredWake", text); listenNow(); return; } // no era para mí
     if (!command) { speakOnce(t("yes")); return; }
     ask(command);
     return;
@@ -1091,6 +1123,7 @@ function afterSpeech() {
   else setState("off");
 }
 speaker.onStart = () => { if (state === "thinking") setState("speaking"); };
+speaker.onWatchdog = () => vlog("ttsStuck");
 speaker.onIdle = () => { if (state === "speaking" || state === "thinking") afterSpeech(); };
 
 const ACTIONS = {
@@ -1126,6 +1159,12 @@ const ACTIONS = {
   },
 };
 
+/** Quita del historial una pregunta que se quedó sin respuesta (interrumpida o con error). */
+function dropOrphan(msg) {
+  const i = history.lastIndexOf(msg);
+  if (i >= 0 && history[i + 1]?.role !== "assistant") { history.splice(i, 1); saveHistory(); }
+}
+
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
   return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), ...payload }, handlers);
@@ -1147,7 +1186,10 @@ function errorText(err) {
     if (Brain.getMode() === "direct") { setTimeout(() => openPanel("core"), 0); return t("needKey"); }
     return t("errAuth");
   }
-  return err === "refusal" ? t("errRefusal") : t("errGeneric");
+  if (err === "refusal") return t("errRefusal");
+  if (err === "rate_limit") return t("keyRate");
+  // Error desconocido: se muestra el motivo para poder arreglarlo.
+  return err && err !== "error" ? `${t("errGeneric")} (${String(err).slice(0, 120)})` : t("errGeneric");
 }
 
 /**
@@ -1155,9 +1197,11 @@ function errorText(err) {
  * desde el chat (channel "text") pinta la respuesta y la lee solo si speak es true.
  */
 async function ask(text, { channel = "voice", speak = true, onText, onDone } = {}) {
-  if (isOffline()) { answerOffline(text, { speak, onText, onDone }); return; }
+  if (isOffline()) { vlog("offline", text); answerOffline(text, { speak, onText, onDone }); return; }
   stopAll();
-  history.push({ role: "user", content: text });
+  const userMsg = { role: "user", content: text };
+  history.push(userMsg);
+  vlog("sent", text);
   setState("thinking");
   ui.reply.textContent = "";
   speaker.begin();
@@ -1176,6 +1220,7 @@ async function ask(text, { channel = "voice", speak = true, onText, onDone } = {
             first = false;
             stats.lastLatency = Math.round(performance.now() - t0);
             pushSeries("latency", stats.lastLatency, 30);
+            vlog("firstToken", `${stats.lastLatency} ms`);
           }
           reply += delta;
           ui.reply.textContent = speakable(reply).slice(-220);
@@ -1186,7 +1231,8 @@ async function ask(text, { channel = "voice", speak = true, onText, onDone } = {
         onStatus: (s) => s === "searching" && setState("thinking", t("searching")),
       },
     );
-    if (ctl !== askCtl) return; // interrumpido
+    if (ctl !== askCtl) { dropOrphan(userMsg); return; } // interrumpido
+    if (err) vlog("aiError", err);
     if (!reply && err === "connection") { // se cayó la conexión a mitad: responde en modo local
       history.pop();
       askCtl = null;
@@ -1194,6 +1240,7 @@ async function ask(text, { channel = "voice", speak = true, onText, onDone } = {
       return;
     }
     if (reply) {
+      vlog("replied", speakable(reply));
       history.push({ role: "assistant", content: reply });
       saveHistory();
       stats.responses++;
@@ -1207,8 +1254,9 @@ async function ask(text, { channel = "voice", speak = true, onText, onDone } = {
     }
     speaker.end();
   } catch (e) {
-    if (ctl !== askCtl) return;
-    history.pop();
+    if (ctl !== askCtl) { dropOrphan(userMsg); return; }
+    vlog("aiError", e?.message || "error");
+    dropOrphan(userMsg);
     onDone?.("", "error");
     if (speak) speakOnce(t("errGeneric")); else afterSpeech();
   } finally {

@@ -41,26 +41,40 @@ export class Listener {
     rec.continuous = false;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
-    let finalText = "", lastInterim = "";
+    let finalText = "", lastInterim = "", delivered = false, silence = null;
+    // Entrega la frase en cuanto está lista, sin esperar a que el navegador cierre el micrófono:
+    // en algunos Android ese aviso llega muy tarde o nunca, y la frase se quedaba sin enviar.
+    const deliver = (text) => {
+      if (delivered) return;
+      delivered = true;
+      clearTimeout(silence);
+      rec.onend = null;
+      if (this.rec === rec) this.rec = null;
+      try { rec.stop(); } catch { /* ya detenido */ }
+      if (text) onFinal?.(text);
+      onEnd?.(Boolean(text));
+    };
     rec.onspeechstart = () => onSound?.(true);
     rec.onspeechend = () => onSound?.(false);
     rec.onresult = (e) => {
       let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      finalText = "";
+      for (let i = 0; i < e.results.length; i++) {
         const r = e.results[i];
         if (r.isFinal) finalText += r[0].transcript;
         else interim += r[0].transcript;
       }
       lastInterim = (finalText + interim).trim();
       onInterim?.(lastInterim);
+      clearTimeout(silence);
+      if (finalText.trim() && !interim.trim()) deliver(finalText.trim());
+      // Si el texto deja de cambiar 1,6 s, se da por terminada la frase.
+      else silence = setTimeout(() => deliver(lastInterim), 1600);
     };
     rec.onerror = (e) => onError?.(e.error);
     rec.onend = () => {
       if (this.rec === rec) this.rec = null;
-      // Algunos Android terminan sin marcar el resultado como final: usamos lo último oído.
-      const text = finalText.trim() || lastInterim;
-      if (text) onFinal?.(text);
-      onEnd?.(Boolean(text));
+      if (!delivered) deliver(finalText.trim() || lastInterim);
     };
     this.rec = rec;
     try { rec.start(); } catch { return false; }
@@ -159,8 +173,16 @@ export class Speaker {
     if (voice) u.voice = voice;
     this.pending++;
     const gen = this.gen;
+    let finished = false;
+    // Vigilante: Chrome a veces no avisa de que terminó de hablar y NIKOLAI
+    // se quedaba «hablando» para siempre sin volver a escuchar.
+    const maxMs = (clean.length * 95) / Math.max(0.5, this.rate) + 4000;
+    const watchdog = setTimeout(() => { if (!finished) { this.onWatchdog?.(); u.onend(); } }, maxMs);
     u.onstart = () => gen === this.gen && this.onStart?.();
     u.onend = u.onerror = () => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(watchdog);
       if (gen !== this.gen) return;
       this.pending = Math.max(0, this.pending - 1);
       if (this.pending === 0 && this.closed) this.onIdle?.();
@@ -383,4 +405,9 @@ export async function prepareOfflineSpeech(lang) {
   } catch {
     return "unsupported";
   }
+}
+
+// Chrome de escritorio pausa la voz tras ~15 s: un «resume» periódico lo evita.
+if ("speechSynthesis" in window) {
+  setInterval(() => { if (speechSynthesis.speaking) speechSynthesis.resume(); }, 5000);
 }

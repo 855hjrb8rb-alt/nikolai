@@ -236,12 +236,23 @@ const CARDS_SCHEMA = {
   additionalProperties: false,
 };
 
+/**
+ * Deja el historial en un orden que la API acepta siempre: sin mensajes vacíos,
+ * sin dos seguidos del mismo rol (se unen) y empezando por el usuario.
+ * (Un historial guardado desordenado hacía que la IA dejara de responder.)
+ */
 export function cleanHistory(raw) {
   if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
-    .slice(-30)
-    .map((m) => ({ role: m.role, content: m.content.slice(0, 8000) }));
+  const out = [];
+  for (const m of raw.slice(-40)) {
+    if ((m?.role !== "user" && m?.role !== "assistant") || typeof m.content !== "string" || !m.content.trim()) continue;
+    const content = m.content.slice(0, 8000);
+    const last = out[out.length - 1];
+    if (last && last.role === m.role) last.content = `${last.content}\n\n${content}`.slice(-12000);
+    else out.push({ role: m.role, content });
+  }
+  while (out.length && out[0].role !== "user") out.shift();
+  return out.slice(-30);
 }
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];

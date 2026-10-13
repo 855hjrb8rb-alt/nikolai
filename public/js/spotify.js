@@ -253,6 +253,7 @@ export async function playInEmbed(type, id, title = "") {
 export function hidePlayer() {
   controller?.pause();
   player.visible = false;
+  player.playing = false;
   document.querySelector("#miniPlayer")?.setAttribute("hidden", "");
   player.onChange?.();
 }

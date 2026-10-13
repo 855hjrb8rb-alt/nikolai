@@ -18,6 +18,11 @@ export const LANGS = {
 
 const T = {
   es: {
+    vlogTitle: "Registro de voz", vlogEmpty: "Aún no hay actividad. Activa la voz y di algo.",
+    vlog_listen: "Escuchando", vlog_heard: "Oí", vlog_sent: "Enviado a la IA", vlog_firstToken: "La IA empezó a responder",
+    vlog_replied: "Respuesta", vlog_aiError: "Error de la IA", vlog_micError: "Error del micrófono", vlog_ttsStuck: "La voz se trabó: continúo",
+    vlog_ignoredMusic: "Ignorado (hay música; di «Nikolai…»)", vlog_ignoredWake: "Ignorado (modo palabra clave: di «Nikolai…»)",
+    vlog_offline: "Sin internet: respuesta local",
     offline: "Sin conexión", offlineDesc: "Úsalo sin internet: modo local y ahorro de batería.",
     offChip: "SIN CONEXIÓN", offShort: "OFF", offStatus: "Estado de la conexión",
     offIsOnline: "Conectado a internet", offIsOffline: "Sin internet: NIKOLAI funciona en modo local",
@@ -219,6 +224,11 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    vlogTitle: "Voice log", vlogEmpty: "No activity yet. Turn voice on and say something.",
+    vlog_listen: "Listening", vlog_heard: "Heard", vlog_sent: "Sent to AI", vlog_firstToken: "AI started answering",
+    vlog_replied: "Reply", vlog_aiError: "AI error", vlog_micError: "Microphone error", vlog_ttsStuck: "Voice got stuck: continuing",
+    vlog_ignoredMusic: "Ignored (music playing; say “Nikolai…”)", vlog_ignoredWake: "Ignored (wake-word mode: say “Nikolai…”)",
+    vlog_offline: "Offline: local answer",
     offline: "Offline", offlineDesc: "Use it without internet: local mode and battery saver.",
     offChip: "OFFLINE", offShort: "OFF", offStatus: "Connection status",
     offIsOnline: "Connected to the internet", offIsOffline: "No internet: NIKOLAI is running in local mode",

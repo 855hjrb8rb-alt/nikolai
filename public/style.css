@@ -632,3 +632,14 @@ body.lowpower .floor { opacity: .4; }
 body.lowpower .card, body.lowpower .panel { box-shadow: none; }
 /* Iconos dentro de cualquier mosaico */
 .tile svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Registro de voz */
+.vlog { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; max-height: 240px; overflow-y: auto; font-size: 13px; }
+.vlog-row { display: grid; grid-template-columns: 70px 170px 1fr; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line-faint); }
+.vlog-row .mono { color: var(--ice-dim); font-size: 11px; }
+.vlog-row b { font-weight: 600; color: var(--ice); }
+.vlog-row span:last-child { overflow-wrap: anywhere; color: #fff; }
+.vlog-row.heard b, .vlog-row.replied b { color: var(--green); }
+.vlog-row.aiError b, .vlog-row.micError b, .vlog-row.ttsStuck b { color: var(--danger); }
+.vlog-row.ignoredMusic b, .vlog-row.ignoredWake b, .vlog-row.offline b { color: var(--gold); }
+@media (max-width: 700px) { .vlog-row { grid-template-columns: 60px 1fr; } .vlog-row span:last-child { grid-column: 1 / -1; } }
