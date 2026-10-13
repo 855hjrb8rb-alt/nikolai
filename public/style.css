@@ -858,3 +858,24 @@ body[data-persona="jfk"] .brand span { color: #dfe6f2; }
 .st-empty p { margin: .4em 0; }
 .st-gen-box summary { cursor: pointer; list-style: none; }
 .st-gen-box[open] { display: flex; flex-direction: column; gap: 8px; }
+.today { color: var(--ice); white-space: nowrap; }
+@media (max-width: 640px) { .today { font-size: 11px; } }
+
+/* ---------- Ver juntos ---------- */
+.wt-platforms { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; flex: none; }
+.wt-plat { padding: 16px 10px; border-radius: 12px; border: 1px solid var(--line); background: linear-gradient(135deg, color-mix(in srgb, var(--pc) 25%, transparent), var(--glass)); color: #fff; font: 800 16px var(--font-display); cursor: pointer; }
+.wt-plat.on { border-color: var(--pc); box-shadow: 0 0 18px color-mix(in srgb, var(--pc) 45%, transparent); }
+.wt-check { display: flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 14px; }
+.wt-companion { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.wt-head { display: flex; align-items: center; gap: 10px; }
+.wt-head b { display: block; color: #fff; font-size: 16px; } .wt-head small { color: var(--ice-dim); font-size: 11px; }
+.wt-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--pc); box-shadow: 0 0 10px var(--pc); flex: none; }
+.wt-min { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 12px; }
+.wt-min button { border: 1px solid var(--line); background: var(--glass); color: var(--ice); border-radius: 8px; padding: 3px 7px; cursor: pointer; font: inherit; }
+.wt-log { display: flex; flex-direction: column; gap: 8px; max-height: 42vh; min-height: 160px; overflow-y: auto; padding: 4px; }
+.wt-quick, .wt-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.wt-form { display: flex; gap: 8px; } .wt-form .field { flex: 1; }
+.pip-body { margin: 0; padding: 10px; background: #0b0c2a; color: var(--ice); font-family: var(--font-display); overflow: hidden; }
+.pip-body .wt-companion { height: calc(100vh - 20px); }
+.pip-body .wt-log { flex: 1; max-height: none; }
+.pip-body .msg { font-size: 14px; }

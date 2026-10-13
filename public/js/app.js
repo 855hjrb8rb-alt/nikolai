@@ -9,6 +9,7 @@ import {
 } from "./voice.js";
 import { CallView } from "./call.js";
 import { renderStudio, studio } from "./studio.js";
+import { renderWatch, watch, minuteNow } from "./watch.js";
 import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -81,6 +82,7 @@ const ICON = {
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
   work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
   projects: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
+  watch: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4M10 8.5v5l4.5-2.5z"/>',
   studio: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 15.5l-5-5-9 8.5"/><path d="M17.5 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>',
   persona: '<circle cx="8" cy="9" r="3.2"/><path d="M2.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="7.5" r="2.7"/><path d="M14.5 12.6c.6-.2 1.3-.3 2-.3 2.4 0 4.3 1.6 4.9 4.4"/>',
   money: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.6-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3.2 6 1.8 6 5 0 1.4-1.3 2.4-3 2.4-1.3 0-2.6-.6-3.2-1.6M12 5.5v13"/>',
@@ -144,10 +146,10 @@ function endCall() {
 
 
 const MODULES = [
-  "core", "chat", "persona", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
+  "core", "chat", "persona", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
-const WIDE = new Set(["studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
+const WIDE = new Set(["watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -191,6 +193,7 @@ function cardBody(id) {
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
+    case "watch": return `<p class="desc" data-bind="wtInfo" style="flex:1"></p><div class="stats">${stat("wt_now", "wtNow")}${stat("wt_minute", "wtMin", "accent")}</div>`;
     case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
     case "persona": return `<div class="big-code persona-code" data-bind="personaName">—</div><div class="stats">${stat("call_title", "callState")}${stat("ps_voice", "personaVoice", "accent")}</div>`;
     case "work": return `<p class="desc" style="flex:1">${esc(t("workCardDesc"))}</p><div class="stats">${stat("wk_tools", "workTools")}${stat("wk_last", "workLast", "accent")}</div>`;
@@ -291,6 +294,9 @@ function values() {
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
     personaName: t("personaShort_" + settings.persona),
+    wtInfo: watch.active ? `${watch.title}` : t("watchCardDesc"),
+    wtNow: watch.active ? t("wt_live") : "—",
+    wtMin: watch.active ? `${minuteNow()}′` : "—",
     stMedia: studio.kind ? t("st_kind_" + studio.kind) : "—",
     stEdits: studio.ops.length,
     callState: call.active ? t("call_live") : "—",
@@ -337,7 +343,7 @@ function updateCards() {
       const id = k.slice(7);
       const live = id === "core" || id === "chat" || id === "homework" ? brain.apiKey
         : id === "news" ? navigator.onLine
-        : id === "work" || id === "projects" || id === "money" || id === "persona" || id === "studio" ? true
+        : id === "work" || id === "projects" || id === "money" || id === "persona" || id === "studio" || id === "watch" ? true
         : id === "settings" ? Boolean(gestures?.running)
         : id === "markets" ? Boolean(market.live.BTCUSDT)
         : id === "music" ? true
@@ -696,6 +702,11 @@ const PANEL = {
 
   news(body) {
     renderNews(body, moduleCtx());
+  },
+
+  watch(body) {
+    renderWatch(body, { ...moduleCtx(), speak: (txt) => speakOnce(txt) });
+    updateCards();
   },
 
   studio(body) {
@@ -2102,9 +2113,19 @@ updateNetChip();
 connectLive();
 if (profile.city) loadWeather(getLang()).then(updateCards);
 
-setInterval(() => {
-  ui.clock.textContent = new Date().toLocaleTimeString(getLang(), { hour12: false });
-}, 1000);
+function tickClock() {
+  const now = new Date();
+  ui.clock.textContent = now.toLocaleTimeString(getLang(), { hour12: false });
+  const today = $("#today");
+  if (today) {
+    const long = innerWidth > 1100;
+    const txt = now.toLocaleDateString(getLang(), long ? { weekday: "long", day: "numeric", month: "long", year: "numeric" } : { weekday: "short", day: "numeric", month: "short" });
+    const cap = txt.charAt(0).toUpperCase() + txt.slice(1);
+    if (today.textContent !== cap) today.textContent = cap;
+  }
+}
+tickClock();
+setInterval(tickClock, 1000);
 setInterval(() => {
   pushSeries("mic", mic.level());
   pushSeries("fps", gestures?.running ? gestures.fps : 0);

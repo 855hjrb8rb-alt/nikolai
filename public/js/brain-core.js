@@ -15,7 +15,7 @@ export const LANGUAGES = {
 };
 export const PANELS = [
   "core", "chat", "homework", "music", "markets", "news", "weather", "tools", "sos", "voice", "translator",
-  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "studio", "none",
+  "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "work", "projects", "money", "persona", "studio", "watch", "none",
 ];
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -66,7 +66,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada), studio (estudio: subir fotos o videos y transformarlos como pida el usuario). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada), studio (estudio: subir fotos o videos y transformarlos como pida el usuario), watch (ver juntos Netflix, Prime Video y otras plataformas con NIKOLAI de compañera). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -214,7 +214,20 @@ function profileLine(profile) {
   return parts.join(" ");
 }
 
-function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video, personaLang }, webSearch) {
+function watchLines(w) {
+  if (!w) return [];
+  return [
+    `Ahora mismo estás viendo con el usuario «${w.title}»${w.ep ? ` (${w.ep})` : ""} en ${w.platform}; llevan unos ${w.minute} minutos. Eres su compañero de sofá: reaccionas, opinas con personalidad (puedes no estar de acuerdo), comentas actuaciones, música y escenas, cuentas datos curiosos y respondes sus dudas sobre la trama, los actores o el mundo de la serie o película.`,
+    "Mensajes muy cortos (1-3 frases), naturales, como quien comenta en voz baja durante la película. Nada de listas.",
+    w.spoilers
+      ? "El usuario permite spoilers."
+      : "SIN SPOILERS: nunca cuentes nada que pase después del punto en el que van (episodio y minuto). Si no estás seguro de qué ya vieron, pregunta o habla en general. Si te pide un spoiler explícitamente, avisa primero y pide confirmación.",
+    "No ves la pantalla salvo que te llegue una captura con el mensaje; no inventes lo que está pasando en la escena: pregunta o comenta lo que el usuario te cuente. Si te llega una captura, coméntala.",
+    "Usa la búsqueda web si necesitas datos de la serie o película (reparto, curiosidades, críticas).",
+  ];
+}
+
+function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video, personaLang, watch }, webSearch) {
   const voice = channel !== "text";
   // JFK vive en 1963: sin búsqueda web ni fecha actual.
   if (persona === "jfk") webSearch = false;
@@ -223,6 +236,7 @@ function systemPrompt({ lang, now, notes, profile, channel, memories, persona, v
     persona === "jfk" && personaLang === "en"
       ? "IMPORTANTE: responde SIEMPRE en inglés, como hablaba Kennedy (con su cadencia de Boston y su estilo de discurso), aunque el usuario te hable en español; si el usuario parece no entender, añade al final una frase breve en español."
       : "",
+    ...watchLines(watch),
     video
       ? "Estás en una videollamada con el usuario: ve tu avatar animado y tú lo ves por su cámara cuando te llega una foto con su mensaje. Si hay foto, coméntala con naturalidad solo cuando venga al caso (cómo se ve, qué te enseña, su expresión), sin describirla entera."
       : "",
@@ -423,6 +437,12 @@ export function parseRequest(body) {
       : [],
     symbol: str(body.symbol, 40),
     followUp: body.followUp === true,
+    watch: body.watch && typeof body.watch === "object" && typeof body.watch.title === "string" && body.watch.title.trim()
+      ? {
+          title: str(body.watch.title, 120), ep: str(body.watch.ep, 60), platform: str(body.watch.platform, 30) || "streaming",
+          minute: Math.max(0, Math.min(600, Math.round(Number(body.watch.minute) || 0))), spoilers: body.watch.spoilers === true,
+        }
+      : null,
     media: body.media === "video" ? "video" : "photo",
     duration: Number.isFinite(body.duration) ? Math.min(3600, Math.max(0, body.duration)) : 0,
     currentOps: str(body.currentOps, 2000),
