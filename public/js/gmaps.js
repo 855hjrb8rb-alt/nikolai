@@ -51,14 +51,16 @@ export async function renderMap(body, ctx) {
         <form class="gm-search"><input class="field" placeholder="${esc(t("gm_search"))}" value="${esc(gm.q)}" autocomplete="off"><button class="nw-mini" data-target>⌕ ${esc(t("search"))}</button></form>
         <div class="tac-group">${TYPES.map((k) => `<button class="nw-mini ${gm.type === k ? "on" : ""}" data-target data-type="${k}">${esc(t("gmt_" + k))}</button>`).join("")}</div>
       </div>
-      <div class="gm-box">${full ? `<div id="gmMap" class="gm-map"></div>` : `<iframe class="gm-map" id="gmFrame" title="Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>`}</div>
+      <div class="gm-box">${full ? `<div id="gmMap" class="gm-map"></div>` : `<iframe class="gm-map" id="gmFrame" title="Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>`}
+        <div class="gm-overlay" hidden><iframe title="Google Maps" referrerpolicy="no-referrer-when-downgrade" allowfullscreen allow="accelerometer; gyroscope"></iframe><button class="nw-mini gm-back" data-target>← ${esc(t("gm_backMap"))}</button></div>
+      </div>
+      <div class="gm-steps hw-out" hidden></div>
       <div class="gm-bar">
         <div class="tac-group">
           ${full ? ["traffic", "transit", "bike"].map((k) => `<button class="nw-mini ${gm[k] ? "on" : ""}" data-target data-layer="${k}">${esc(t("gml_" + k))}</button>`).join("") : ""}
           <button class="nw-mini" data-target data-act="locate">⌖ ${esc(t("map_locate"))}</button>
           <button class="nw-mini" data-target data-act="street">🚶 ${esc(t("map_street"))}</button>
           <button class="nw-mini" data-target data-act="route">↱ ${esc(t("gm_route"))}</button>
-          <button class="nw-mini" data-target data-act="open">↗ ${esc(t("gm_openApp"))}</button>
           ${full ? `<button class="nw-mini heli-btn" data-target data-act="heli">🚁 ${esc(t("heli_fly"))}</button>` : ""}
           <button class="nw-mini" data-target data-act="full">⛶ ${esc(t("map_full"))}</button>
         </div>
@@ -135,9 +137,31 @@ function initFull(body, maps) {
   });
 }
 
+/** Coordenadas de un lugar sin clave (OpenStreetMap), para saber dónde poner Street View. */
+async function geocodeFree(q) {
+  try {
+    const r = await (await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`)).json();
+    if (r[0]) return { lat: +r[0].lat, lon: +r[0].lon };
+  } catch { /* sin conexión */ }
+  return null;
+}
+
+/** Muestra algo de Google Maps encima del mapa, sin salir de NIKOLAI. */
+function showOverlay(url) {
+  const ov = document.querySelector("#gmWrap .gm-overlay");
+  if (!ov) return;
+  ov.querySelector("iframe").src = url;
+  ov.hidden = false;
+}
+
 async function search(body, q) {
   gm.q = q; persist();
-  if (!gmap) { updateEmbed(body); return; }
+  if (!gmap) {
+    updateEmbed(body);
+    const ll = await geocodeFree(q);
+    if (ll) { gm.lat = ll.lat; gm.lon = ll.lon; persist(); }
+    return;
+  }
   try {
     const { results } = await new google.maps.Geocoder().geocode({ address: q });
     const r = results?.[0];
@@ -145,8 +169,9 @@ async function search(body, q) {
     if (r.geometry.viewport) gmap.fitBounds(r.geometry.viewport); else gmap.setCenter(r.geometry.location);
     new google.maps.Marker({ map: gmap, position: r.geometry.location, title: r.formatted_address });
   } catch {
-    // Si el Geocoding no está activado en la clave, usa el buscador incrustado de Google.
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, "_blank", "noopener");
+    // Si el Geocoding no está activado en la clave, se busca con OpenStreetMap y se centra el mapa.
+    const ll = await geocodeFree(q);
+    if (ll) { gmap.setCenter({ lat: ll.lat, lng: ll.lon }); gmap.setZoom(15); new google.maps.Marker({ map: gmap, position: { lat: ll.lat, lng: ll.lon }, title: q }); }
   }
 }
 
@@ -180,6 +205,7 @@ function bindCommon(body) {
     layers[k]?.setMap(gm[k] ? gmap : null);
   }));
   const route = body.querySelector(".gm-route");
+  body.querySelector(".gm-back").addEventListener("click", () => { const ov = body.querySelector(".gm-overlay") || document.querySelector("#gmWrap .gm-overlay"); ov.hidden = true; ov.querySelector("iframe").src = "about:blank"; });
   body.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => {
     const a = b.dataset.act, c = center();
     if (a === "locate") {
@@ -199,15 +225,14 @@ function bindCommon(body) {
           if (st === "OK") { sv.setPosition(data.location.latLng); sv.setPov({ heading: 0, pitch: 0 }); sv.setVisible(true); }
           else body.querySelector(".gm-note").textContent = t("gm_noStreet");
         });
-      } else window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${c.lat},${c.lon}`, "_blank", "noopener");
+      } else {
+        // Street View de Google dentro de NIKOLAI (sin clave).
+        showOverlay(`https://maps.google.com/maps?layer=c&cbll=${c.lat},${c.lon}&cbp=12,0,0,0,0&source=embed&output=svembed&hl=${ctxRef.lang || "es"}`);
+      }
     } else if (a === "route") {
       route.hidden = !route.hidden;
     } else if (a === "go") {
-      const from = body.querySelector("#gmFrom").value.trim(), to = body.querySelector("#gmTo").value.trim() || `${c.lat},${c.lon}`;
-      const mode = body.querySelector("#gmMode").value;
-      window.open(`https://www.google.com/maps/dir/?api=1${from ? "&origin=" + encodeURIComponent(from) : ""}&destination=${encodeURIComponent(to)}&travelmode=${mode}`, "_blank", "noopener");
-    } else if (a === "open") {
-      window.open(gm.q ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gm.q)}` : `https://www.google.com/maps/@${c.lat},${c.lon},${gm.zoom}z`, "_blank", "noopener");
+      routeInside(body, c);
     } else if (a === "full") {
       const wrap = document.querySelector("#gmWrap");
       const full = !document.body.classList.contains("tac-fullscreen");
@@ -245,4 +270,35 @@ function bindCommon(body) {
     } catch { out.textContent = t("errGeneric"); }
   });
 }
-let fullHome = null;
+let fullHome = null, dirRenderer = null;
+
+/** Rutas dentro de NIKOLAI: con clave, dibujadas en el mapa con los pasos; sin clave, la ruta de Google incrustada. */
+async function routeInside(body, c) {
+  const { t } = ctxRef;
+  let from = body.querySelector("#gmFrom").value.trim();
+  const to = body.querySelector("#gmTo").value.trim() || `${c.lat},${c.lon}`;
+  const mode = body.querySelector("#gmMode").value;
+  if (!from) {
+    // Sin origen: desde donde estás.
+    from = await new Promise((res) => {
+      if (!navigator.geolocation) return res("");
+      navigator.geolocation.getCurrentPosition((p) => res(`${p.coords.latitude},${p.coords.longitude}`), () => res(""), { timeout: 8000 });
+    });
+    if (!from) { body.querySelector(".gm-note").textContent = t("gm_needFrom"); return; }
+  }
+  const steps = document.querySelector("#gmWrap .gm-steps");
+  if (gmap) {
+    try {
+      const res = await new google.maps.DirectionsService().route({ origin: from, destination: to, travelMode: mode.toUpperCase() });
+      dirRenderer?.setMap(null);
+      dirRenderer = new google.maps.DirectionsRenderer({ map: gmap });
+      dirRenderer.setDirections(res);
+      const leg = res.routes[0].legs[0];
+      steps.hidden = false;
+      steps.innerHTML = `<b>${esc(leg.distance.text)} · ${esc(leg.duration.text)}</b><ol>${leg.steps.map((st) => `<li>${st.instructions} <small class="muted">${esc(st.distance.text)}</small></li>`).join("")}</ol>`;
+      return;
+    } catch { /* la clave no tiene «Directions»: se usa la ruta incrustada */ }
+  }
+  const flag = { driving: "d", walking: "w", transit: "r", bicycling: "b" }[mode] || "d";
+  showOverlay(`https://maps.google.com/maps?saddr=${encodeURIComponent(from)}&daddr=${encodeURIComponent(to)}&dirflg=${flag}&hl=${ctxRef.lang || "es"}&ie=UTF8&output=embed`);
+}

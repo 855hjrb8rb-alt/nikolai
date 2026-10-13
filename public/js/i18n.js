@@ -18,14 +18,15 @@ export const LANGS = {
 
 const T = {
   es: {
+    gm_backMap: "Volver al mapa", gm_needFrom: "Escribe desde dónde sales o permite tu ubicación.",
     gm_search: "Buscar en Google Maps: lugar, dirección, negocio…", gmt_roadmap: "Mapa", gmt_satellite: "Satélite", gmt_hybrid: "Satélite + calles", gmt_terrain: "Relieve",
     gml_traffic: "Tráfico", gml_transit: "Transporte público", gml_bike: "Ciclovías",
-    gm_route: "Cómo llegar", gm_from: "Desde (vacío = tu ubicación)", gm_to: "Hasta", gm_go: "Ver ruta en Google Maps", gm_openApp: "Abrir en Google Maps",
+    gm_route: "Cómo llegar", gm_from: "Desde (vacío = tu ubicación)", gm_to: "Hasta", gm_go: "Ver ruta", gm_openApp: "Abrir en Google Maps",
     gmm_driving: "En auto", gmm_walking: "Caminando", gmm_transit: "Transporte público", gmm_bicycling: "Bicicleta",
     gm_view: "Vista", gm_modeK: "Modo", gm_modeFull: "COMPLETO", gm_modeBasic: "BÁSICO",
     gm_noStreet: "No hay Street View cerca de este punto. Arrastra el muñequito a una calle azul.",
     gm_fullNote: "Arrastra el muñequito amarillo (abajo a la derecha) a una calle azul para bajar a Street View. Usa el control de giro para la vista 45° y Ctrl + arrastrar para inclinar.",
-    gm_embedNote: "Modo básico: Google Maps sin clave. Para tener el muñequito de Street View dentro, tráfico, transporte y el helicóptero, pon tu clave de Google abajo (gratis para uso personal normal).",
+    gm_embedNote: "Todo se ve aquí dentro: busca, cambia a satélite, toca «Vista de calle» para bajar a Street View o «Cómo llegar» para la ruta. Con tu clave de Google (abajo) además tienes el muñequito para arrastrar, tráfico, transporte y el helicóptero.",
     gm_keyTitle: "Clave de Google Maps (para todas las herramientas)", gm_keyBad: "clave no válida o sin permisos",
     gm_k1: "Entra a", gm_k2: "Crea un proyecto, activa «Maps JavaScript API» (y si quieres «Geocoding API» para el buscador) y crea una clave en «Credenciales».",
     gm_k3: "Pégala aquí. Por seguridad, en Google limita la clave a tu sitio: 855hjrb8rb-alt.github.io/*",
@@ -439,9 +440,10 @@ const T = {
     voiceHelp: "Diga, por ejemplo: «abre el traductor», «habla en inglés», «apunta comprar pan», «lee mis notas», «¿qué tiempo hace en Madrid?».",
   },
   en: {
+    gm_backMap: "Back to map", gm_needFrom: "Type where you start from or allow your location.",
     gm_search: "Search Google Maps: place, address, business…", gmt_roadmap: "Map", gmt_satellite: "Satellite", gmt_hybrid: "Satellite + streets", gmt_terrain: "Terrain",
     gml_traffic: "Traffic", gml_transit: "Transit", gml_bike: "Bike lanes",
-    gm_route: "Directions", gm_from: "From (empty = your location)", gm_to: "To", gm_go: "Show route in Google Maps", gm_openApp: "Open in Google Maps",
+    gm_route: "Directions", gm_from: "From (empty = your location)", gm_to: "To", gm_go: "Show route", gm_openApp: "Open in Google Maps",
     gmm_driving: "Driving", gmm_walking: "Walking", gmm_transit: "Transit", gmm_bicycling: "Bicycle",
     gm_view: "View", gm_modeK: "Mode", gm_modeFull: "FULL", gm_modeBasic: "BASIC",
     gm_noStreet: "No Street View near this point. Drag the little man onto a blue street.",
