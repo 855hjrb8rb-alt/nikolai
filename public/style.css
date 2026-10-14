@@ -907,3 +907,60 @@ body[data-mood="jealous"] .mood-chip, body[data-mood="loving"] .mood-chip { bord
 .bot-card .tile[disabled] { opacity: .45; cursor: not-allowed; }
 .bot-code { font-size: 26px !important; }
 @media (max-width: 640px) { .bot-count b { font-size: 24px; } }
+
+/* ===================================================================
+   NIKOLAI QUANT — bots de trading y minería
+   =================================================================== */
+.q-brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.q-brand b { font-size: 20px; letter-spacing: 1px; color: var(--gold); }
+.q-brand span { font-size: 11px; color: var(--ice-dim); letter-spacing: .06em; }
+.q-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.q-tab { flex: 1 1 auto; min-width: 84px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass); color: var(--ice-dim); font: inherit; font-size: 13px; cursor: pointer; transition: .15s; }
+.q-tab.on { background: var(--gold); color: #1a1405; border-color: var(--gold); font-weight: 700; }
+.q-body { display: flex; flex-direction: column; gap: 12px; }
+.q-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.q-card { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--glass); display: flex; flex-direction: column; gap: 9px; }
+.q-card.live { border-color: var(--green); box-shadow: 0 0 18px rgba(125,255,178,.22); }
+.q-card.blown { border-color: var(--danger); opacity: .85; }
+.q-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.q-card-top b { font-size: 15px; } .q-card-top small { display: block; color: var(--ice-dim); }
+.q-lev { font-size: 13px; font-weight: 800; color: var(--gold); border: 1px solid var(--gold-dim, rgba(255,204,92,.5)); border-radius: 99px; padding: 2px 10px; white-space: nowrap; }
+.q-lev.hot { color: #1a1405; background: var(--danger); border-color: var(--danger); }
+.q-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.q-chip { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; color: var(--ice-dim); }
+.q-chip.long { color: var(--green); border-color: rgba(125,255,178,.5); }
+.q-chip.short { color: var(--danger); border-color: rgba(255,122,144,.5); }
+.q-chip.both { color: var(--gold); border-color: rgba(255,204,92,.5); }
+.q-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.q-stats > div { background: rgba(0,0,0,.18); border-radius: 10px; padding: 8px 6px; text-align: center; }
+.q-stats span { display: block; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--ice-dim); margin-bottom: 2px; }
+.q-stats b { font-size: 15px; }
+.up { color: var(--green); } .down { color: var(--danger); }
+.q-pos { display: flex; justify-content: space-between; font-size: 12px; color: var(--ice-dim); }
+.q-mini { font-size: 11px; color: var(--ice-dim); line-height: 1.5; }
+.q-warn { color: var(--danger); font-size: 12px; margin: 0; }
+.q-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.q-row .nw-mini { font-size: 12px; padding: 6px 11px; }
+.q-row a.nw-mini { text-decoration: none; display: inline-flex; align-items: center; }
+.q-ai { background: rgba(0,0,0,.25); border: 1px solid var(--line-faint); border-radius: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+.q-order { display: flex; flex-direction: column; gap: 4px; }
+.q-order b { color: var(--gold); font-size: 13px; }
+.q-order a { margin-top: 6px; align-self: flex-start; text-decoration: none; }
+/* formularios */
+.q-fcard { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--glass); display: flex; flex-direction: column; gap: 10px; }
+.q-fcard > b { color: var(--gold); }
+.q-fcard label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ice-dim); }
+.q-in { font: inherit; font-size: 14px; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); background: rgba(0,0,0,.25); color: #fff; width: 100%; box-sizing: border-box; }
+.q-in:focus { outline: none; border-color: var(--gold); }
+select.q-in { appearance: none; }
+.q-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.q-lev-pick { display: flex; flex-direction: column; gap: 6px; }
+.q-lev-pick > span { font-size: 12px; color: var(--ice-dim); }
+.q-levs { display: flex; gap: 6px; flex-wrap: wrap; }
+.q-levbtn { flex: 1 1 auto; min-width: 46px; padding: 8px 4px; border: 1px solid var(--line); border-radius: 10px; background: rgba(0,0,0,.2); color: var(--ice); font: inherit; font-weight: 700; cursor: pointer; transition: .12s; }
+.q-levbtn.on { background: var(--gold); color: #1a1405; border-color: var(--gold); }
+.q-levbtn.hot { border-color: rgba(255,122,144,.6); }
+.q-levbtn.hot.on { background: var(--danger); border-color: var(--danger); }
+.q-liqnote { font-size: 12px; color: var(--ice-dim); margin: 0; line-height: 1.5; }
+.q-risk { font-size: 11px; color: var(--ice-dim); opacity: .85; margin: 2px 0 0; line-height: 1.5; }
+.q-roe { font-weight: 700; }

@@ -10,7 +10,7 @@ import {
 import { CallView } from "./call.js";
 import { renderStudio, studio } from "./studio.js";
 import { renderWatch, watch, minuteNow } from "./watch.js";
-import { renderBots, botsInMaintenance, MAINTENANCE_UNTIL } from "./bots.js";
+import { renderBots, botsSummary, stopBots } from "./bots.js";
 import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -193,7 +193,7 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.14-b";
+const APP_VERSION = "2026.10.14-c";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -242,7 +242,7 @@ function cardBody(id) {
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
-    case "bots": return `<div class="big-code mono bot-code" data-bind="botLeft">—</div><div class="stats">${stat("bot_status", "botState")}${stat("bot_kinds", "botKinds", "accent")}</div>`;
+    case "bots": return `<div class="big-code mono bot-code" data-bind="botActive">0</div><div class="stats">${stat("bot_status", "botState")}${stat("bot_pnlK", "botPnl", "accent")}</div>`;
     case "watch": return `<p class="desc" data-bind="wtInfo" style="flex:1"></p><div class="stats">${stat("wt_now", "wtNow")}${stat("wt_minute", "wtMin", "accent")}</div>`;
     case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
     case "persona": return `<div class="big-code persona-code" data-bind="personaName">—</div><div class="stats">${stat("call_title", "callState")}${stat("ps_voice", "personaVoice", "accent")}</div>`;
@@ -344,9 +344,9 @@ function values() {
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
     personaName: t("personaShort_" + settings.persona),
-    botLeft: (() => { const ms = Math.max(0, MAINTENANCE_UNTIL - Date.now()); return `${Math.floor(ms / 864e5)}d ${Math.floor((ms % 864e5) / 36e5)}h`; })(),
-    botState: botsInMaintenance() ? t("bot_maint").toUpperCase() : "OK",
-    botKinds: "2",
+    botActive: String(botsSummary().active),
+    botState: botsSummary().active ? t("q_running").toUpperCase() : "OK",
+    botPnl: `${botsSummary().pnl >= 0 ? "+" : "-"}$${Math.abs(botsSummary().pnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
     wtInfo: watch.active ? `${watch.title}` : t("watchCardDesc"),
     wtNow: watch.active ? t("wt_live") : "—",
     wtMin: watch.active ? `${minuteNow()}′` : "—",
@@ -450,6 +450,7 @@ function drawSpark(cv) {
 // =====================================================================
 function openPanel(id) {
   if (!MODULES.includes(id)) return;
+  if (openId === "bots" && id !== "bots") stopBots();
   clearInterval(panelTimer);
   openId = id;
   setFocus(MODULES.indexOf(id));
@@ -465,6 +466,7 @@ function openPanel(id) {
 let panelTimer = null;
 function closePanel() {
   clearInterval(panelTimer);
+  if (openId === "bots") stopBots();
   openId = null;
   ui.panel.hidden = true;
   ui.stage.classList.remove("dimmed");
