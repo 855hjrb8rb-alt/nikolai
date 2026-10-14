@@ -18,6 +18,7 @@ export const LANGS = {
 
 const T = {
   es: {
+    bk_sub: "SUBNIVEL", bk_toLobby: "Subir al lobby", bk_upLevel: "Subir un nivel", bk_downLevel: "Bajar un nivel",
     pl_me: "Mi personaje", pl_choose: "Elige tu personaje", pl_action: "Acción",
     sec_guard: "Guardia", sec_doorTitle: "Puerta de personal", sec_needUniform: "El guardia te detiene: «Solo personal del hotel. Necesitas uniforme para pasar.»",
     sec_haveUniform: "Tienes un uniforme del hotel. Póntelo para que el guardia te deje pasar.",

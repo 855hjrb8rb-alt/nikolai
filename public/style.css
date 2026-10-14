@@ -1342,15 +1342,15 @@ body.in-lobby #dock, body.in-lobby .hud-top { visibility: hidden; }
 
 /* ===== Máquina expendedora + puerta oculta ===== */
 .lb-vend-spot { position: absolute; left: 44%; bottom: 10%; width: 96px; height: 150px; z-index: 6; }
-.lb-vend { position: absolute; inset: 0; background: linear-gradient(#b71c1c, #7f0000); border: 4px solid #4a0000; border-radius: 8px; cursor: pointer; transition: transform .8s ease; display: flex; flex-direction: column; padding: 6px; gap: 4px; z-index: 2; }
-.lb-vend.moved { transform: translateX(-88px) rotate(-3deg); }
+.lb-vend { position: absolute; inset: 0; background: linear-gradient(#b71c1c, #7f0000); border: 4px solid #4a0000; border-radius: 8px; cursor: pointer; transition: transform .8s ease; display: flex; flex-direction: column; padding: 6px; gap: 4px; z-index: 4; }
+.lb-vend.moved { transform: translateX(96px) rotate(3deg); }
 .vd-top { font-size: 7px; color: #fff; text-align: center; background: #000; border-radius: 2px; padding: 1px; }
 .vd-glass { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: #111; padding: 4px; border-radius: 3px; }
 .vd-glass i { background: var(--c); border-radius: 2px; }
 .vd-pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; } .vd-pad i { height: 6px; background: #333; border-radius: 1px; }
 .vd-slot { height: 10px; background: #000; border-radius: 2px; }
-.lb-hidden-door { position: absolute; left: 0; bottom: 0; width: 78px; height: 150px; background: linear-gradient(#3a2a1a, #221509); border: 4px solid #1a0f06; border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .8s; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #b58a5a; }
-.lb-hidden-door.show { opacity: 1; }
+.lb-hidden-door { position: absolute; left: 0; bottom: 0; width: 90px; height: 150px; background: linear-gradient(#4a3420, #241509); border: 5px solid #1a0f06; border-radius: 4px; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .8s; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #d8b070; box-shadow: 0 0 30px rgba(0,0,0,.8); }
+.lb-hidden-door.show { opacity: 1; pointer-events: auto; animation: pulse 2s infinite; }
 .lb-hidden-door i { width: 60%; height: 55%; border: 3px solid #5a3f22; border-radius: 3px; background: repeating-linear-gradient(0deg, #2a1c0e 0 6px, #3a2814 6px 7px); box-shadow: inset 0 0 20px #000; }
 .lb-hidden-door span { font: 600 9px var(--font-mono); }
 
@@ -1478,3 +1478,89 @@ body.in-lobby #dock, body.in-lobby .hud-top { visibility: hidden; }
 .lb-sofa { display: none; }
 .lb-chair.c1 { left: 42%; } .lb-chair.c2 { display: none; } .lb-chair.c3 { left: 48%; } .lb-table { left: 45%; bottom: 8%; }
 .lb-guard { left: 11% !important; }
+
+/* ===== Playa mejorada: mar animado, camastros, salvavidas, barcos, aves ===== */
+.bc-sea { background: linear-gradient(#0d47a1, #1976d2 40%, #29b6d6); }
+.bc-sea .wave { position: absolute; left: -10%; width: 120%; height: 10px; background: rgba(255,255,255,.4); border-radius: 50%; filter: blur(1px); }
+.wave.w1 { bottom: 6%; animation: seaWave 5s ease-in-out infinite alternate; }
+.wave.w2 { bottom: 34%; opacity: .55; animation: seaWave 7s ease-in-out infinite alternate-reverse; }
+.wave.w3 { bottom: 60%; opacity: .4; animation: seaWave 9s ease-in-out infinite alternate; }
+.wave.w4 { bottom: 85%; opacity: .3; animation: seaWave 11s ease-in-out infinite alternate-reverse; }
+@keyframes seaWave { from { transform: translateX(-4%) scaleY(1); } to { transform: translateX(4%) scaleY(1.6); } }
+.bc-sparkle { position: absolute; inset: 0; background: radial-gradient(1px 1px at 20% 30%, #fff 50%, transparent), radial-gradient(1px 1px at 60% 50%, #fff 50%, transparent), radial-gradient(1px 1px at 80% 20%, #fff 50%, transparent), radial-gradient(1px 1px at 40% 70%, #fff 50%, transparent); opacity: .5; animation: twinkle 2.5s steps(4) infinite; }
+@keyframes twinkle { 50% { opacity: .15; } }
+.bc-foam { position: absolute; left: 0; right: 0; bottom: -4px; height: 14px; background: repeating-linear-gradient(90deg, rgba(255,255,255,.8) 0 18px, transparent 18px 34px); border-radius: 50%; animation: foam 3s linear infinite; }
+@keyframes foam { to { background-position: 34px 0; } }
+.bc-boat { position: absolute; width: 70px; height: 54px; }
+.bc-boat .hull { position: absolute; bottom: 0; left: 0; right: 0; height: 16px; background: #5d4037; border-radius: 0 0 40% 40%; box-shadow: 0 2px 0 #3e2723; }
+.bc-boat .sail { position: absolute; bottom: 14px; left: 44%; width: 0; height: 0; border-left: 20px solid #fff; border-top: 34px solid transparent; filter: drop-shadow(1px 0 2px rgba(0,0,0,.2)); }
+.bc-boat.big { top: 20%; animation: boat 60s linear infinite; }
+.bc-boat.small { top: 48%; transform: scale(.6); animation: boat 90s linear infinite reverse; opacity: .85; }
+@keyframes boat { from { left: -12%; } to { left: 108%; } }
+.bc-boat .hull { animation: bob 3s ease-in-out infinite alternate; }
+@keyframes bob { to { transform: translateY(-3px) rotate(1.5deg); } }
+.bc-bird { position: absolute; color: #333; animation: fly 30s linear infinite; }
+.bc-bird i { position: absolute; width: 13px; height: 4px; border-top: 2px solid #37474f; border-radius: 50% 50% 0 0 / 100% 100% 0 0; animation: flap .5s ease-in-out infinite alternate; }
+.bc-bird i:first-child { left: -11px; } .bc-bird i:last-child { left: 0px; }
+@keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(.4); } }
+.bc-bird.b1 { top: 10%; animation-duration: 34s; } .bc-bird.b2 { top: 22%; animation-duration: 46s; animation-delay: -10s; } .bc-bird.b3 { top: 12%; animation-duration: 40s; animation-delay: -22s; transform: scale(.7); } .bc-bird.b4 { top: 26%; animation-duration: 52s; animation-delay: -6s; transform: scale(.8); } .bc-bird.b5 { top: 18%; animation-duration: 38s; animation-delay: -30s; transform: scale(.6); }
+@keyframes fly { from { left: -6%; } to { left: 106%; } }
+.bc-tower-guard { position: absolute; bottom: 28%; left: 4%; width: 70px; height: 110px; }
+.bc-tower-guard .legs { position: absolute; bottom: 0; left: 8px; width: 54px; height: 60px; border: 4px solid #c0392b; border-top: 0; clip-path: polygon(0 100%, 20% 0, 80% 0, 100% 100%); }
+.bc-tower-guard .cabin { position: absolute; top: 20px; left: 4px; width: 62px; height: 40px; background: #e74c3c; border: 3px solid #fff; border-radius: 4px; }
+.bc-tower-guard .roof { position: absolute; top: 2px; left: -2px; width: 74px; height: 22px; background: #c0392b; clip-path: polygon(0 100%, 50% 0, 100% 100%); }
+.bc-tower-guard .flag { position: absolute; top: -14px; left: 34px; width: 16px; height: 10px; background: #f1c40f; animation: flagw 1.5s ease-in-out infinite alternate; transform-origin: left; }
+@keyframes flagw { to { transform: skewX(-18deg); } }
+.bc-lounger { position: absolute; bottom: 18%; width: 70px; height: 26px; }
+.bc-lounger .frame { position: absolute; inset: 0; background: #6d4c41; border-radius: 4px; }
+.bc-lounger .frame::before { content: ""; position: absolute; left: -2px; top: -20px; width: 26px; height: 24px; background: #6d4c41; transform: skewX(-24deg); border-radius: 3px; }
+.bc-lounger .towel { position: absolute; inset: 2px; background: repeating-linear-gradient(90deg, #ffffff 0 8px, #4fc3f7 8px 16px); border-radius: 3px; }
+.bc-lounger.l1 { left: 30%; } .bc-lounger.l2 { left: 44%; } .bc-lounger.l3 { left: 58%; transform: scale(.92); }
+.bc-ring { position: absolute; bottom: 14%; left: 22%; width: 34px; height: 34px; border: 7px solid #e74c3c; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 2px #e74c3c; }
+.bc-ring::after { content: ""; position: absolute; inset: 7px; border: 7px solid #fff; border-radius: 50%; }
+.bc-starfish { position: absolute; bottom: 8%; left: 68%; width: 24px; height: 24px; background: #ff8f00; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+
+/* ===== Búnker estilo Vault-Sec ===== */
+.lb-bunker.vault .bk-room { background:
+  radial-gradient(ellipse at 50% 15%, rgba(120,160,90,.12), transparent 55%),
+  repeating-linear-gradient(90deg, #35382f 0 46px, #2e3129 46px 50px),
+  linear-gradient(#2a2d24, #16180f); }
+.bk-marquee { position: absolute; top: 56px; left: 0; right: 0; height: 22px; background: #0d0f08; border-top: 2px solid #c6d64a; border-bottom: 2px solid #c6d64a; overflow: hidden; z-index: 6; }
+.bk-marquee span { position: absolute; white-space: nowrap; font: 700 13px var(--font-mono); color: #d4e157; letter-spacing: .15em; line-height: 22px; animation: marquee 22s linear infinite; }
+@keyframes marquee { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+.lb-bunker.vault .bk-room { padding-top: 20px; }
+.lb-bunker.vault .bk-vault { background: radial-gradient(#8a7a2a, #4a4015); border: 12px solid #2e2a0e; box-shadow: inset 0 0 40px rgba(0,0,0,.6), 0 0 0 5px #c6d64a, 0 0 0 8px #1a1708; }
+.lb-bunker.vault .bk-vault .wheel { border-color: #c6d64a; background: conic-gradient(#5a5020 0 8%, transparent 8% 14%, #5a5020 14% 33%, transparent 33% 39%, #5a5020 39% 58%, transparent 58% 64%, #5a5020 64% 83%, transparent 83% 89%, #5a5020 89%); }
+.lb-bunker.vault .bk-vault::after { content: "111"; position: absolute; top: 8%; left: 50%; transform: translateX(-50%); font: 800 20px var(--font-mono); color: #d4e157; }
+.lb-bunker.vault .bk-vault.open { background: radial-gradient(#111309, #000); box-shadow: inset 0 0 60px #000, 0 0 0 5px #c6d64a; }
+.lb-bunker.vault .bk-stencil { color: #d4e157; }
+.lb-bunker.vault .bk-obj { filter: sepia(.25) brightness(.9) hue-rotate(10deg); }
+.bk-grime { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 15% 40%, rgba(60,70,30,.4) 0 40px, transparent 60px), radial-gradient(circle at 80% 70%, rgba(50,40,15,.4) 0 50px, transparent 70px), radial-gradient(circle at 60% 20%, rgba(40,50,20,.3) 0 30px, transparent 50px); mix-blend-mode: multiply; }
+
+/* ===== Cuartos: muebles más chicos, textura y animación ===== */
+.rm2-wall { background-image: repeating-linear-gradient(90deg, rgba(0,0,0,.025) 0 40px, transparent 40px 42px); }
+.rm2-zone.sleep { background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.02) 0 30px, transparent 30px 60px); }
+.lb-room2 .rm2-bed { left: 30%; bottom: 2%; width: 44%; height: 34%; }
+.lb-room2 .rm2-bed .headboard { top: -14%; height: 22%; }
+.lb-room2 .rm2-sofa { width: 48%; height: 28%; }
+.lb-room2 .rm2-tv { width: 42%; height: 28%; }
+.lb-room2 .rm2-tv i { animation: tvflick 6s steps(3) infinite; }
+@keyframes tvflick { 0%,100%{opacity:.8} 50%{opacity:.6} 70%{opacity:.9} }
+.rm2-window .curtain { animation: sway 5s ease-in-out infinite alternate; transform-origin: top; }
+.rm2-window .curtain.r { animation-delay: -2.5s; }
+@keyframes sway { to { transform: skewX(3deg); } }
+.rm2-night .lampshade { animation: lampglow 4s ease-in-out infinite alternate; }
+@keyframes lampglow { to { box-shadow: 0 0 26px rgba(255,220,140,.9); } }
+.rm2-floor { background-image: repeating-linear-gradient(100deg, rgba(0,0,0,.06) 0 2px, transparent 2px 50px); }
+
+/* NPC: respiración y parpadeo para que se vean vivos */
+.npc-torso { transform-box: fill-box; transform-origin: 50% 0; animation: breathe 3.5s ease-in-out infinite; }
+.npc .npc-head, .lb-player .npc-head { transform-box: fill-box; transform-origin: 50% 100%; animation: headbob 4s ease-in-out infinite; }
+.npc .eye, .lb-player .eye { transform-box: fill-box; transform-origin: center; animation: blink 5s infinite; }
+.npc.walk .npc-torso { animation: none; }
+@keyframes breathe { 50% { transform: scaleY(1.03); } }
+@keyframes headbob { 25% { transform: rotate(1.5deg); } 75% { transform: rotate(-1.5deg); } }
+@keyframes blink { 0%,94%,100% { transform: scaleY(1); } 97% { transform: scaleY(.1); } }
+
+.lb-bunker .lb-player { z-index: 7; }
+.lb-bunker .bk-vault { z-index: 8; }

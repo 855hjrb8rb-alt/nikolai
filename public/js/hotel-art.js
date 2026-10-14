@@ -122,19 +122,20 @@ export function roomHtml({ suite, balcony, f }) {
 
 // ---------- Subniveles oxidados ----------
 export function bunkerHtml(level, hasKey) {
+  const grime = `<i class="bk-grime"></i>`;
   const pipes = `<i class="bk-pipe p1"></i><i class="bk-pipe p2"></i><i class="bk-pipe p3"></i><i class="bk-valve"></i>`;
   const light = `<i class="bk-light"></i><i class="bk-drip d1"></i><i class="bk-drip d2"></i><i class="bk-puddle"></i>`;
-  if (level === 1) return `${pipes}${light}
+  if (level === 1) return `${grime}${pipes}${light}
     <button class="bk-obj bk-boiler" data-target data-bk="boiler"><i></i><i></i></button>
     <button class="bk-obj bk-generator" data-target data-bk="generator"><i class="fan"></i></button>
     <button class="bk-obj bk-panel" data-target data-bk="panel"><i></i><i></i><i></i></button>
     <span class="bk-stencil">S1 · CUARTO DE MÁQUINAS</span>`;
-  if (level === 2) return `${pipes}${light}
+  if (level === 2) return `${grime}${pipes}${light}
     <button class="bk-obj bk-shelf" data-target data-bk="shelf"><i></i><i></i><i></i><i></i></button>
     <button class="bk-obj bk-locker" data-target data-bk="locker"><i></i><i></i><i></i></button>
     <button class="bk-obj bk-crates" data-target data-bk="crates"><i></i><i></i><i></i></button>
     <span class="bk-stencil">S2 · ALMACÉN — PROHIBIDO EL PASO</span>`;
-  return `${pipes}${light}
+  return `${grime}${pipes}${light}
     <button class="bk-obj bk-vault ${hasKey ? "open" : ""}" data-target data-bk="vault"><i class="wheel"></i><i class="bolts"></i></button>
     ${hasKey ? `
     <button class="bk-obj bk-bunks" data-target data-bk="bunks"><i></i><i></i></button>

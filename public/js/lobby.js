@@ -26,40 +26,48 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 
 // ---------- Personas (dibujadas en SVG) ----------
 function person({ skin = "#e0b08a", shirt = "#3b6fb6", pants = "#2c2f3a", hair = "#3a2a1c", long = false, hat = "", glasses = false, shorts = false, dress = false, prop = "" }) {
+  const dk = (c, n = 18) => { const x = parseInt(c.replace("#", ""), 16); let r = (x >> 16) - n, g = ((x >> 8) & 255) - n, b = (x & 255) - n; return `#${[r, g, b].map((v) => Math.max(0, v).toString(16).padStart(2, "0")).join("")}`; };
   const legs = shorts
-    ? `<g class="leg l"><rect x="23" y="96" width="8" height="18" fill="${pants}"/><rect x="23" y="114" width="7" height="24" fill="${skin}"/><rect x="21" y="136" width="11" height="5" rx="2" fill="#222"/></g>
-       <g class="leg r"><rect x="33" y="96" width="8" height="18" fill="${pants}"/><rect x="34" y="114" width="7" height="24" fill="${skin}"/><rect x="32" y="136" width="11" height="5" rx="2" fill="#222"/></g>`
-    : `<g class="leg l"><rect x="23" y="94" width="8" height="44" rx="3" fill="${pants}"/><rect x="20" y="136" width="12" height="6" rx="3" fill="#1d1d1d"/></g>
-       <g class="leg r"><rect x="33" y="94" width="8" height="44" rx="3" fill="${pants}"/><rect x="32" y="136" width="12" height="6" rx="3" fill="#1d1d1d"/></g>`;
+    ? `<g class="leg l"><path d="M24 98 l-1 18 l-1 24 h7 l1-24 l1-18z" fill="${pants}"/><rect x="21" y="140" width="11" height="5" rx="2.5" fill="#2a2a2a"/></g>
+       <g class="leg r"><path d="M39 98 l1 18 l1 24 h-7 l-1-24 l-1-18z" fill="${pants}"/><rect x="32" y="140" width="11" height="5" rx="2.5" fill="#2a2a2a"/></g>`
+    : `<g class="leg l"><path d="M24 96 q-2 24 -3 44 h8 q1-22 2-44z" fill="${pants}"/><rect x="19" y="138" width="13" height="6" rx="3" fill="#1d1d1d"/></g>
+       <g class="leg r"><path d="M40 96 q2 24 3 44 h-8 q-1-22 -2-44z" fill="${pants}"/><rect x="32" y="138" width="13" height="6" rx="3" fill="#1d1d1d"/></g>`;
   const body = dress
-    ? `<path d="M20 52 Q32 46 44 52 L50 104 L14 104 Z" fill="${shirt}"/>`
-    : `<rect x="19" y="50" width="26" height="48" rx="8" fill="${shirt}"/>`;
+    ? `<path d="M22 52 Q32 47 42 52 L52 108 Q32 114 12 108 Z" fill="${shirt}"/><path d="M32 52 L32 108" stroke="${dk(shirt)}" stroke-width="1" opacity=".4"/>`
+    : `<path d="M22 50 Q32 46 42 50 L45 98 Q32 102 19 98 Z" fill="${shirt}"/><path d="M22 50 Q32 60 42 50" fill="none" stroke="${dk(shirt)}" stroke-width="1" opacity=".5"/>`;
   const hats = {
-    sun: `<ellipse cx="32" cy="18" rx="20" ry="5" fill="#e8d6a0"/><rect x="22" y="8" width="20" height="11" rx="5" fill="#e8d6a0"/><rect x="22" y="15" width="20" height="3" fill="#b5523a"/>`,
-    cap: `<path d="M20 20 Q32 4 44 20 Z" fill="#c33"/><rect x="38" y="17" width="14" height="4" rx="2" fill="#c33"/>`,
-    bell: `<rect x="23" y="7" width="18" height="9" rx="2" fill="#8b1e2e"/><rect x="21" y="15" width="22" height="3" fill="#d4a017"/>`,
+    sun: `<ellipse cx="32" cy="18" rx="21" ry="5.5" fill="#e8d6a0"/><path d="M22 18 Q22 7 32 7 Q42 7 42 18Z" fill="#efe0b4"/><rect x="22" y="15" width="20" height="3" fill="#b5523a"/>`,
+    cap: `<path d="M19 20 Q32 3 45 20 Z" fill="#c0392b"/><path d="M43 19 q10 0 11 4 q-6 2 -11 0z" fill="#a93226"/>`,
+    bell: `<rect x="23" y="6" width="18" height="10" rx="2" fill="#8b1e2e"/><rect x="21" y="15" width="22" height="3" fill="#d4a017"/>`,
   };
   const props = {
-    camera: `<rect x="38" y="66" width="14" height="10" rx="2" fill="#222"/><circle cx="45" cy="71" r="3" fill="#6af"/>`,
-    case: `<rect x="44" y="84" width="14" height="18" rx="2" fill="#5a3a22"/><rect x="48" y="81" width="6" height="4" fill="#3a2414"/>`,
-    drink: `<path d="M44 66 L52 66 L50 80 L46 80 Z" fill="#ffd36b" stroke="#fff" stroke-width=".8"/><line x1="49" y1="60" x2="51" y2="67" stroke="#f55" stroke-width="1.5"/>`,
-    board: `<ellipse cx="54" cy="80" rx="6" ry="30" fill="#29b6c8" stroke="#fff" stroke-width="1.5"/>`,
-    tray: `<rect x="40" y="64" width="20" height="3" rx="1" fill="#ccc"/><rect x="45" y="56" width="4" height="8" fill="#9cf"/>`,
+    camera: `<rect x="37" y="66" width="15" height="11" rx="2" fill="#222"/><circle cx="44" cy="71" r="3.2" fill="#6af"/><circle cx="44" cy="71" r="1.3" fill="#9df"/>`,
+    case: `<rect x="44" y="84" width="15" height="19" rx="2" fill="#5a3a22"/><rect x="48" y="81" width="7" height="4" rx="1" fill="#3a2414"/>`,
+    drink: `<path d="M43 66 L53 66 L51 81 L45 81 Z" fill="#ffd36b" stroke="#fff" stroke-width=".8"/><line x1="49" y1="59" x2="52" y2="67" stroke="#f55" stroke-width="1.5"/><circle cx="49" cy="59" r="2" fill="#f55"/>`,
+    board: `<ellipse cx="55" cy="80" rx="6" ry="30" fill="#29b6c8" stroke="#fff" stroke-width="1.5"/><line x1="55" y1="54" x2="55" y2="106" stroke="#fff" stroke-width="1"/>`,
+    tray: `<ellipse cx="50" cy="65" rx="11" ry="3" fill="#cfd8dc"/><rect x="46" y="57" width="4" height="8" rx="1" fill="#90caf9"/>`,
   };
   return `<svg viewBox="0 0 64 146" class="npc-svg">
-    <ellipse cx="32" cy="142" rx="18" ry="4" fill="rgba(0,0,0,.25)"/>
+    <defs><radialGradient id="sk" cx="40%" cy="35%"><stop offset="0" stop-color="${skin}"/><stop offset="1" stop-color="${dk(skin, 22)}"/></radialGradient></defs>
+    <ellipse class="npc-shadow" cx="32" cy="143" rx="17" ry="3.5" fill="rgba(0,0,0,.28)"/>
     ${legs}
-    <g class="arm l"><rect x="12" y="54" width="8" height="36" rx="4" fill="${shirt}"/><circle cx="16" cy="92" r="4" fill="${skin}"/></g>
-    ${body}
-    <g class="arm r"><rect x="44" y="54" width="8" height="36" rx="4" fill="${shirt}"/><circle cx="48" cy="92" r="4" fill="${skin}"/></g>
-    <rect x="28" y="40" width="8" height="10" fill="${skin}"/>
-    ${long ? `<path d="M16 26 Q14 52 20 58 L44 58 Q50 52 48 26 Z" fill="${hair}"/>` : ""}
-    <ellipse cx="32" cy="27" rx="13" ry="15" fill="${skin}"/>
-    <path d="M19 24 Q20 10 32 10 Q44 10 45 24 Q40 16 32 17 Q24 16 19 24 Z" fill="${hair}"/>
-    <circle class="eye" cx="27" cy="27" r="1.6" fill="#222"/><circle class="eye" cx="37" cy="27" r="1.6" fill="#222"/>
-    <path d="M28 34 Q32 37 36 34" stroke="#8a3b2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    ${glasses ? `<g fill="none" stroke="#111" stroke-width="1.3"><circle cx="27" cy="27" r="4"/><circle cx="37" cy="27" r="4"/><line x1="31" y1="27" x2="33" y2="27"/></g>` : ""}
-    ${hat ? hats[hat] : ""}
+    <g class="arm l"><path d="M20 52 q-7 4 -9 20 q-1 10 0 18" fill="none" stroke="${shirt}" stroke-width="8" stroke-linecap="round"/><circle cx="12" cy="92" r="4.2" fill="url(#sk)"/></g>
+    <g class="npc-torso">${body}</g>
+    <g class="arm r"><path d="M44 52 q7 4 9 20 q1 10 0 18" fill="none" stroke="${shirt}" stroke-width="8" stroke-linecap="round"/><circle cx="52" cy="92" r="4.2" fill="url(#sk)"/></g>
+    <rect x="28" y="40" width="8" height="9" rx="3" fill="${dk(skin, 10)}"/>
+    <g class="npc-head">
+      ${long ? `<path d="M16 24 Q13 54 21 60 L43 60 Q51 54 48 24 Z" fill="${hair}"/>` : ""}
+      <ellipse cx="32" cy="28" rx="13" ry="15" fill="url(#sk)"/>
+      <ellipse cx="19" cy="29" rx="2.6" ry="4" fill="${skin}"/><ellipse cx="45" cy="29" rx="2.6" ry="4" fill="${skin}"/>
+      <path d="M19 25 Q19 11 32 11 Q45 11 45 25 Q40 16 32 17.5 Q24 16 19 25 Z" fill="${hair}"/>
+      <path d="M24 24 q3-2 6 0M34 24 q3-2 6 0" stroke="${dk(hair, 20)}" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <ellipse class="eye" cx="27" cy="28" rx="1.7" ry="2" fill="#2a2320"/><ellipse class="eye" cx="37" cy="28" rx="1.7" ry="2" fill="#2a2320"/>
+      <path d="M30 31 Q32 33 34 31" stroke="${dk(skin, 30)}" stroke-width="1" fill="none"/>
+      <ellipse cx="24" cy="32" rx="2.4" ry="1.5" fill="#e8907a" opacity=".45"/><ellipse cx="40" cy="32" rx="2.4" ry="1.5" fill="#e8907a" opacity=".45"/>
+      <path d="M28 35 Q32 38 36 35" stroke="#a84a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      ${glasses ? `<g fill="none" stroke="#1a1a1a" stroke-width="1.3"><rect x="23" y="25" width="8" height="6" rx="2"/><rect x="33" y="25" width="8" height="6" rx="2"/><line x1="31" y1="28" x2="33" y2="28"/></g>` : ""}
+      ${hat ? hats[hat] : ""}
+    </g>
     ${prop ? props[prop] : ""}
   </svg>`;
 }
@@ -187,7 +195,7 @@ function drawLobby() {
   root.querySelectorAll("[data-place]").forEach((b) => b.addEventListener("click", () => drawPlace(b.dataset.place)));
   root.querySelector("[data-vend]").addEventListener("click", vending);
   root.querySelector("[data-staff]").addEventListener("click", staffDoor);
-  root.querySelector("[data-secret]").addEventListener("click", () => { if (!hotel.vendMoved) return; toast(t("ht_goingDown")); drawStairs(-1); });
+  root.querySelector("[data-secret]").addEventListener("click", () => { if (!hotel.vendMoved) return; toast(t("ht_goingDown")); ticks.length = 0; drawBunker(1); });
   const tick = () => {
     lobby.clocks.forEach((n, i) => {
       const el = root?.querySelector(`[data-clock="${i}"]`);
@@ -234,12 +242,27 @@ function drawBeach() {
   root.className = "lb lb-beach";
   root.innerHTML = `
     ${topBar(t("lb_beachTitle"), `<button class="nw-mini" data-target data-go="lobby">← ${esc(t("lb_toLobby"))}</button>` + avatarBtn() + muteBtn() + uniformBtn() + notebookBtn())}
-    <div class="bc-sky"><div class="bc-sun"></div><div class="bc-cloud c1"></div><div class="bc-cloud c2"></div><div class="bc-cloud c3"></div><div class="bc-cloud c4"></div><div class="bc-cloud c5"></div><div class="bc-cloud c6"></div><span class="bc-bird b1">〰</span><span class="bc-bird b2">〰</span></div>
+    <div class="bc-sky">
+      <div class="bc-sun"></div>
+      ${[1,2,3,4,5,6].map((i)=>`<div class="bc-cloud c${i}"></div>`).join("")}
+      ${[1,2,3,4,5].map((i)=>`<span class="bc-bird b${i}"><i></i><i></i></span>`).join("")}
+    </div>
     <div class="bc-hotel"><div class="bc-tower"></div><div class="bc-tower t2"></div><span>NIKOLAI BEACH RESORT</span></div>
-    <div class="bc-sea"><i class="wave w1"></i><i class="wave w2"></i><i class="wave w3"></i></div>
+    <div class="bc-sea">
+      <div class="bc-boat big"><i class="hull"></i><i class="sail"></i></div>
+      <div class="bc-boat small"><i class="hull"></i><i class="sail"></i></div>
+      <i class="wave w1"></i><i class="wave w2"></i><i class="wave w3"></i><i class="wave w4"></i>
+      <div class="bc-sparkle"></div>
+      <div class="bc-foam"></div>
+    </div>
     <div class="bc-sand">
       <span class="bc-palm p1">${PALM}</span><span class="bc-palm p2">${PALM}</span><span class="bc-palm p3">${PALM}</span>
+      <div class="bc-tower-guard"><i class="legs"></i><i class="cabin"></i><i class="roof"></i><i class="flag"></i></div>
+      <div class="bc-lounger l1"><i class="frame"></i><i class="towel"></i></div>
+      <div class="bc-lounger l2"><i class="frame"></i><i class="towel"></i></div>
+      <div class="bc-lounger l3"><i class="frame"></i><i class="towel"></i></div>
       <span class="bc-umb u1">${UMBRELLA}</span><span class="bc-umb u2">${UMBRELLA}</span><span class="bc-castle">${CASTLE}</span><span class="bc-ball">${BALL}</span>
+      <div class="bc-ring"></div><div class="bc-starfish"></div>
       <button class="bc-pc" data-target data-pc><span class="bc-monitor">${LAPTOP}</span><b>${esc(t("lb_computer"))}</b></button>
       ${npcHtml(BEACH_NPCS)}
     </div>
@@ -523,7 +546,7 @@ function staffRooms() {
 function canEnter(room) { return hotel.key?.room === room || staffRooms().has(room); }
 function canReach(floor) {
   if (floor === 0) return true;
-  if (floor < 0) return Boolean(hotel.bunkerKey);
+  if (floor < 0) return true;
   if (!SUITE_FLOORS.includes(floor)) return Boolean(hotel.key) || [...staffRooms()].some((r) => +String(r)[0] === floor) || mysteryStep()?.floor === floor;
   return hotel.key?.suite || [...staffRooms()].some((r) => +String(r)[0] === floor) || mysteryStep()?.floor === floor;
 }
@@ -836,21 +859,27 @@ function drawBunker(level) {
   const { t } = ctxRef;
   ticks.length = 0;
   hotel.floor = -level; saveHotel();
-  root.className = `lb lb-bunker l${level}`;
+  root.className = `lb lb-bunker vault l${level}`;
+  const names = [t("bk_title1"), t("bk_title2"), t("bk_title3")];
   root.innerHTML = `
-    ${topBar(t("bk_title" + level), avatarBtn() + muteBtn() + uniformBtn() + notebookBtn())}
+    ${topBar(names[level - 1], avatarBtn() + muteBtn() + notebookBtn())}
+    <div class="bk-marquee mono"><span>VAULT-SEC INDUSTRIES · ${esc(t("bk_sub"))} S${level} · SECTOR SEGURO · ${esc(t("bk_sub"))} S${level} · PREPARADOS PARA EL MAÑANA · </span></div>
     <div class="bk-room">${bunkerHtml(level, hotel.bunkerKey)}</div>
-    <div class="hl-ends"><button class="tile" data-target data-bkstairs><span class="t-main">${I.stairs} ${esc(t("ht_stairs"))}</span></button>
-      ${hotel.bunkerKey ? `<button class="tile" data-target data-bkelev><span class="t-main">${I.elevator} ${esc(t("bk_service"))}</span></button>` : ""}</div>
-    <div class="bk-flash"></div>
+    <div class="hl-ends bk-nav">
+      <button class="tile" data-target data-bkup><span class="t-main">${I.up} ${esc(level === 1 ? t("bk_toLobby") : t("bk_upLevel"))}</span></button>
+      ${level < 3 ? `<button class="tile action" data-target data-bkdown><span class="t-main">${I.down} ${esc(t("bk_downLevel"))}</span></button>` : ""}
+    </div>
     <div class="lb-picker" hidden></div>
     <p class="lb-hint mono">${esc(t("bk_hint"))}</p>`;
   ambient("bunker");
   bindHotelCommon();
-  root.querySelector("[data-bkstairs]").addEventListener("click", () => drawStairs(-level));
-  root.querySelector("[data-bkelev]")?.addEventListener("click", elevator);
-  root.querySelectorAll("[data-bk]").forEach((b) => b.addEventListener("click", () => {
-    const k = b.dataset.bk;
+  root.querySelector("[data-bkup]").addEventListener("click", () => { ticks.length = 0; if (level === 1) drawLobby(); else drawBunker(level - 1); });
+  root.querySelector("[data-bkdown]")?.addEventListener("click", () => {
+    if (level === 2 && !hotel.bunkerKey) { toast(t("bk_vaultLocked")); return; }
+    drawBunker(level + 1);
+  });
+  root.querySelectorAll("[data-bk]").forEach((bt) => bt.addEventListener("click", () => {
+    const k = bt.dataset.bk;
     if (k === "locker" && !hotel.bunkerKey) {
       hotel.bunkerKey = true; saveHotel(); ding();
       showNote(t("bk_foundKeyTitle"), t("bk_foundKey"));
@@ -858,7 +887,9 @@ function drawBunker(level) {
     }
     if (k === "vault") {
       if (!hotel.bunkerKey) { toast(t("bk_vaultLocked")); return; }
-      if (!b.classList.contains("open")) { drawBunker(3); return; }
+      bt.classList.add("open"); ding();
+      showNote(t("bk_vault_t"), t("bk_vault"));
+      return;
     }
     if (k === "radio") radioStatic();
     showNote(t("bk_" + k + "_t"), t("bk_" + k));
