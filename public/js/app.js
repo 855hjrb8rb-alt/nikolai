@@ -10,9 +10,7 @@ import {
 import { CallView } from "./call.js";
 import { renderStudio, studio } from "./studio.js";
 import { renderWatch, watch, minuteNow } from "./watch.js";
-import { renderMap, destroy as destroyMap, gm } from "./gmaps.js";
 import { renderBots, botsInMaintenance, MAINTENANCE_UNTIL } from "./bots.js";
-import { openLobby, closeLobby, lobby, CITIES } from "./lobby.js";
 import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -85,9 +83,7 @@ const ICON = {
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
   work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
   projects: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
-  lobby: '<circle cx="12" cy="11" r="7"/><path d="M12 7v4l2.5 2M5 21h14M8 18l-1 3M16 18l1 3"/>',
   bots: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4M9 13h.01M15 13h.01M9.5 16.5h5M3 12v3M21 12v3"/><circle cx="12" cy="3.5" r="1"/>',
-  map: '<circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="2.5"/>',
   watch: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4M10 8.5v5l4.5-2.5z"/>',
   studio: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 15.5l-5-5-9 8.5"/><path d="M17.5 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>',
   persona: '<circle cx="8" cy="9" r="3.2"/><path d="M2.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="7.5" r="2.7"/><path d="M14.5 12.6c.6-.2 1.3-.3 2-.3 2.4 0 4.3 1.6 4.9 4.4"/>',
@@ -197,12 +193,12 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.14-a";
+const APP_VERSION = "2026.10.14-b";
 const MODULES = [
-  "core", "chat", "persona", "lobby", "bots", "map", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
+  "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
-const WIDE = new Set(["lobby", "bots", "map", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
+const WIDE = new Set(["bots", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -246,9 +242,7 @@ function cardBody(id) {
     case "memory": return `<div class="big-code" data-bind="memCount">0</div><div class="stats">${stat("memory", "memState")}${stat("last", "memLast", "accent")}</div>`;
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
-    case "lobby": return `<div class="big-code mono" data-bind="lbTime">—</div><div class="stats">${stat("lb_clocks", "lbClocks")}${stat("lb_tips", "lbTips", "accent")}</div>`;
     case "bots": return `<div class="big-code mono bot-code" data-bind="botLeft">—</div><div class="stats">${stat("bot_status", "botState")}${stat("bot_kinds", "botKinds", "accent")}</div>`;
-    case "map": return `<div class="big-code mono map-code" data-bind="tacCoords">—</div><div class="stats">${stat("gm_view", "gmType")}${stat("gm_modeK", "gmMode", "accent")}</div>`;
     case "watch": return `<p class="desc" data-bind="wtInfo" style="flex:1"></p><div class="stats">${stat("wt_now", "wtNow")}${stat("wt_minute", "wtMin", "accent")}</div>`;
     case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
     case "persona": return `<div class="big-code persona-code" data-bind="personaName">—</div><div class="stats">${stat("call_title", "callState")}${stat("ps_voice", "personaVoice", "accent")}</div>`;
@@ -350,15 +344,9 @@ function values() {
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
     personaName: t("personaShort_" + settings.persona),
-    lbTime: new Date().toLocaleTimeString(getLang(), { hour: "2-digit", minute: "2-digit", timeZone: (CITIES.find((c) => c[0] === lobby.clocks[1]) || CITIES[0])[1] }),
-    lbClocks: lobby.clocks.length,
-    lbTips: `$${lobby.job.money.toLocaleString()}`,
     botLeft: (() => { const ms = Math.max(0, MAINTENANCE_UNTIL - Date.now()); return `${Math.floor(ms / 864e5)}d ${Math.floor((ms % 864e5) / 36e5)}h`; })(),
     botState: botsInMaintenance() ? t("bot_maint").toUpperCase() : "OK",
     botKinds: "2",
-    tacCoords: gm.q ? gm.q.slice(0, 18) : `${gm.lat.toFixed(2)}, ${gm.lon.toFixed(2)}`,
-    gmType: t("gmt_" + gm.type),
-    gmMode: localStorage.getItem("nikolai.googleMapsKey") ? t("gm_modeFull") : t("gm_modeBasic"),
     wtInfo: watch.active ? `${watch.title}` : t("watchCardDesc"),
     wtNow: watch.active ? t("wt_live") : "—",
     wtMin: watch.active ? `${minuteNow()}′` : "—",
@@ -408,7 +396,7 @@ function updateCards() {
       const id = k.slice(7);
       const live = id === "core" || id === "chat" || id === "homework" ? brain.apiKey
         : id === "news" ? navigator.onLine
-        : id === "work" || id === "projects" || id === "money" || id === "persona" || id === "studio" || id === "watch" || id === "map" ? true
+        : id === "work" || id === "projects" || id === "money" || id === "persona" || id === "studio" || id === "watch" ? true
         : id === "settings" ? Boolean(gestures?.running)
         : id === "markets" ? Boolean(market.live.BTCUSDT)
         : id === "music" ? true
@@ -462,7 +450,6 @@ function drawSpark(cv) {
 // =====================================================================
 function openPanel(id) {
   if (!MODULES.includes(id)) return;
-  if (openId === "map") destroyMap();
   clearInterval(panelTimer);
   openId = id;
   setFocus(MODULES.indexOf(id));
@@ -478,14 +465,12 @@ function openPanel(id) {
 let panelTimer = null;
 function closePanel() {
   clearInterval(panelTimer);
-  if (openId === "map") destroyMap();
   openId = null;
   ui.panel.hidden = true;
   ui.stage.classList.remove("dimmed");
   renderDock();
 }
-// El mapa no se repinta solo (perdería la vista y las capas): solo al abrirlo.
-const refreshPanel = () => openId && openId !== "map" && openPanel(openId);
+const refreshPanel = () => openId && openPanel(openId);
 
 function tile(main, sub = "", cls = "") {
   return `<button class="tile ${cls}" data-target><span class="t-main">${main}</span>${sub ? `<span class="t-sub">${sub}</span>` : ""}</button>`;
@@ -772,27 +757,8 @@ const PANEL = {
     renderNews(body, moduleCtx());
   },
 
-  lobby(body) {
-    const ctx = { ...moduleCtx(), lang: getLang(), openPanel, speak: (txt) => settings.chatSpeak && speakOnce(txt) };
-    body.innerHTML = `
-      <div class="lb-preview">
-        <p>${esc(t("lb_desc"))}</p>
-        <div class="lb-mini">${lobby.clocks.map((n) => { const c = CITIES.find((x) => x[0] === n) || CITIES[0]; return `<div><b class="mono">${new Date().toLocaleTimeString(getLang(), { timeZone: c[1], hour: "2-digit", minute: "2-digit" })}</b><span>${c[2]} ${esc(n)}</span></div>`; }).join("")}</div>
-        <div class="tiles">
-          ${tile(`🕰<br>${esc(t("lb_enter"))}`, "", "action lb-go")}
-          ${tile(`🏖<br>${esc(t("lb_toBeach"))}`, "", "action lb-go2")}
-        </div>
-      </div>`;
-    body.querySelector(".lb-go").onclick = () => { closePanel(); openLobby(ctx, "lobby"); };
-    body.querySelector(".lb-go2").onclick = () => { closePanel(); openLobby(ctx, "beach"); };
-  },
-
   bots(body) {
     renderBots(body, { ...moduleCtx(), lang: getLang() });
-  },
-
-  map(body) {
-    renderMap(body, { ...moduleCtx(), lang: getLang() });
   },
 
   watch(body) {

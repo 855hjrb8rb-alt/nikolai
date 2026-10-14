@@ -46,7 +46,7 @@ const MODULE_WORDS = {
   notes: ["nota", "notas"], memory: ["memoria", "recuerdo", "recuerdos"], tools: ["calculadora", "temporizador", "herramienta", "herramientas", "cronometro"],
   weather: ["clima", "tiempo"], news: ["noticia", "noticias"], markets: ["bolsa", "acciones", "cripto", "mercado"], music: ["musica", "spotify"],
   homework: ["tarea", "tareas"], chat: ["chat"], profile: ["perfil"], system: ["sistema", "diagnostico"], sos: ["emergencia", "sos"],
-  language: ["idioma", "idiomas"], lobby: ["sala", "relojes", "hotel", "playa"], bots: ["bot", "bots", "trading", "minar", "mineria"], map: ["mapa", "maps", "google maps", "satelite", "street view"], watch: ["netflix", "prime", "pelicula", "serie", "ver juntos"], studio: ["estudio", "foto", "fotos", "video", "videos", "editar"], persona: ["personalidad", "personalidades", "abogado", "amiga", "videollamada"], work: ["trabajo", "curriculum", "entrevista"], projects: ["proyecto", "proyectos"], money: ["dinero", "millonario", "presupuesto", "ahorro", "habitos"], voice: ["voz", "voces"], translator: ["traductor"], offline: ["conexion", "offline"],
+  language: ["idioma", "idiomas"], bots: ["bot", "bots", "trading", "minar", "mineria"], watch: ["netflix", "prime", "pelicula", "serie", "ver juntos"], studio: ["estudio", "foto", "fotos", "video", "videos", "editar"], persona: ["personalidad", "personalidades", "abogado", "amiga", "videollamada"], work: ["trabajo", "curriculum", "entrevista"], projects: ["proyecto", "proyectos"], money: ["dinero", "millonario", "presupuesto", "ahorro", "habitos"], voice: ["voz", "voces"], translator: ["traductor"], offline: ["conexion", "offline"],
 };
 
 /**
