@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && for f in public/js/*.js; do node --check \"$f\" || exit 1; done",
+    "check": "node --check server.js && for f in public/js/*.js public/cine16/*.js; do node --check \"$f\" || exit 1; done",
     "build:vendor": "esbuild scripts/anthropic-sdk-entry.mjs --bundle --format=esm --platform=browser --minify --legal-comments=none --outfile=public/vendor/anthropic-sdk.mjs"
   },
   "engines": {

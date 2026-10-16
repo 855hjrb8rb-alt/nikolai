@@ -33,6 +33,18 @@ Entra en https://app.netlify.com/drop y arrastra la carpeta `public/`. Te da un 
 
 > La cámara y el micrófono solo funcionan en `https://` o en `localhost`.
 
+## 🎞️ Cine 16 — estudio de película antigua
+
+Web aparte en `public/cine16/` (en GitHub Pages: `https://855hjrb8rb-alt.github.io/nikolai/cine16/`).
+
+- **Estudio 16 mm**: carga un vídeo, unas fotos o la cámara y conviértelos en 16 mm Kodachrome, noticiero en blanco y negro de 1945,
+  Super 8, Ektachrome, cine mudo o Super 16. Puedes ajustar la resolución (240p a 4K), el formato del cuadro (4:3, 1.37, 1.66, 16:9, 2.39),
+  la cadencia (12 a 24 fps), el grano, las rayas, el polvo, el parpadeo, el temblor, la halación, las fugas de luz, las perforaciones, la colilla con cuenta atrás y el sonido viejo con ruido de proyector.
+  **Crear película** graba el resultado (MP4 o WebM) y lo descarga. Todo se procesa en el navegador.
+- **Las cintas · El Hombre en el Castillo**: catálogo de las películas de otros mundos de la serie, de la temporada 1 a la 4, con resumen,
+  enlace a Prime Video, búsqueda del clip y una reconstrucción original con efecto de película. La serie tiene derechos de autor, así que no se aloja
+  ningún fragmento. Si tienes tu propia copia de un clip, puedes adjuntarla a su ficha: se guarda solo en tu navegador y se reproduce con el efecto.
+
 ## 🖥️ Con servidor propio (la clave queda en el servidor)
 
 Requisitos: **Node.js 18+**, una webcam y **Chrome o Edge**.

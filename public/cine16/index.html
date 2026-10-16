@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cine 16</title>
+  <meta name="description" content="Convierte tus vídeos en cine de 16 mm, Super 8 o cine mudo, elige la resolución y explora las cintas de «El Hombre en el Castillo».">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Playfair+Display:wght@600;800&display=swap">
+  <link rel="stylesheet" href="cine16.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23d9a441'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23171310'/%3E%3Cg fill='%23171310'%3E%3Ccircle cx='32' cy='15' r='7'/%3E%3Ccircle cx='32' cy='49' r='7'/%3E%3Ccircle cx='15' cy='32' r='7'/%3E%3Ccircle cx='49' cy='32' r='7'/%3E%3C/g%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="top">
+    <a class="logo" href="#estudio"><span class="reel" aria-hidden="true"></span>CINE&nbsp;16</a>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-view="estudio" aria-selected="true">Estudio 16 mm</button>
+      <button role="tab" data-view="cintas" aria-selected="false">Las cintas · El Hombre en el Castillo</button>
+    </nav>
+    <a class="back" href="../">← NIKOLAI</a>
+  </header>
+
+  <!-- ============ ESTUDIO ============ -->
+  <main id="estudio" class="view">
+    <section class="stage">
+      <div class="screen" id="screen">
+        <canvas id="out" aria-label="Vista previa de la película"></canvas>
+        <div class="drop" id="drop">
+          <p class="big">Suelta aquí un vídeo o unas fotos</p>
+          <p>o elige una fuente a la derecha. Todo se procesa en tu navegador: nada se sube a internet.</p>
+        </div>
+      </div>
+      <div class="transport">
+        <button id="play" class="btn" disabled>▶ Reproducir</button>
+        <input id="seek" type="range" min="0" max="1000" value="0" disabled aria-label="Posición">
+        <span id="time" class="mono">00:00 / 00:00</span>
+        <button id="shot" class="btn ghost" title="Guardar fotograma PNG">📷 Fotograma</button>
+      </div>
+      <div class="export card">
+        <div class="row">
+          <button id="rec" class="btn rec">● Crear película</button>
+          <button id="stop" class="btn ghost" hidden>■ Detener</button>
+          <span id="recInfo" class="mono small"></span>
+        </div>
+        <div class="bar" hidden id="recBar"><i></i></div>
+        <p id="recDone" class="small" hidden></p>
+        <p class="small muted" id="recHint">Se graba en tiempo real a la resolución elegida. Con un vídeo, se graba de principio a fin con su sonido.</p>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h3>1 · Fuente</h3>
+        <div class="grid4">
+          <label class="btn ghost file">🎞 Vídeo<input id="fileVideo" type="file" accept="video/*" hidden></label>
+          <label class="btn ghost file">🖼 Fotos<input id="fileImages" type="file" accept="image/*" multiple hidden></label>
+          <button id="srcCam" class="btn ghost">🎥 Cámara</button>
+          <button id="srcDemo" class="btn ghost">✨ Demo</button>
+        </div>
+        <p id="srcName" class="small muted">Sin fuente.</p>
+      </div>
+
+      <div class="card">
+        <h3>2 · Estilo</h3>
+        <div id="presets" class="chips"></div>
+      </div>
+
+      <div class="card">
+        <h3>3 · Resolución y formato</h3>
+        <label class="field">Resolución<select id="height"></select></label>
+        <label class="field">Formato del cuadro<select id="aspect"></select></label>
+        <label class="check"><input id="pillarbox" type="checkbox"> Meter el cuadro en 16:9 con bandas negras</label>
+        <label class="field">Cadencia<select id="fps">
+          <option value="12">12 fps · animación tosca</option>
+          <option value="16">16 fps · cine mudo</option>
+          <option value="18">18 fps · Super 8</option>
+          <option value="24">24 fps · cine sonoro</option>
+        </select></label>
+        <label class="field">Velocidad<select id="speed">
+          <option value="0.75">0,75× lenta</option>
+          <option value="1">1× normal</option>
+          <option value="1.25">1,25× mudo acelerado</option>
+          <option value="1.5">1,5×</option>
+        </select></label>
+        <label class="field">Perforaciones<select id="perfs">
+          <option value="none">Sin tira</option>
+          <option value="single">16 mm · un lado</option>
+          <option value="double">16 mm · dos lados</option>
+        </select></label>
+        <p class="small muted mono" id="sizeInfo"></p>
+      </div>
+
+      <div class="card">
+        <h3>4 · Revelado</h3>
+        <label class="field">Color<select id="color">
+          <option value="color">Color</option>
+          <option value="bw">Blanco y negro</option>
+          <option value="sepia">Sepia</option>
+        </select></label>
+        <div id="sliders"></div>
+        <label class="check"><input id="leader" type="checkbox"> Colilla con cuenta atrás al empezar</label>
+      </div>
+
+      <div class="card">
+        <h3>5 · Sonido</h3>
+        <label class="check"><input id="sound" type="checkbox" checked> Sonido del vídeo</label>
+        <div id="soundSliders"></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ============ CINTAS ============ -->
+  <main id="cintas" class="view" hidden>
+    <section class="intro">
+      <h1>Las cintas de otros mundos</h1>
+      <p>En <em>The Man in the High Castle</em> (Amazon, 2015–2019), unas películas misteriosas muestran universos paralelos, casi siempre uno donde los Aliados ganaron la guerra. Aquí tienes todas las cintas y momentos clave, de la temporada 1 a la 4.</p>
+      <p class="small muted">La serie tiene derechos de autor, así que esta web no copia ni aloja ningún fragmento. Cada ficha tiene un resumen, enlaces para verla de forma legal (Prime Video) o buscar el clip, y una <b>reconstrucción</b> original al estilo de las cintas. Si tienes tu propia copia de un clip, <b>adjúntala</b> a su ficha y se reproducirá con el efecto de película.</p>
+      <div class="row wrap">
+        <button id="playAll" class="btn rec">▶ Ver todas en orden (T1 → T4)</button>
+        <div class="seasons" id="seasonTabs"></div>
+      </div>
+    </section>
+    <div id="filmList"></div>
+  </main>
+
+  <dialog id="player">
+    <div class="player-head">
+      <div><b id="pTitle"></b><span id="pSub" class="small muted"></span></div>
+      <button id="pClose" class="btn ghost" aria-label="Cerrar">✕</button>
+    </div>
+    <canvas id="pCanvas"></canvas>
+    <div class="row">
+      <button id="pPrev" class="btn ghost">⏮</button>
+      <button id="pPlay" class="btn">⏸</button>
+      <button id="pNext" class="btn ghost">⏭</button>
+      <span id="pInfo" class="small muted"></span>
+    </div>
+  </dialog>
+
+  <video id="vid" playsinline crossorigin="anonymous" hidden></video>
+  <video id="pVid" playsinline hidden></video>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
