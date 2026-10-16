@@ -11,6 +11,7 @@ import { CallView } from "./call.js";
 import { renderStudio, studio } from "./studio.js";
 import { renderWatch, watch, minuteNow } from "./watch.js";
 import { renderBots, botsSummary, stopBots } from "./bots.js";
+import { renderMap, destroy as destroyMap, gm } from "./gmaps.js";
 import { renderWork, renderProjects, renderMoney, projectStats, streak, habits, money, monthsToGoal, work } from "./business.js";
 import { GestureController } from "./gestures.js";
 import * as Brain from "./brain.js";
@@ -84,6 +85,7 @@ const ICON = {
   music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
   work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
   projects: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
+  map: '<circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="2.5"/>',
   bots: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4M9 13h.01M15 13h.01M9.5 16.5h5M3 12v3M21 12v3"/><circle cx="12" cy="3.5" r="1"/>',
   terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 2.5L7 14M12.5 14h4"/>',
   watch: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4M10 8.5v5l4.5-2.5z"/>',
@@ -195,12 +197,12 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.16-c";
+const APP_VERSION = "2026.10.16-d";
 const MODULES = [
-  "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
+  "core", "chat", "persona", "bots", "map", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
-const WIDE = new Set(["bots", "terminal", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
+const WIDE = new Set(["bots", "map", "terminal", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -245,6 +247,7 @@ function cardBody(id) {
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
     case "terminal": return `<div class="big-code mono" data-bind="tmBtc">—</div><div class="stats">${stat("tm_cmd", "tmHint")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
+    case "map": return `<div class="big-code mono map-code" data-bind="tacCoords">—</div><div class="stats">${stat("gm_view", "gmType")}${stat("gm_modeK", "gmMode", "accent")}</div>`;
     case "bots": return `<div class="big-code mono bot-code" data-bind="botActive">0</div><div class="stats">${stat("bot_status", "botState")}${stat("bot_pnlK", "botPnl", "accent")}</div>`;
     case "watch": return `<p class="desc" data-bind="wtInfo" style="flex:1"></p><div class="stats">${stat("wt_now", "wtNow")}${stat("wt_minute", "wtMin", "accent")}</div>`;
     case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
@@ -351,6 +354,9 @@ function values() {
     personaName: t("personaShort_" + settings.persona),
     botActive: String(botsSummary().active),
     botState: botsSummary().active ? t("q_running").toUpperCase() : "OK",
+    tacCoords: gm.q ? gm.q.slice(0, 18) : `${gm.lat.toFixed(2)}, ${gm.lon.toFixed(2)}`,
+    gmType: t("gmt_" + gm.type),
+    gmMode: localStorage.getItem("nikolai.googleMapsKey") ? t("gm_modeFull") : t("gm_modeBasic"),
     botPnl: `${botsSummary().pnl >= 0 ? "+" : "-"}$${Math.abs(botsSummary().pnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
     wtInfo: watch.active ? `${watch.title}` : t("watchCardDesc"),
     wtNow: watch.active ? t("wt_live") : "—",
@@ -401,7 +407,7 @@ function updateCards() {
       const id = k.slice(7);
       const live = id === "core" || id === "chat" || id === "homework" ? brain.apiKey
         : id === "news" ? navigator.onLine
-        : id === "work" || id === "projects" || id === "money" || id === "persona" || id === "studio" || id === "watch" ? true
+        : id === "work" || id === "projects" || id === "money" || id === "persona" || id === "studio" || id === "watch" || id === "map" ? true
         : id === "settings" ? Boolean(gestures?.running)
         : id === "markets" ? Boolean(market.live.BTCUSDT)
         : id === "music" ? true
@@ -455,6 +461,7 @@ function drawSpark(cv) {
 // =====================================================================
 function openPanel(id) {
   if (!MODULES.includes(id)) return;
+  if (openId === "map") destroyMap();
   if (openId === "bots" && id !== "bots") stopBots();
   if (openId === "terminal" && id !== "terminal") stopTerminal();
   clearInterval(panelTimer);
@@ -474,12 +481,14 @@ function closePanel() {
   clearInterval(panelTimer);
   if (openId === "bots") stopBots();
   if (openId === "terminal") stopTerminal();
+  if (openId === "map") destroyMap();
   openId = null;
   ui.panel.hidden = true;
   ui.stage.classList.remove("dimmed");
   renderDock();
 }
-const refreshPanel = () => openId && openPanel(openId);
+// El mapa no se repinta solo (perdería la vista y las capas): solo al abrirlo.
+const refreshPanel = () => openId && openId !== "map" && openPanel(openId);
 
 function tile(main, sub = "", cls = "") {
   return `<button class="tile ${cls}" data-target><span class="t-main">${main}</span>${sub ? `<span class="t-sub">${sub}</span>` : ""}</button>`;
@@ -767,6 +776,10 @@ const PANEL = {
 
   news(body) {
     renderNews(body, moduleCtx());
+  },
+
+  map(body) {
+    renderMap(body, { ...moduleCtx(), lang: getLang() });
   },
 
   bots(body) {
