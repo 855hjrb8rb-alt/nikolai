@@ -157,7 +157,7 @@ export function renderBots(body, ctx) {
   ctxRef = ctx; bodyRef = body;
   const tabs = [["trade", "q_tabTrade"], ["mine", "q_tabMine"], ["tools", "q_tabTools"], ["keys", "q_tabKeys"]];
   body.innerHTML = `
-    <div class="q-brand"><b>${BRAND}</b><span class="mono">${esc(t("q_tagline"))}</span></div>
+    <div class="q-brand"><b>${BRAND}</b><span class="mono">${esc(t("q_tagline"))}</span><a class="nw-mini" href="/quant" target="_blank" rel="noopener">Panel privado PRO ↗</a></div>
     <div class="q-tabs">${tabs.map(([id, k]) => `<button class="q-tab ${quant.tab === id ? "on" : ""}" data-target data-qtab="${id}">${esc(t(k))}</button>`).join("")}</div>
     <div class="q-body"></div>`;
   body.querySelectorAll("[data-qtab]").forEach((b) => b.addEventListener("click", () => { quant.tab = b.dataset.qtab; save(); renderBots(body, ctx); }));

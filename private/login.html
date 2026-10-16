@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>NIKOLAI Quant · Acceso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112..125,500..800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <style>
+    :root { --bg: #05061a; --bg2: #12114a; --ice: #cfe3ff; --dim: #8ea6d8; --line: rgba(176,200,255,.22); --cyan: #79e3ff; --violet: #9b8cff; --danger: #ff7a90; --gold: #ffcc5c; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { display: grid; place-items: center; padding: 16px; color: var(--ice); font-family: "Archivo", system-ui, sans-serif; font-stretch: 112%;
+      background: radial-gradient(110% 80% at 50% 20%, #2a1a6e 0%, var(--bg2) 40%, var(--bg) 80%) var(--bg); }
+    .card { width: min(400px, 100%); padding: 36px 30px 28px; border: 1px solid var(--line); border-radius: 18px;
+      background: linear-gradient(180deg, rgba(92,112,220,.16), rgba(92,112,220,.05)); backdrop-filter: blur(14px);
+      box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
+    .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+    .logo svg { width: 42px; height: 42px; }
+    .logo b { display: block; font-size: 22px; letter-spacing: .14em; }
+    .logo span { font: 500 11px "JetBrains Mono", monospace; color: var(--dim); letter-spacing: .2em; }
+    label { display: block; font: 500 12px "JetBrains Mono", monospace; color: var(--dim); letter-spacing: .08em; margin-bottom: 8px; }
+    input { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); background: rgba(5,6,26,.6); color: var(--ice); font: 500 16px "JetBrains Mono", monospace; outline: none; }
+    input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(121,227,255,.15); }
+    button { margin-top: 18px; width: 100%; padding: 14px; border: 0; border-radius: 12px; cursor: pointer; font: 700 15px "Archivo", sans-serif; letter-spacing: .12em;
+      color: #05061a; background: linear-gradient(90deg, var(--cyan), var(--violet)); }
+    button:disabled { opacity: .6; cursor: wait; }
+    .msg { min-height: 20px; margin-top: 14px; font: 500 13px "JetBrains Mono", monospace; color: var(--danger); }
+    .note { margin-top: 18px; font: 400 11px/1.6 "JetBrains Mono", monospace; color: var(--dim); }
+    .setup { font: 400 13px/1.6 "JetBrains Mono", monospace; color: var(--gold); }
+    code { color: var(--cyan); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo">
+      <svg viewBox="0 0 48 48" fill="none" stroke="#79e3ff" stroke-width="2.4"><path d="M6 36 18 22l8 8 16-18"/><path d="M34 12h8v8" stroke="#ffcc5c"/><circle cx="24" cy="24" r="21" stroke="rgba(155,140,255,.5)"/></svg>
+      <div><b>NIKOLAI QUANT</b><span>ACCESO PRIVADO</span></div>
+    </div>
+    <form id="f" hidden>
+      <label for="pw">CONTRASEÑA</label>
+      <input id="pw" type="password" autocomplete="current-password" autofocus required>
+      <button id="go" type="submit">ENTRAR</button>
+      <p class="msg" id="msg" role="alert"></p>
+    </form>
+    <p class="setup" id="setup" hidden>El panel está desactivado. En el servidor define <code>QUANT_PASSWORD</code> (y opcionalmente <code>QUANT_SECRET</code>) y reinícialo con <code>npm start</code>.</p>
+    <p class="note">Sesión cifrada de 12 h. 5 intentos fallidos bloquean el acceso 15 min.</p>
+  </main>
+  <script>
+    const f = document.getElementById("f"), msg = document.getElementById("msg"), go = document.getElementById("go");
+    fetch("/api/quant/status").then((r) => r.json()).then((s) => {
+      if (s.authed) location.reload();
+      else if (s.enabled) f.hidden = false;
+      else document.getElementById("setup").hidden = false;
+    });
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      go.disabled = true; msg.textContent = "";
+      try {
+        const r = await fetch("/api/quant/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: document.getElementById("pw").value }) });
+        const d = await r.json();
+        if (d.ok) return location.reload();
+        msg.textContent = d.error === "locked" ? `Bloqueado. Reintenta en ${Math.ceil(d.retryIn / 60)} min.` : "Contraseña incorrecta.";
+      } catch { msg.textContent = "Sin conexión con el servidor."; }
+      go.disabled = false;
+    });
+  </script>
+</body>
+</html>

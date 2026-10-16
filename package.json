@@ -1,20 +1,22 @@
 {
   "name": "nikolai-jarvis",
   "version": "1.0.0",
-  "description": "Asistente de IA tipo JARVIS con control por gestos de la mano, voz y muchos idiomas",
+  "description": "Asistente de IA tipo JARVIS con control por gestos, voz y panel privado de bots de trading (NIKOLAI QUANT)",
   "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && for f in public/js/*.js; do node --check \"$f\" || exit 1; done",
-    "build:vendor": "esbuild scripts/anthropic-sdk-entry.mjs --bundle --format=esm --platform=browser --minify --legal-comments=none --outfile=public/vendor/anthropic-sdk.mjs"
+    "check": "node --check server.js && for f in public/js/*.js quant/*.js private/app.js; do node --check \"$f\" || exit 1; done",
+    "build:vendor": "esbuild scripts/anthropic-sdk-entry.mjs --bundle --format=esm --platform=browser --minify --legal-comments=none --outfile=public/vendor/anthropic-sdk.mjs",
+    "test:quant": "node scripts/quant-selftest.mjs"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
-    "@mediapipe/tasks-vision": "0.10.14"
+    "@mediapipe/tasks-vision": "0.10.14",
+    "ccxt": "^4.5.88"
   },
   "devDependencies": {
     "esbuild": "^0.24.0"

@@ -8,7 +8,10 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
-import { DEFAULT_MODEL, DEFAULT_EFFORT, parseRequest, runChat } from "./public/js/brain-core.js";
+import { DEFAULT_MODEL, DEFAULT_EFFORT, MODELS, parseRequest, runChat } from "./public/js/brain-core.js";
+import { handleQuant } from "./quant/routes.js";
+import { setAI, resumeAll, seedPresets } from "./quant/engine.js";
+import { authEnabled } from "./quant/auth.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(ROOT, "public");
@@ -20,6 +23,10 @@ const EFFORT = process.env.JARVIS_EFFORT || DEFAULT_EFFORT;
 const WEB_SEARCH = process.env.JARVIS_WEB_SEARCH !== "off";
 
 const client = new Anthropic(); // usa ANTHROPIC_API_KEY del entorno
+
+// NIKOLAI QUANT (panel privado de bots en /quant): solo si hay QUANT_PASSWORD.
+setAI(client, process.env.QUANT_AI_MODEL || MODELS.balanced);
+if (authEnabled()) { seedPresets(); resumeAll(); }
 
 async function handleChat(req, res) {
   let body;
@@ -98,7 +105,8 @@ function sendJson(res, status, obj) {
 }
 
 http
-  .createServer((req, res) => {
+  .createServer(async (req, res) => {
+    if (await handleQuant(req, res)) return;
     if (req.method === "POST" && req.url === "/api/chat") return handleChat(req, res);
     if (req.method === "GET" && req.url === "/api/health") {
       return sendJson(res, 200, { ok: true, mode: "server", model: MODEL, apiKey: Boolean(process.env.ANTHROPIC_API_KEY) });
@@ -111,4 +119,7 @@ http
     if (!process.env.ANTHROPIC_API_KEY) {
       console.warn("  ⚠  Falta ANTHROPIC_API_KEY: la interfaz y los gestos funcionan, pero el cerebro (Claude) no responderá.\n");
     }
+    console.log(authEnabled()
+      ? `  📈 NIKOLAI QUANT (privado) → http://localhost:${PORT}/quant\n`
+      : "  🔒 NIKOLAI QUANT desactivado: define QUANT_PASSWORD para activar el panel de bots en /quant\n");
   });

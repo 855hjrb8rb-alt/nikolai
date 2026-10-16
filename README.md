@@ -123,6 +123,45 @@ Además: **pantalla completa** e **instalar como app** en la computadora o el ce
 - «Emergencia, llama a mi contacto»
 - «Recuerda que mi perro se llama Rocky» / «Olvida lo de Rocky»
 
+## 📈 NIKOLAI QUANT — panel privado de bots (trading y minería)
+
+Panel HD **privado con contraseña** en `/quant`, con bots que operan solos en
+**Binance, Bitso, KuCoin, Kraken, Bybit, OKX, Bitget, MEXC y Coinbase** (vía [ccxt](https://github.com/ccxt/ccxt)).
+Necesita el servidor propio (no funciona en GitHub Pages: las órdenes se firman en el servidor).
+
+```bash
+npm install
+export QUANT_PASSWORD="una-contraseña-larga"   # activa el panel
+export QUANT_SECRET="otra-frase-secreta"        # cifra tus claves API (recomendado)
+export ANTHROPIC_API_KEY="sk-ant-..."           # para la IA (análisis y bot IA)
+npm start
+```
+
+Abre **http://localhost:3000/quant**, inicia sesión y pulsa **▶ Iniciar todos**.
+
+**Qué incluye**
+
+- **7 bots preprogramados** (arrancan en *simulación* con precios reales): tendencia EMA 5x, ruptura Donchian 3x,
+  grid BTC/MXN en Bitso, reversión RSI, DCA en Kraken, MACD 2x en OKX y un bot **IA NIKOLAI** (Claude decide en cada vela).
+- **Estrategias:** Tendencia EMA+RSI, Reversión RSI+Bollinger, Ruptura Donchian, MACD, Grid, DCA inteligente e IA.
+- **Apalancamiento** en futuros perpetuos (hasta el máximo de cada exchange) con margen aislado, precio de liquidación,
+  stop-loss y take-profit (en modo real se envían adjuntos a la orden cuando el exchange lo permite).
+- **Gestión de riesgo:** pérdida máxima por bot (se detiene solo), botón **PÁNICO** (cierra todo), avisos si el stop
+  queda detrás de la liquidación.
+- **Modo REAL:** guarda tus claves en «Exchanges» (cifradas AES-256-GCM en `data/quant.json`), prueba el saldo y cambia el bot
+  a «REAL». Pide confirmación explícita.
+- **Analista IA:** análisis de cualquier par con indicadores (EMA, RSI, MACD, Bollinger, ATR) y plan de entrada/stop.
+- **Minería:** calculadora de rentabilidad de Bitcoin con dificultad, hashrate y precio en vivo (mempool.space), monitor de
+  tus mineros en 2Miners (hashrate, trabajadores, saldo) y enlaces a pools oficiales (NiceHash, Braiins, ViaBTC, F2Pool…).
+  La minería real la hace tu hardware (ASIC/GPU) conectado al pool; una web no puede minar de forma rentable.
+- **Herramientas:** calculadora de liquidación, tamaño de posición por riesgo y P&L con apalancamiento.
+
+**Seguridad y riesgo.** Crea claves API **sin permiso de retiro** y limitadas a la IP del servidor. Empieza en
+simulación, luego en real con poco capital. El trading con apalancamiento puede hacerte perder todo el margen; ningún bot
+garantiza ganancias. Si publicas el servidor en internet, ponlo detrás de HTTPS (y `QUANT_SECURE_COOKIE=1`).
+
+Prueba del motor sin conexión: `npm run test:quant`.
+
 ## ⚙️ Configuración (variables de entorno)
 
 | Variable | Por defecto | Descripción |
@@ -132,6 +171,14 @@ Además: **pantalla completa** e **instalar como app** en la computadora o el ce
 | `JARVIS_MODEL` | `claude-opus-5-5` | Modelo de Claude. |
 | `JARVIS_EFFORT` | `low` | Nivel de razonamiento: `low` (rápido, ideal para voz), `medium`, `high`… |
 | `JARVIS_WEB_SEARCH` | activado | Pon `off` para desactivar la búsqueda web. |
+| `QUANT_PASSWORD` | — | Contraseña del panel privado `/quant`. Sin ella el panel está desactivado. |
+| `QUANT_SECRET` | `QUANT_PASSWORD` | Frase con la que se cifran las claves API de los exchanges. |
+| `QUANT_AI_MODEL` | `claude-sonnet-5-5` | Modelo de Claude para el bot IA y el analista. |
+| `QUANT_SANDBOX` | — | `1` = usa la testnet de los exchanges que la tengan. |
+| `QUANT_DATA_DIR` | `./data` | Carpeta donde se guardan bots y claves cifradas. |
+| `QUANT_PROXY` | — | Proxy HTTPS para llegar a los exchanges (si tu red lo necesita). |
+| `QUANT_SECURE_COOKIE` | — | `1` para cookie solo-HTTPS (o se detecta con `X-Forwarded-Proto`). |
+| `QUANT_TRUST_PROXY` | — | `1` si el servidor está detrás de un proxy (IP real para el bloqueo de intentos). |
 
 ## 🏗️ Arquitectura
 
