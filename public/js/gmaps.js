@@ -4,9 +4,12 @@
 //   Street View, tráfico, transporte público, ciclovías, mi ubicación y rutas.
 // · Sin clave: Google Maps incrustado (buscar, mapa/satélite/relieve, zoom) y botones que
 //   abren Street View y las rutas en Google Maps.
+// · «Ciudades del mundo»: 174 ciudades por continente para ir a cualquiera de un toque,
+//   vista de todo el mundo y ciudad al azar; con clave, todas aparecen marcadas en el mapa.
 // · «Jugar en bloques aquí»: convierte el lugar del mapa en un mundo de bloques en primera
 //   persona (blocks.js, se carga solo al pulsarlo).
 import { renderInto } from "./md.js";
+import { CITIES, CONTINENTS } from "./cities.js";
 
 const KEY = "nikolai.googleMapsKey";
 const TYPES = ["roadmap", "satellite", "hybrid", "terrain"];
@@ -37,7 +40,7 @@ function loadGoogle(key, lang) {
 }
 let authFailed = false, onAuthFail = null;
 
-let gmap = null, layers = {}, myDot = null, ctxRef = null;
+let gmap = null, layers = {}, myDot = null, ctxRef = null, cont = "all", cityMarker = null;
 
 /** ctx = { t, esc, tile, icon, stream, errorText, lang } */
 export async function renderMap(body, ctx) {
@@ -71,6 +74,16 @@ export async function renderMap(body, ctx) {
         <select class="field" id="gmMode">${["driving", "walking", "transit", "bicycling"].map((m) => `<option value="${m}">${esc(t("gmm_" + m))}</option>`).join("")}</select>
         <button class="nw-mini" data-target data-act="go">${esc(t("gm_go"))}</button>
       </div>
+      <div class="gm-cities">
+        <div class="gm-cities-head">
+          <b>🌍 ${esc(t("gm_cities"))}</b><span class="muted mono">${CITIES.length}</span>
+          <button class="nw-mini" data-target data-act="world">🌐 ${esc(t("gm_world"))}</button>
+          <button class="nw-mini" data-target data-act="random">🎲 ${esc(t("gm_random"))}</button>
+        </div>
+        <div class="tac-group">${CONTINENTS.map((k) => `<button class="nw-mini ${cont === k ? "on" : ""}" data-target data-cont="${k}">${esc(t("gmc_" + k))}</button>`).join("")}</div>
+        <input class="field gm-cfilter" placeholder="${esc(t("gm_cityFilter"))}" autocomplete="off">
+        <div class="gm-clist"></div>
+      </div>
       <button class="gm-blocks" data-target data-act="blocks"><span class="gm-blocks-ico">⛏</span><span><b>${esc(t("gm_blocks"))}</b><small>${esc(t("gm_blocksSub"))}</small></span></button>
       <p class="muted gm-note">${esc(full ? t("gm_fullNote") : t("gm_embedNote"))}</p>
       <div class="tiles biz-actions">${tile(`${icon("send")}<br>${esc(t("map_analyze"))}`, "", "action gm-ai")}</div>
@@ -91,6 +104,7 @@ export async function renderMap(body, ctx) {
     </div>`;
   body.querySelector(".gm-search").addEventListener("submit", (e) => e.preventDefault());
   bindCommon(body);
+  bindCities(body);
   if (full) {
     try {
       onAuthFail = () => { if (body.isConnected) renderMap(body, ctx); };
@@ -130,6 +144,12 @@ function initFull(body, maps) {
   layers.transit = new maps.TransitLayer();
   layers.bike = new maps.BicyclingLayer();
   for (const k of ["traffic", "transit", "bike"]) if (gm[k]) layers[k].setMap(gmap);
+  // Todas las ciudades del mundo marcadas en el mapa: un toque y vas.
+  CITIES.forEach((c, i) => {
+    const mk = new maps.Marker({ map: gmap, position: { lat: c[3], lng: c[4] }, title: `${c[2]} ${c[0]}, ${c[1]}`,
+      icon: { path: maps.SymbolPath.CIRCLE, scale: 4, fillColor: "#ffcc5c", fillOpacity: 1, strokeColor: "#1a1a1a", strokeWeight: 1.5 } });
+    mk.addListener("click", () => goCity(body, i));
+  });
   gmap.addListener("idle", () => {
     const c = gmap.getCenter();
     gm.lat = +c.lat().toFixed(5); gm.lon = +c.lng().toFixed(5); gm.zoom = gmap.getZoom();
@@ -230,6 +250,10 @@ function bindCommon(body) {
       if (full) { fullHome = wrap.parentNode; document.body.appendChild(wrap); } else if (fullHome?.isConnected) fullHome.appendChild(wrap);
       document.body.classList.toggle("tac-fullscreen", full);
       document.querySelectorAll('#gmWrap [data-act="full"]').forEach((x) => x.classList.toggle("on", full));
+    } else if (a === "world") {
+      showWorld(body);
+    } else if (a === "random") {
+      goCity(body, Math.floor(Math.random() * CITIES.length));
     } else if (a === "blocks") {
       openWorld(b, c);
     }
@@ -254,6 +278,53 @@ function bindCommon(body) {
   });
 }
 let fullHome = null, dirRenderer = null;
+
+// ---------- Ciudades del mundo ----------
+const norm = (x) => String(x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+function listCities(body) {
+  const box = body.querySelector(".gm-clist");
+  if (!box) return;
+  const q = norm(body.querySelector(".gm-cfilter")?.value.trim() || "");
+  const items = CITIES.map((c, i) => [c, i]).filter(([c]) => (cont === "all" || c[5] === cont) && (!q || norm(c[0]).includes(q) || norm(c[1]).includes(q)));
+  box.innerHTML = items.length
+    ? items.map(([c, i]) => `<button class="gm-city ${gm.q === `${c[0]}, ${c[1]}` ? "on" : ""}" data-target data-city="${i}"><span>${c[2]}</span><b>${esc(c[0])}</b><small>${esc(c[1])}</small></button>`).join("")
+    : `<p class="muted">${esc(ctxRef.t("gm_noCity"))}</p>`;
+  box.querySelectorAll("[data-city]").forEach((b) => b.addEventListener("click", () => goCity(body, Number(b.dataset.city))));
+}
+
+function bindCities(body) {
+  body.querySelectorAll("[data-cont]").forEach((b) => b.addEventListener("click", () => {
+    cont = b.dataset.cont;
+    body.querySelectorAll("[data-cont]").forEach((x) => x.classList.toggle("on", x === b));
+    listCities(body);
+  }));
+  body.querySelector(".gm-cfilter").addEventListener("input", () => listCities(body));
+  listCities(body);
+}
+
+/** Lleva el mapa a una ciudad de la lista. */
+function goCity(body, i) {
+  const [name, country, , lat, lon] = CITIES[i];
+  gm.q = `${name}, ${country}`; gm.lat = lat; gm.lon = lon; gm.zoom = 12; persist();
+  const input = body.querySelector(".gm-search input"); if (input) input.value = gm.q;
+  const to = body.querySelector("#gmTo"); if (to) to.value = gm.q;
+  if (gmap) {
+    gmap.setCenter({ lat, lng: lon }); gmap.setZoom(12);
+    cityMarker?.setMap(null);
+    cityMarker = new google.maps.Marker({ map: gmap, position: { lat, lng: lon }, title: gm.q });
+  } else updateEmbed(body);
+  body.querySelectorAll(".gm-city").forEach((b) => b.classList.toggle("on", Number(b.dataset.city) === i));
+  (document.querySelector("#gmWrap .gm-box"))?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+/** Todo el planeta en pantalla. */
+function showWorld(body) {
+  gm.q = ""; gm.lat = 20; gm.lon = 0; gm.zoom = 2; persist();
+  const input = body.querySelector(".gm-search input"); if (input) input.value = "";
+  if (gmap) { gmap.setCenter({ lat: 20, lng: 0 }); gmap.setZoom(2); } else updateEmbed(body);
+  body.querySelectorAll(".gm-city").forEach((b) => b.classList.remove("on"));
+}
 
 /** Abre el mundo de bloques del lugar que está en el centro del mapa. */
 async function openWorld(btn, c) {
