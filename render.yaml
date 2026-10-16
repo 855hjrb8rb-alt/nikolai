@@ -1,0 +1,33 @@
+# Despliegue en Render (https://render.com) como Blueprint.
+# Frankfurt: Binance y Bybit bloquean servidores en EE. UU.
+# Plan "starter": el gratuito se duerme (los bots se pararían) y no tiene disco.
+services:
+  - type: web
+    name: nikolai-quant
+    runtime: node
+    region: frankfurt
+    plan: starter
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: quant-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: QUANT_PASSWORD
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: QUANT_SECRET
+        generateValue: true
+      - key: QUANT_DATA_DIR
+        value: /var/data
+      - key: QUANT_HOME
+        value: "1"
+      - key: QUANT_SECURE_COOKIE
+        value: "1"
+      - key: QUANT_TRUST_PROXY
+        value: "1"

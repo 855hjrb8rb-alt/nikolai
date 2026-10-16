@@ -17,7 +17,7 @@ const digest = (s) => createHash("sha256").update(String(s)).digest();
 export const authEnabled = () => Boolean(process.env.QUANT_PASSWORD);
 
 function clientIp(req) {
-  return (process.env.QUANT_TRUST_PROXY ? String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() : "") || req.socket.remoteAddress || "?";
+  return (process.env.QUANT_TRUST_PROXY ? String(req.headers["x-forwarded-for"] || "").split(",").pop().trim() : "") || req.socket.remoteAddress || "?";
 }
 
 export function login(req, password) {
@@ -25,8 +25,9 @@ export function login(req, password) {
   const f = fails.get(ip);
   if (f && f.until > Date.now()) return { ok: false, error: "locked", retryIn: Math.ceil((f.until - Date.now()) / 1000) };
   if (!authEnabled() || !timingSafeEqual(digest(password), digest(process.env.QUANT_PASSWORD))) {
-    const n = (f && f.until > Date.now() - LOCK_MS ? f.n : 0) + 1;
-    fails.set(ip, { n, until: n >= MAX_FAILS ? Date.now() + LOCK_MS : 0 });
+    const recent = f && f.first > Date.now() - LOCK_MS;
+    const n = (recent ? f.n : 0) + 1;
+    fails.set(ip, { n, first: recent ? f.first : Date.now(), until: n >= MAX_FAILS ? Date.now() + LOCK_MS : 0 });
     return { ok: false, error: "bad_password" };
   }
   fails.delete(ip);

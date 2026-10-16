@@ -107,6 +107,11 @@ function sendJson(res, status, obj) {
 http
   .createServer(async (req, res) => {
     if (await handleQuant(req, res)) return;
+    // QUANT_HOME=1: la portada abre directamente el panel de bots.
+    if (process.env.QUANT_HOME === "1" && req.method === "GET" && (req.url === "/" || req.url === "/index.html")) {
+      res.writeHead(302, { Location: "/quant" });
+      return res.end();
+    }
     if (req.method === "POST" && req.url === "/api/chat") return handleChat(req, res);
     if (req.method === "GET" && req.url === "/api/health") {
       return sendJson(res, 200, { ok: true, mode: "server", model: MODEL, apiKey: Boolean(process.env.ANTHROPIC_API_KEY) });

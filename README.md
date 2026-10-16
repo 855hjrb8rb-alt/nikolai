@@ -162,6 +162,19 @@ garantiza ganancias. Si publicas el servidor en internet, ponlo detrás de HTTPS
 
 Prueba del motor sin conexión: `npm run test:quant`.
 
+### Publicar el panel en internet (Render, 1 clic)
+
+El repositorio incluye `render.yaml`:
+
+1. Entra en https://dashboard.render.com → **New → Blueprint** y conecta este repositorio (rama con `render.yaml`).
+2. Render pedirá `QUANT_PASSWORD` (tu contraseña) y `ANTHROPIC_API_KEY`. `QUANT_SECRET` se genera solo.
+3. Al terminar tendrás `https://nikolai-quant.onrender.com` (o similar): la portada abre directamente el login del panel.
+
+Se usa la región **Frankfurt** (Binance y Bybit bloquean servidores de EE. UU.) y el plan **Starter** con disco
+persistente: en el plan gratuito el servidor se duerme y los bots dejarían de operar.
+
+En un VPS propio: `docker build -t nikolai . && docker run -d -p 3000:3000 -e QUANT_PASSWORD=... -e QUANT_SECRET=... -v nikolai-data:/data nikolai`.
+
 ## ⚙️ Configuración (variables de entorno)
 
 | Variable | Por defecto | Descripción |
@@ -178,6 +191,7 @@ Prueba del motor sin conexión: `npm run test:quant`.
 | `QUANT_DATA_DIR` | `./data` | Carpeta donde se guardan bots y claves cifradas. |
 | `QUANT_PROXY` | — | Proxy HTTPS para llegar a los exchanges (si tu red lo necesita). |
 | `QUANT_SECURE_COOKIE` | — | `1` para cookie solo-HTTPS (o se detecta con `X-Forwarded-Proto`). |
+| `QUANT_HOME` | — | `1` = la portada `/` redirige al panel `/quant`. |
 | `QUANT_TRUST_PROXY` | — | `1` si el servidor está detrás de un proxy (IP real para el bloqueo de intentos). |
 
 ## 🏗️ Arquitectura
