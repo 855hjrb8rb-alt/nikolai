@@ -12,11 +12,11 @@
   --serif: "Playfair Display", Georgia, serif;
   --mono: "Courier Prime", ui-monospace, monospace;
 }
-:root[data-theme="light"] { color-scheme: light; }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 body {
   background: radial-gradient(1200px 600px at 70% -10%, #2b2116 0%, var(--bg) 60%) fixed, var(--bg);
   color: var(--ink);
@@ -29,7 +29,7 @@ body {
 a { color: var(--amber2); }
 
 .top {
-  position: sticky; top: 0; z-index: 5;
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
   display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
   padding: 12px 20px; background: rgba(19, 16, 12, 0.92); backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--line);

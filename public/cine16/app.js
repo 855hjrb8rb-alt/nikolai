@@ -8,13 +8,22 @@ const fmt = (s) => {
   if (!isFinite(s)) s = 0;
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 };
-const download = (blob, name) => {
+// Dentro del visor de claude.ai las descargas pasan por su capacidad «downloads»;
+// en cualquier otro hosting se usa un enlace de descarga normal.
+const dlCap = window.claude?.use ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null);
+async function download(blob, name) {
+  const cap = await dlCap;
+  if (cap) {
+    try { await cap.save({ filename: name, data: blob }); return "Guardada."; }
+    catch (e) { return e?.code === "declined" ? "No se guardó (cancelaste la descarga)." : "No se pudo guardar el archivo aquí."; }
+  }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
-};
+  return "Se ha descargado.";
+}
 
 /* ===================== Pestañas ===================== */
 function showView(name) {
@@ -190,7 +199,7 @@ async function loadCam() {
   try {
     camStream = await navigator.mediaDevices.getUserMedia({ video: { width: 1920, height: 1080 }, audio: true });
   } catch {
-    $("srcName").textContent = "No hay permiso para la cámara (hace falta https o localhost).";
+    $("srcName").textContent = "No hay acceso a la cámara aquí. Graba el vídeo con tu móvil y cárgalo con el botón Vídeo.";
     return;
   }
   const cam = document.createElement("video");
@@ -368,18 +377,19 @@ async function startRecording() {
   const chunks = [];
   recorder = new MediaRecorder(stream, { mimeType: mime || undefined, videoBitsPerSecond: BITRATE[settings.height] || 16e6 });
   recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-  recorder.onstop = () => {
+  recorder.onstop = async () => {
     const type = recorder.mimeType || mime || "video/webm";
     const ext = type.includes("mp4") ? "mp4" : "webm";
     const blob = new Blob(chunks, { type });
     const { w, h } = outputSize(settings);
     const name = `pelicula-16mm-${h}p.${ext}`;
-    download(blob, name);
-    $("recDone").hidden = false;
-    $("recDone").textContent = `✓ Película lista: ${name} · ${w}×${h} · ${(blob.size / 1e6).toFixed(1)} MB. Se ha descargado.`;
     stream.getVideoTracks().forEach((t) => t.stop());
     recorder = null;
     setRecUI(false);
+    $("recDone").hidden = false;
+    $("recDone").textContent = `✓ Película lista: ${name} · ${w}×${h} · ${(blob.size / 1e6).toFixed(1)} MB.`;
+    const msg = await download(blob, name);
+    $("recDone").textContent += " " + msg;
   };
   setRecUI(true, mime);
   // Siempre desde el principio (salvo la cámara).
