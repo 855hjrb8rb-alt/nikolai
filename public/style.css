@@ -1110,3 +1110,33 @@ select.q-in { appearance: none; }
   .q-sgrid { grid-template-columns: repeat(2, 1fr); }
   .q-pgrid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ===== NIKOLAI TERMINAL — pantalla completa + nuevas opciones ===== */
+.tm-fsbtn { background: #1a1200; border: 1px solid var(--amb-mid); color: var(--amb); font-size: 14px; line-height: 1; width: 28px; height: 24px; border-radius: 4px; cursor: pointer; margin-left: 6px; }
+.tm-fsbtn:hover { border-color: var(--amb); box-shadow: 0 0 8px rgba(255,176,0,.4); }
+.tm.tm-fs { position: fixed; inset: 0; z-index: 99999; height: 100vh !important; max-height: none; border-radius: 0; border: 0; }
+body.tm-fs-lock { overflow: hidden; }
+/* barra de temporalidad / velas */
+.tm-tfbar { display: inline-flex; gap: 3px; margin-left: auto; align-items: center; }
+.tm-tf { background: #140e00; border: 1px solid var(--amb-mid); color: var(--amb); font: 700 10px ui-monospace, monospace; padding: 2px 7px; border-radius: 3px; cursor: pointer; letter-spacing: .5px; }
+.tm-tf.on { background: var(--amb); color: #000; }
+.tm-tfsep { width: 1px; height: 14px; background: var(--amb-mid); margin: 0 3px; }
+/* convertidor */
+.tm-conv { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; }
+.tm-camt { max-width: 150px; }
+.tm-csel { background: #000; border: 1px solid var(--amb-mid); color: var(--amb); font-family: inherit; font-size: 13px; padding: 7px 9px; border-radius: 3px; text-transform: uppercase; }
+.tm-cresult { padding: 10px 12px; font-size: 15px; color: #fff; border-top: 1px solid var(--amb-mid); line-height: 1.7; }
+.tm-cresult b { color: var(--amb); }
+/* watchlist */
+.tm-thead { grid-template-columns: 1fr 1fr 1fr 24px !important; }
+.tm-wrow { grid-template-columns: 1fr 1fr 1fr 24px !important; }
+.tm-wrm { background: none; border: 0; color: var(--amb-mid); cursor: pointer; font-size: 12px; padding: 0; }
+.tm-wrm:hover { color: var(--tm-down); }
+/* alertas */
+.tm-alerts { padding: 4px 0; }
+.tm-arow { display: grid; grid-template-columns: 1fr auto 1fr 1fr 24px; gap: 8px; align-items: center; padding: 5px 10px; font-size: 12.5px; border-bottom: 1px solid #190f00; }
+.tm-arow .tm-sym { color: #fff; }
+.tm-toast { position: absolute; left: 50%; top: 58px; transform: translateX(-50%); z-index: 100000; background: var(--amb); color: #000; font-weight: 700; font-size: 12.5px; padding: 8px 14px; border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,.6); cursor: pointer; animation: tmToast .4s; }
+.tm-toast b { margin-right: 6px; }
+.tm-toast.gone { opacity: 0; transition: .4s; }
+@keyframes tmToast { from { opacity: 0; transform: translateX(-50%) translateY(-8px); } }

@@ -21,10 +21,15 @@ const TAPE = [
   { proName: "FX_IDC:USDMXN", title: "USD/MXN" }, { proName: "FX:EURUSD", title: "EUR/USD" },
   { proName: "BINANCE:BTCUSDT", title: "Bitcoin" }, { proName: "BINANCE:ETHUSDT", title: "Ether" },
 ];
-const FUNCS = { HELP: "help", H: "help", "?": "help", MON: "home", HOME: "home", TOP: "news", N: "news", NEWS: "news", WEI: "wei", DES: "des", GP: "gp", GIP: "gp", Q: "quote", CLR: "home" };
+const FUNCS = { HELP: "help", H: "help", "?": "help", MON: "home", HOME: "home", TOP: "news", N: "news", NEWS: "news", WEI: "wei", DES: "des", GP: "gp", GIP: "gp", Q: "quote", CLR: "home", HEAT: "heat", HM: "heat", CAL: "cal", ECO: "cal", SCR: "scr", FX: "fx", CONV: "conv", WATCH: "watch", WL: "watch", ALERT: "alerts", AL: "alerts", FS: "fs" };
+const TFS = [["1H", "60"], ["1D", "D"], ["1S", "W"], ["1M", "M"]];
 
-let ctxRef = null, bodyRef = null, unsub = null, clock = 0;
-const state = { sym: "BTC", hist: [], hi: -1 };
+const TKEY = "nikolai.term";
+const store = Object.assign({ watch: [], alerts: [] }, (() => { try { return JSON.parse(localStorage.getItem(TKEY)) || {}; } catch { return {}; } })());
+const saveStore = () => { try { localStorage.setItem(TKEY, JSON.stringify(store)); } catch { /* lleno */ } };
+
+let ctxRef = null, bodyRef = null, unsub = null, clock = 0, fsOn = false, onKey = null;
+const state = { sym: "BTC", hist: [], hi: -1, tf: "D" };
 
 const tvSym = (sym) => (CRYPTO.has(sym) ? `BINANCE:${sym}USDT` : sym);
 const pairOf = (sym) => (CRYPTO.has(sym) ? `${sym}USDT` : null);
@@ -39,20 +44,21 @@ export function renderTerminal(body, ctx) {
   Promise.resolve(loadFearGreed()).catch(() => {});
   if (!news.items.length) Promise.resolve(loadFeed(ctx.lang)).catch(() => {});
   const { t, esc } = ctx;
-  const menu = [["1", "HELP"], ["2", "MON"], ["3", "NEWS"], ["4", "WEI"], ["5", "TOP"], ["6", "DES"], ["7", "GP"]];
+  const menu = [["1", "HELP"], ["2", "MON"], ["3", "WEI"], ["4", "HEAT"], ["5", "SCR"], ["6", "CAL"], ["7", "FX"], ["8", "CONV"], ["9", "WATCH"], ["10", "NEWS"]];
   body.innerHTML = `
     <div class="tm">
       <div class="tm-head">
         <span class="tm-logo">◆ NIKOLAI <b>TERMINAL</b></span>
         <span class="tm-clock mono" id="tmClock"></span>
         <span class="tm-conn mono"><i></i> ${esc(t("tm_live"))}</span>
+        <button class="tm-fsbtn" id="tmFs" title="${esc(t("tm_fs"))}">⛶</button>
       </div>
       <div class="tm-cmd">
         <span class="tm-prompt mono">CMD<span class="tm-cur">▊</span></span>
         <input class="tm-in mono" id="tmIn" autocomplete="off" spellcheck="false" placeholder="${esc(t("tm_ph"))}">
         <button class="tm-go" data-target id="tmGo">&lt;GO&gt;</button>
       </div>
-      <div class="tm-menu mono">${menu.map(([n, c]) => `<span class="tm-mi" data-cmd="${c}">${n})&lt;${c}&gt;</span>`).join("")}<span class="tm-mi tm-dim" data-cmd="HELP">8)&lt;MENU&gt;</span></div>
+      <div class="tm-menu mono">${menu.map(([n, c]) => `<span class="tm-mi" data-cmd="${c}">${n})&lt;${c}&gt;</span>`).join("")}<span class="tm-mi tm-dim" data-cmd="ALERT">⬤ ALERT</span></div>
       <div class="tm-grid">
         <div class="tm-left">
           <div class="tm-panel">
@@ -79,6 +85,10 @@ export function renderTerminal(body, ctx) {
   });
   // Delegación: cualquier elemento con data-cmd (menú, cabecera, teclas) ejecuta su comando.
   body.querySelector(".tm").addEventListener("click", (e) => { const b = e.target.closest("[data-cmd]"); if (b) { status(b.dataset.cmd); exec(b.dataset.cmd); } });
+  body.querySelector("#tmFs").addEventListener("click", toggleFs);
+  if (fsOn) { fsOn = false; toggleFs(); } // conserva pantalla completa al re-renderizar
+  onKey = (e) => { if (e.key === "Escape" && fsOn) toggleFs(); };
+  addEventListener("keydown", onKey);
   setTimeout(() => input.focus(), 60);
 
   if (navigator.onLine) tvWidget(body.querySelector("#tmTape"), "ticker-tape", { symbols: TAPE, showSymbolLogo: false, isTransparent: true, displayMode: "compact", colorTheme: "dark", locale: ctx.lang || "es" });
@@ -108,6 +118,7 @@ function patchMonitor() {
     if (prev && live.price !== prev) { row.classList.remove("flash", "up", "down"); void row.offsetWidth; row.classList.add("flash", live.price > prev ? "up" : "down"); }
   }
   if (gp$ && gp$.cv && gp$.cv.isConnected && pairOf(state.sym) && market.live[pairOf(state.sym)]) drawGP();
+  patchWatch(); checkAlerts(); if (convLive) convLive();
 }
 function patchFng() {
   const el = bodyRef?.querySelector("#tmFng"); if (!el) return;
@@ -135,10 +146,15 @@ function tickClock() {
 function exec(raw) {
   const tokens = raw.trim().toUpperCase().split(/\s+/);
   const first = tokens[0];
+  // Comandos con argumentos
+  if (first === "CONV") return convertView(tokens);
+  if ((first === "W" || first === "WATCH" || first === "WL") && tokens[1]) return watchAdd(tokens[1]);
+  if ((first === "ALERT" || first === "AL") && tokens[1]) return alertAdd(tokens);
   if (FUNCS[first]) {
     const fn = FUNCS[first];
     if (fn === "des" || fn === "gp" || fn === "quote") { if (tokens[1]) state.sym = tokens[1]; return ({ des, gp, quote }[fn])(); }
-    return ({ help, home, news: newsView, wei }[fn])();
+    if (fn === "fs") return toggleFs();
+    return ({ help, home, news: newsView, wei, heat, cal, scr, fx, conv: convertView, watch: watchView, alerts: alertView }[fn])();
   }
   if (/^[A-Z0-9.:/-]{1,12}$/.test(first)) {
     state.sym = first;
@@ -243,7 +259,22 @@ function quote() {
     <div class="tm-panel tm-grow"><div class="tm-ph">GIP · ${ctxRef.esc(state.sym)}</div><div id="tmChart" style="height:320px"></div></div>`);
   mountChart("tmChart");
 }
-function gp() { out(`${secHeader()}<div class="tm-panel tm-grow"><div class="tm-ph">GP · ${ctxRef.esc(state.sym)} · ${esc2(ctxRef.t("tm_price"))}</div><div id="tmChart" style="height:460px"></div></div>`); mountChart("tmChart"); }
+function tfBar() {
+  const { t } = ctxRef;
+  return `<div class="tm-tfbar mono">
+    ${TFS.map(([lbl, v]) => `<button class="tm-tf ${state.tf === v ? "on" : ""}" data-tf="${v}">${lbl}</button>`).join("")}
+    <span class="tm-tfsep"></span>
+    <button class="tm-tf ${!state.candles ? "on" : ""}" data-candles="0">${esc2(t("tm_line"))}</button>
+    <button class="tm-tf ${state.candles ? "on" : ""}" data-candles="1">${esc2(t("tm_candles"))}</button></div>`;
+}
+function bindTf(host, redraw) {
+  host.querySelectorAll("[data-tf]").forEach((b) => b.addEventListener("click", () => { state.tf = b.dataset.tf; redraw(); }));
+  host.querySelectorAll("[data-candles]").forEach((b) => b.addEventListener("click", () => { state.candles = b.dataset.candles === "1"; redraw(); }));
+}
+function gp() {
+  out(`${secHeader()}<div class="tm-panel tm-grow"><div class="tm-ph">GP · ${ctxRef.esc(state.sym)} · ${esc2(ctxRef.t("tm_price"))} ${tfBar()}</div><div id="tmChart" style="height:460px"></div></div>`);
+  mountChart("tmChart"); bindTf(bodyRef.querySelector("#tmMain"), gp);
+}
 
 // ---------- Gráfica nativa estilo Bloomberg (ámbar sobre negro) ----------
 let gp$ = null;
@@ -259,7 +290,7 @@ function mountChart(id) {
   const el = bodyRef?.querySelector("#" + id); if (!el) return;
   if (gp$?.ro) { gp$.ro.disconnect(); } gp$ = null;
   const series = seriesFor(state.sym);
-  if (series.length > 6) {            // gráfica nativa Bloomberg cuando hay datos (cripto)
+  if (series.length > 6 && !state.candles) { // gráfica nativa Bloomberg (línea) cuando hay datos (cripto)
     el.innerHTML = `<canvas class="tm-gp" id="${id}Cv"></canvas><div class="tm-gpcross" id="${id}Cr" hidden></div>`;
     const cv = el.querySelector("canvas");
     gp$ = { el, cv, id };
@@ -269,8 +300,8 @@ function mountChart(id) {
     return;
   }
   if (!navigator.onLine) { el.innerHTML = `<div class="tm-dim mono" style="padding:16px">${ctxRef.esc(ctxRef.t("tm_offline"))}</div>`; return; }
-  // Acciones sin histórico local: TradingView con tema ámbar/negro tipo Bloomberg.
-  tvWidget(el, "advanced-chart", { symbol: tvSym(state.sym), interval: "D", timezone: "America/New_York", style: "2", allow_symbol_change: true, autosize: true, studies: ["Volume@tv-basicstudies"], theme: "dark", backgroundColor: "#000000", gridColor: "rgba(255,176,0,0.07)", locale: ctxRef.lang || "es",
+  // TradingView con tema ámbar/negro tipo Bloomberg (velas o línea, con intervalo elegido).
+  tvWidget(el, "advanced-chart", { symbol: tvSym(state.sym), interval: state.tf || "D", timezone: "America/New_York", style: state.candles ? "1" : "2", allow_symbol_change: true, autosize: true, studies: ["Volume@tv-basicstudies"], theme: "dark", backgroundColor: "#000000", gridColor: "rgba(255,176,0,0.07)", locale: ctxRef.lang || "es",
     overrides: { "mainSeriesProperties.lineStyle.color": "#ffb000", "mainSeriesProperties.areaStyle.color1": "rgba(255,176,0,0.25)", "mainSeriesProperties.areaStyle.color2": "rgba(255,176,0,0.02)", "mainSeriesProperties.areaStyle.linecolor": "#ffb000", "scalesProperties.textColor": "#ffb000", "paneProperties.background": "#000000", "paneProperties.vertGridProperties.color": "rgba(255,176,0,0.06)", "paneProperties.horzGridProperties.color": "rgba(255,176,0,0.06)" } });
 }
 function drawGP(cross) {
@@ -387,7 +418,9 @@ function help() {
   const { t, esc } = ctxRef;
   const rows = [
     ["AAPL", t("tm_h_sym")], ["BTC", t("tm_h_crypto")], ["DES AAPL", t("tm_h_des")], ["GP TSLA", t("tm_h_gp")],
-    ["WEI", t("tm_h_wei")], ["TOP / N", t("tm_h_news")], ["MON", t("tm_h_mon")], ["Q BTC", t("tm_h_q")],
+    ["WEI", t("tm_h_wei")], ["HEAT", t("tm_h_heat")], ["SCR", t("tm_h_scr")], ["CAL", t("tm_h_cal")],
+    ["FX", t("tm_h_fx")], ["CONV 2 BTC USD", t("tm_h_conv")], ["W AAPL", t("tm_h_watch")], ["ALERT BTC 70000", t("tm_h_alert")],
+    ["TOP / N", t("tm_h_news")], ["MON", t("tm_h_mon")], ["Q BTC", t("tm_h_q")], ["FS", t("tm_h_fs")],
     [t("tm_h_freeHdr"), t("tm_h_free")],
   ];
   out(`<div class="tm-panel"><div class="tm-ph">HELP · ${esc2(t("tm_cmdref"))}</div><div class="tm-help mono">
@@ -396,8 +429,141 @@ function help() {
   </div></div>`);
 }
 
+// ---------- Pantalla completa ----------
+function toggleFs() {
+  const tm = bodyRef?.querySelector(".tm"); if (!tm) return;
+  fsOn = !fsOn;
+  tm.classList.toggle("tm-fs", fsOn);
+  document.body.classList.toggle("tm-fs-lock", fsOn);
+  const btn = tm.querySelector("#tmFs"); if (btn) btn.textContent = fsOn ? "⤢" : "⛶";
+  status(ctxRef.t(fsOn ? "tm_fsOn" : "tm_fsOff"));
+  try { if (fsOn && tm.requestFullscreen) tm.requestFullscreen().catch(() => {}); else if (!fsOn && document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch { /* bloqueado */ }
+  const inp = tm.querySelector("#tmIn"); if (inp) setTimeout(() => inp.focus(), 40);
+}
+
+// ---------- Mapa de calor ----------
+function heat() {
+  const { t } = ctxRef;
+  out(`<div class="tm-two">
+    <div class="tm-panel tm-grow"><div class="tm-ph">HEAT · ${esc2(t("tm_stocks"))} S&P 500</div><div id="tmHt1" style="height:420px"></div></div>
+    <div class="tm-panel tm-grow"><div class="tm-ph">HEAT · ${esc2(t("tm_crypto"))}</div><div id="tmHt2" style="height:420px"></div></div></div>`);
+  if (!navigator.onLine) return offline();
+  tvWidget(bodyRef.querySelector("#tmHt1"), "stock-heatmap", { dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", hasTopBar: true, isZoomEnabled: true, hasSymbolTooltip: true, colorTheme: "dark", isTransparent: true, locale: ctxRef.lang || "es" });
+  tvWidget(bodyRef.querySelector("#tmHt2"), "crypto-coins-heatmap", { dataSource: "Crypto", blockSize: "market_cap_calc", blockColor: "24h_close_change|5", isZoomEnabled: true, hasSymbolTooltip: true, colorTheme: "dark", isTransparent: true, locale: ctxRef.lang || "es" });
+}
+// ---------- Calendario económico ----------
+function cal() {
+  const { t } = ctxRef;
+  out(`<div class="tm-panel tm-grow"><div class="tm-ph">CAL · ${esc2(t("tm_calendar"))}</div><div id="tmCal" style="height:520px"></div></div>`);
+  if (!navigator.onLine) return offline();
+  tvWidget(bodyRef.querySelector("#tmCal"), "events", { importanceFilter: "0,1", countryFilter: "us,mx,eu,gb,cn,jp,ca,au", colorTheme: "dark", isTransparent: true, locale: ctxRef.lang || "es" });
+}
+// ---------- Screener ----------
+function scr() {
+  const { t } = ctxRef;
+  out(`<div class="tm-panel tm-grow"><div class="tm-ph">SCR · ${esc2(t("tm_screener"))}</div><div id="tmScr" style="height:540px"></div></div>`);
+  if (!navigator.onLine) return offline();
+  tvWidget(bodyRef.querySelector("#tmScr"), "screener", { defaultColumn: "overview", defaultScreen: "most_capitalized", market: "america", showToolbar: true, colorTheme: "dark", isTransparent: true, locale: ctxRef.lang || "es" });
+}
+// ---------- Divisas ----------
+function fx() {
+  const { t } = ctxRef;
+  out(`<div class="tm-panel tm-grow"><div class="tm-ph">FX · ${esc2(t("tm_forex"))}</div><div id="tmFx" style="height:480px"></div></div>`);
+  if (!navigator.onLine) return offline();
+  tvWidget(bodyRef.querySelector("#tmFx"), "forex-cross-rates", { currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "MXN", "CNY"], isTransparent: true, colorTheme: "dark", width: "100%", height: "100%", locale: ctxRef.lang || "es" });
+}
+function offline() { const m = bodyRef?.querySelector(".tm-grow div[id]"); if (m) m.innerHTML = `<div class="tm-dim mono" style="padding:16px">${esc2(ctxRef.t("tm_offline"))}</div>`; }
+
+// ---------- Convertidor ----------
+const priceUSD = (sym) => { if (sym === "USD" || sym === "USDT" || sym === "USDC") return 1; const p = market.live[`${sym}USDT`]?.price; if (p) return p; const c = coinOf(sym); return c?.price || null; };
+function convertView(tokens) {
+  const { t, esc } = ctxRef;
+  const amt = tokens && Number(tokens[1]) ? Number(tokens[1]) : 1;
+  const from = (tokens && tokens[2]) || "BTC", to = (tokens && tokens[3]) || "USD";
+  const opts = ["USD", ...MONITOR.map((m) => m[0]), "LTC", "LINK", "DOT", "MATIC"];
+  const sel = (id, v) => `<select class="tm-csel mono" id="${id}">${[...new Set(opts)].map((o) => `<option ${o === v ? "selected" : ""}>${o}</option>`).join("")}</select>`;
+  out(`<div class="tm-panel"><div class="tm-ph">CONV · ${esc2(t("tm_converter"))}</div>
+    <div class="tm-conv mono">
+      <input class="tm-in tm-camt" id="tmCamt" type="number" value="${amt}" min="0" step="any"> ${sel("tmCfrom", from)}
+      <span class="tm-dim">→</span> ${sel("tmCto", to)}
+    </div>
+    <div class="tm-cresult mono" id="tmCout">—</div>
+    <p class="tm-dim mono" style="padding:0 10px 8px">${esc(t("tm_convNote"))}</p></div>`);
+  const recompute = () => {
+    const a = Number(bodyRef.querySelector("#tmCamt").value) || 0;
+    const f = bodyRef.querySelector("#tmCfrom").value, tt = bodyRef.querySelector("#tmCto").value;
+    const pf = priceUSD(f), pt = priceUSD(tt), el = bodyRef.querySelector("#tmCout");
+    if (!pf || !pt) { el.textContent = t("tm_convWait"); return; }
+    const res = (a * pf) / pt;
+    el.innerHTML = `<b>${a.toLocaleString("en-US", { maximumFractionDigits: 8 })} ${esc(f)}</b> = <b class="up">${res.toLocaleString("en-US", { maximumFractionDigits: res < 1 ? 8 : 2 })} ${esc(tt)}</b><br><span class="tm-dim">1 ${esc(f)} = ${(pf / pt).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${esc(tt)} · 1 ${esc(tt)} = ${(pt / pf).toLocaleString("en-US", { maximumFractionDigits: 8 })} ${esc(f)}</span>`;
+  };
+  ["tmCamt", "tmCfrom", "tmCto"].forEach((id) => bodyRef.querySelector("#" + id).addEventListener("input", recompute));
+  recompute(); convLive = recompute;
+}
+let convLive = null;
+
+// ---------- Watchlist ----------
+function watchAdd(sym) { sym = sym.toUpperCase(); if (!store.watch.includes(sym)) { store.watch.unshift(sym); if (store.watch.length > 24) store.watch.pop(); saveStore(); } status(`WATCH + ${sym}`); watchView(); }
+function watchView() {
+  const { t, esc } = ctxRef;
+  const rows = store.watch.length ? store.watch.map((s) => watchRow(s)).join("") : `<div class="tm-dim" style="padding:10px">${esc(t("tm_watchEmpty"))}</div>`;
+  out(`<div class="tm-panel"><div class="tm-ph">WATCH · ${esc2(t("tm_watchlist"))} <span class="tm-dim" style="margin-left:auto;font-weight:400;letter-spacing:0;text-transform:none">${esc(t("tm_watchHint"))}</span></div>
+    <div class="tm-thead mono"><span>TICKER</span><span>LAST</span><span>%CHG</span><span></span></div>
+    <div class="tm-mon" id="tmWatch">${rows}</div></div>`);
+  bodyRef.querySelectorAll("[data-wrm]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); store.watch = store.watch.filter((x) => x !== b.dataset.wrm); saveStore(); watchView(); }));
+}
+function watchRow(sym) {
+  const pair = pairOf(sym), live = pair && market.live[pair], coin = coinOf(sym);
+  const price = live ? live.price : coin?.price, chg = live ? live.change : coin?.change;
+  return `<div class="tm-trow tm-wrow" data-pair="${pair || ""}" data-cmd="${sym}"><span class="tm-sym">${esc2(sym)}</span><span class="tm-px mono">${price != null ? fmtMoney(price) : "—"}</span><span class="tm-chg mono ${(chg || 0) >= 0 ? "up" : "down"}">${chg != null ? fmtPct(chg) : "—"}</span><button class="tm-wrm" data-wrm="${sym}" title="quitar">✕</button></div>`;
+}
+function patchWatch() {
+  const box = bodyRef?.querySelector("#tmWatch"); if (!box) return;
+  box.querySelectorAll(".tm-wrow").forEach((row) => { const pair = row.dataset.pair, live = pair && market.live[pair]; if (!live) return; row.querySelector(".tm-px").textContent = fmtMoney(live.price); const c = row.querySelector(".tm-chg"); c.textContent = fmtPct(live.change); c.className = "tm-chg mono " + (live.change >= 0 ? "up" : "down"); });
+}
+
+// ---------- Alertas de precio ----------
+function alertAdd(tokens) {
+  const sym = tokens[1].toUpperCase(), target = Number(tokens[2]);
+  if (!target) { status(ctxRef.t("tm_alertUsage")); return alertView(); }
+  const pair = pairOf(sym), cur = pair ? market.live[pair]?.price : (coinOf(sym)?.price);
+  store.alerts.push({ id: Math.random().toString(36).slice(2, 7), sym, target, dir: cur != null && target >= cur ? "up" : "down" });
+  saveStore(); status(`ALERT ${sym} @ ${target}`); alertView();
+}
+function alertView() {
+  const { t, esc } = ctxRef;
+  const rows = store.alerts.length ? store.alerts.map((a) => { const cur = pairOf(a.sym) ? market.live[`${a.sym}USDT`]?.price : coinOf(a.sym)?.price; return `<div class="tm-arow mono"><span class="tm-sym">${esc(a.sym)}</span><span class="tm-dim">${a.dir === "up" ? "≥" : "≤"}</span><span>${fmtMoney(a.target)}</span><span class="tm-dim">${cur != null ? fmtMoney(cur) : "—"}</span><button class="tm-wrm" data-arm="${a.id}">✕</button></div>`; }).join("") : `<div class="tm-dim" style="padding:10px">${esc(t("tm_alertEmpty"))}</div>`;
+  out(`<div class="tm-panel"><div class="tm-ph">ALERT · ${esc2(t("tm_alerts"))}</div>
+    <p class="tm-dim mono" style="padding:4px 10px">${esc(t("tm_alertHelp"))}</p>
+    <div class="tm-alerts">${rows}</div></div>`);
+  bodyRef.querySelectorAll("[data-arm]").forEach((b) => b.addEventListener("click", () => { store.alerts = store.alerts.filter((x) => x.id !== b.dataset.arm); saveStore(); alertView(); }));
+}
+function checkAlerts() {
+  if (!store.alerts.length) return;
+  let fired = false;
+  for (const a of store.alerts.slice()) {
+    const pair = pairOf(a.sym); const p = pair ? market.live[pair]?.price : null; if (p == null) continue;
+    if ((a.dir === "up" && p >= a.target) || (a.dir === "down" && p <= a.target)) {
+      tmAlert(`${a.sym} ${a.dir === "up" ? "≥" : "≤"} ${fmtMoney(a.target)} · ${fmtMoney(p)}`);
+      store.alerts = store.alerts.filter((x) => x.id !== a.id); fired = true;
+    }
+  }
+  if (fired) { saveStore(); if (bodyRef?.querySelector(".tm-alerts")) alertView(); }
+}
+function tmAlert(msg) {
+  const tm = bodyRef?.querySelector(".tm"); if (!tm) return;
+  const el = document.createElement("div"); el.className = "tm-toast mono"; el.innerHTML = `<b>⬤ ALERT</b> ${ctxRef.esc(msg)}`;
+  tm.appendChild(el); try { ctxRef.speak?.(ctxRef.t("tm_alertHit") + " " + msg); } catch { /* sin voz */ }
+  el.addEventListener("click", () => el.remove());
+  setTimeout(() => { el.classList.add("gone"); setTimeout(() => el.remove(), 400); }, 7000);
+}
+
 export function termSummary() {
   const btc = market.live.BTCUSDT;
   return { price: btc ? fmtMoney(btc.price) : "—", chg: btc ? btc.change : null };
 }
-export function stopTerminal() { clearInterval(clock); if (unsub) { unsub(); unsub = null; } if (gp$?.ro) { gp$.ro.disconnect(); } gp$ = null; }
+export function stopTerminal() {
+  clearInterval(clock); if (unsub) { unsub(); unsub = null; } if (gp$?.ro) { gp$.ro.disconnect(); } gp$ = null;
+  if (onKey) { removeEventListener("keydown", onKey); onKey = null; }
+  convLive = null; document.body.classList.remove("tm-fs-lock");
+}
