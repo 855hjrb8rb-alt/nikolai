@@ -21,6 +21,12 @@ const TAPE = [
   { proName: "FX_IDC:USDMXN", title: "USD/MXN" }, { proName: "FX:EURUSD", title: "EUR/USD" },
   { proName: "BINANCE:BTCUSDT", title: "Bitcoin" }, { proName: "BINANCE:ETHUSDT", title: "Ether" },
 ];
+// Reloj mundial (como la columna de ciudades del Bloomberg).
+const CITIES = [
+  { c: "NY", city: "Nueva York", tz: "America/New_York" }, { c: "LDN", city: "Londres", tz: "Europe/London" },
+  { c: "FRA", city: "Fráncfort", tz: "Europe/Berlin" }, { c: "MEX", city: "México", tz: "America/Mexico_City" },
+  { c: "TYO", city: "Tokio", tz: "Asia/Tokyo" }, { c: "HK", city: "Hong Kong", tz: "Asia/Hong_Kong" }, { c: "SYD", city: "Sídney", tz: "Australia/Sydney" },
+];
 // Mercado agrícola: materias primas (TradingView) con su símbolo y unidad.
 const AGRI = [
   { s: "CBOT:ZC1!", d: "Maíz", u: "¢/bu" }, { s: "CBOT:ZW1!", d: "Trigo", u: "¢/bu" }, { s: "CBOT:ZS1!", d: "Soja", u: "¢/bu" },
@@ -101,7 +107,7 @@ export function renderTerminal(body, ctx) {
   if (navigator.onLine) tvWidget(body.querySelector("#tmTape"), "ticker-tape", { symbols: TAPE, showSymbolLogo: false, isTransparent: true, displayMode: "compact", colorTheme: "dark", locale: ctx.lang || "es" });
 
   patchMonitor(); patchFng(); patchExch(); tickClock();
-  clock = setInterval(() => { tickClock(); patchExch(); }, 1000);
+  clock = setInterval(() => { tickClock(); patchExch(); patchClocks(); }, 1000);
   unsub = onMarket(patchMonitor);
   home();
 }
@@ -176,21 +182,58 @@ function exec(raw) {
 function out(html) { const m = bodyRef?.querySelector("#tmMain"); if (m) { m.innerHTML = html; m.scrollTop = 0; } return bodyRef?.querySelector("#tmMain"); }
 const esc2 = (s) => ctxRef.esc(s);
 
-// ---------- Inicio / monitor ----------
+// ---------- Reloj mundial ----------
+function clocksStrip() {
+  return `<div class="tm-clocks mono" id="tmClocks">${CITIES.map((c) => `<div class="tm-ck" data-tz="${c.tz}"><span class="tm-ckc">${c.c}</span><b class="tm-cktime">--:--:--</b><span class="tm-ckcity">${ctxRef.esc(c.city)}</span></div>`).join("")}</div>`;
+}
+function patchClocks() {
+  const box = bodyRef?.querySelector("#tmClocks"); if (!box) return;
+  box.querySelectorAll(".tm-ck").forEach((el) => {
+    const tz = el.dataset.tz;
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", weekday: "short" }).formatToParts(new Date());
+    const g = (k) => parts.find((p) => p.type === k)?.value || "";
+    const h = Number(g("hour"));
+    el.querySelector(".tm-cktime").textContent = `${g("hour")}:${g("minute")}:${g("second")}`;
+    el.classList.toggle("night", h < 7 || h >= 20);
+  });
+}
+// ---------- Donut de mercado (nativo, estilo Bloomberg) ----------
+function donutColor(chg) {
+  if (chg >= 0) { const l = 42 + Math.min(16, chg * 2.2); return `hsl(150 62% ${l}%)`; }
+  const l = 42 + Math.min(16, -chg * 2.2); return `hsl(353 72% ${l}%)`;
+}
+function renderDonut() {
+  const el = bodyRef?.querySelector("#tmDonut"); if (!el) return;
+  const coins = market.coins.filter((c) => c.cap && typeof c.change === "number").sort((a, b) => b.cap - a.cap).slice(0, 8);
+  if (!coins.length) { el.innerHTML = `<div class="tm-dim" style="padding:14px">${esc2(ctxRef.t("tm_loading"))}</div>`; setTimeout(renderDonut, 1500); return; }
+  const total = coins.reduce((s, c) => s + c.cap, 0) || 1;
+  const C = 2 * Math.PI * 52; let acc = 0;
+  const arcs = coins.map((c) => { const dash = (c.cap / total) * C; const a = `<circle class="tm-arc" r="52" cx="70" cy="70" fill="none" stroke="${donutColor(c.change)}" stroke-width="20" stroke-dasharray="${dash - 1.5} ${C - dash + 1.5}" stroke-dashoffset="${-acc}" transform="rotate(-90 70 70)"><title>${esc2((c.symbol || "").toUpperCase())} ${fmtPct(c.change)}</title></circle>`; acc += dash; return a; }).join("");
+  const avg = coins.reduce((s, c) => s + c.change, 0) / coins.length;
+  const legend = coins.slice(0, 6).map((c) => `<div class="tm-lg" data-cmd="${(c.symbol || "").toUpperCase()}"><span class="tm-lgdot" style="background:${donutColor(c.change)}"></span><span class="tm-sym">${(c.symbol || "").toUpperCase()}</span><span class="tm-chg mono ${c.change >= 0 ? "up" : "down"}">${fmtPct(c.change)}</span></div>`).join("");
+  el.innerHTML = `<svg viewBox="0 0 140 140" class="tm-donutsvg"><circle r="52" cx="70" cy="70" fill="none" stroke="#1a1200" stroke-width="20"/>${arcs}
+    <text x="70" y="66" text-anchor="middle" class="tm-dcenter">CRIPTO</text><text x="70" y="82" text-anchor="middle" class="tm-dsub ${avg >= 0 ? "up" : "down"}">${fmtPct(avg)}</text></svg>
+    <div class="tm-legend">${legend}</div>`;
+}
+
+// ---------- Inicio / Launchpad ----------
 function home() {
   const { t, esc } = ctxRef;
-  out(`<div class="tm-hero mono">
-      <div class="tm-art">NIKOLAI&lt;GO&gt; · ${esc(t("tm_overview")).toUpperCase()}</div>
-      <p>${esc(t("tm_welcome"))}</p>
-      <p class="tm-dim">${esc(t("tm_tryp"))}</p>
+  out(`${clocksStrip()}
+    <div class="tm-two">
+      <div class="tm-panel"><div class="tm-ph">MKT · ${esc(t("tm_cryptoCap"))}</div><div class="tm-donut" id="tmDonut"></div></div>
+      <div class="tm-panel"><div class="tm-ph">MOV · ${esc(t("tm_movers"))}</div><div class="tm-movers mono" id="tmMov"></div></div>
     </div>
     <div class="tm-two">
-      <div class="tm-panel"><div class="tm-ph">MOV · ${esc(t("tm_movers"))}</div><div class="tm-movers mono" id="tmMov"></div></div>
       <div class="tm-panel"><div class="tm-ph">N · ${esc(t("tm_topnews"))}</div><div class="tm-news mono" id="tmNews"></div></div>
+      <div class="tm-panel"><div class="tm-ph">TA · BTC · ${esc(t("tm_tech"))}</div><div id="tmHomeTA" style="height:224px"></div></div>
     </div>
-    <div class="tm-panel tm-grow"><div class="tm-ph">WEI · ${esc(t("tm_overview"))}</div><div id="tmWei" style="height:300px"></div></div>`);
-  renderMovers(); loadHeadlines();
-  if (navigator.onLine) overviewWidget("tmWei");
+    <div class="tm-panel tm-grow"><div class="tm-ph">WEI · ${esc(t("tm_overview"))}</div><div id="tmWei" style="height:280px"></div></div>`);
+  patchClocks(); renderDonut(); renderMovers(); loadHeadlines();
+  if (navigator.onLine) {
+    overviewWidget("tmWei");
+    tvWidget(bodyRef.querySelector("#tmHomeTA"), "technical-analysis", { symbol: "BINANCE:BTCUSDT", interval: "1D", showIntervalTabs: true, displayMode: "single", colorTheme: "dark", isTransparent: true, locale: ctxRef.lang || "es" });
+  }
 }
 function overviewWidget(id) {
   tvWidget(bodyRef.querySelector("#" + id), "market-overview", {
