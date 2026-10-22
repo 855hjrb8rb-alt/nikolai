@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constitución Mexicana · Portal Ciudadano</title>
+<meta name="description" content="Guía ciudadana (no oficial) de la Constitución Política de los Estados Unidos Mexicanos: derechos humanos, políticos y civiles.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --guinda: #611232;
+    --guinda-2: #9d2449;
+    --guinda-osc: #4a0e26;
+    --dorado: #a57f2c;
+    --dorado-cl: #d4c19c;
+    --verde: #235b4e;
+    --verde-cl: #10312b;
+    --gris: #545454;
+    --gris-cl: #f5f5f5;
+    --linea: #e2ddd3;
+    --texto: #1f1f1f;
+    --fondo: #ffffff;
+    --tarjeta: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --gris: #b9b2a6; --gris-cl: #1d1a1b; --linea: #3a3234;
+      --texto: #f1ece4; --fondo: #141112; --tarjeta: #1d191a; --dorado-cl: #6b5a37;
+    }
+  }
+  :root[data-theme="dark"] {
+    --gris: #b9b2a6; --gris-cl: #1d1a1b; --linea: #3a3234;
+    --texto: #f1ece4; --fondo: #141112; --tarjeta: #1d191a; --dorado-cl: #6b5a37;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: Montserrat, system-ui, sans-serif; color: var(--texto); background: var(--fondo); line-height: 1.55; }
+  a { color: var(--guinda-2); }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------- Pantalla de acceso ---------- */
+  #acceso { position: fixed; inset: 0; z-index: 100; background: radial-gradient(circle at 50% 35%, #7a1a40 0%, var(--guinda) 45%, var(--guinda-osc) 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 16px; transition: opacity .7s, visibility .7s; }
+  #acceso.fuera { opacity: 0; visibility: hidden; }
+  #acceso .emblema { width: 108px; height: 108px; margin-bottom: 18px; animation: brillo 2.4s ease-in-out infinite; }
+  @keyframes brillo { 50% { filter: drop-shadow(0 0 18px rgba(212,193,156,.75)); } }
+  #acceso h1 { font-size: clamp(18px, 4vw, 26px); letter-spacing: .14em; text-transform: uppercase; margin: 0 0 4px; font-weight: 700; }
+  #acceso p { margin: 0; color: var(--dorado-cl); letter-spacing: .08em; font-size: 13px; }
+  .barra { width: min(360px, 80vw); height: 4px; background: rgba(255,255,255,.18); border-radius: 4px; margin: 28px 0 12px; overflow: hidden; }
+  .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--dorado), #f0dcae); transition: width .25s; }
+  #estadoAcceso { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: rgba(255,255,255,.8); min-height: 18px; }
+
+  /* ---------- Barras superiores ---------- */
+  .top { background: var(--verde-cl); color: #fff; font-size: 12.5px; }
+  .top .wrap { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 34px; }
+  .top span { opacity: .85; }
+  .top button { background: none; border: 1px solid rgba(255,255,255,.35); color: #fff; font: inherit; border-radius: 3px; padding: 2px 8px; cursor: pointer; }
+  header.main { background: var(--guinda); color: #fff; position: sticky; top: 0; z-index: 20; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+  header.main .wrap { display: flex; align-items: center; gap: 14px; min-height: 70px; }
+  .marca { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; }
+  .marca svg { width: 44px; height: 44px; flex: none; }
+  .marca b { display: block; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; }
+  .marca small { display: block; font-size: 11px; color: var(--dorado-cl); letter-spacing: .1em; text-transform: uppercase; }
+  nav.menu { margin-left: auto; display: flex; gap: 2px; flex-wrap: wrap; }
+  nav.menu a { color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 11px; border-radius: 3px; }
+  nav.menu a:hover { background: rgba(255,255,255,.12); }
+  #btnMenu { display: none; margin-left: auto; background: none; border: 1px solid rgba(255,255,255,.4); color: #fff; border-radius: 4px; padding: 6px 10px; font: inherit; }
+  .franja { height: 6px; background: linear-gradient(90deg, var(--dorado) 0 33%, var(--guinda-2) 33% 66%, var(--verde) 66%); }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; color: #fff; background: linear-gradient(180deg, rgba(74,14,38,.55), rgba(74,14,38,.92)), var(--guinda-osc); overflow: hidden; }
+  .hero svg.fachada { position: absolute; inset: auto 0 0 0; width: 100%; height: 60%; opacity: .14; }
+  .hero .wrap { position: relative; padding: 64px 16px 72px; }
+  .migas { font-size: 12.5px; color: var(--dorado-cl); margin-bottom: 18px; }
+  .migas a { color: var(--dorado-cl); text-decoration: none; }
+  .hero h2 { font-family: "Noto Serif", Georgia, serif; font-size: clamp(28px, 5vw, 46px); line-height: 1.15; margin: 0 0 14px; max-width: 820px; }
+  .hero p.lead { font-size: clamp(15px, 2vw, 18px); max-width: 720px; color: #f1e6d4; margin: 0 0 26px; }
+  .cifras { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; max-width: 760px; }
+  .cifras div { border-left: 3px solid var(--dorado); padding: 4px 12px; }
+  .cifras b { display: block; font-size: 26px; font-weight: 800; }
+  .cifras span { font-size: 12px; color: var(--dorado-cl); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ---------- Buscador ---------- */
+  .busca { background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.12); margin-top: -32px; position: relative; z-index: 5; padding: 18px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .busca label { font-weight: 700; font-size: 14px; color: var(--guinda-2); }
+  .busca input { flex: 1 1 260px; min-width: 0; border: 1px solid var(--linea); background: var(--fondo); color: var(--texto); border-radius: 4px; padding: 12px 14px; font: inherit; font-size: 15px; }
+  .busca input:focus { outline: 2px solid var(--dorado); border-color: transparent; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .chip { border: 1px solid var(--linea); background: var(--gris-cl); color: var(--texto); border-radius: 20px; padding: 5px 12px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--guinda); color: #fff; border-color: var(--guinda); }
+
+  /* ---------- Secciones ---------- */
+  section.bloque { padding: 56px 0 8px; scroll-margin-top: 80px; }
+  .titulo-sec { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+  .titulo-sec h3 { font-family: "Noto Serif", Georgia, serif; font-size: clamp(24px, 3.4vw, 32px); margin: 0; color: var(--guinda-2); }
+  .titulo-sec .etq { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--dorado); }
+  .sub { color: var(--gris); max-width: 820px; margin: 0 0 26px; }
+  .sub::after { content: ""; display: block; width: 64px; height: 3px; background: var(--dorado); margin-top: 16px; }
+
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .tarjeta { background: var(--tarjeta); border: 1px solid var(--linea); border-top: 4px solid var(--guinda); border-radius: 4px; padding: 18px 18px 16px; display: flex; flex-direction: column; }
+  .tarjeta.politico { border-top-color: var(--verde); }
+  .tarjeta.civil { border-top-color: var(--dorado); }
+  .tarjeta .art { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; color: var(--dorado); text-transform: uppercase; }
+  .tarjeta h4 { margin: 6px 0 8px; font-size: 16px; }
+  .tarjeta p { margin: 0; font-size: 14px; color: var(--gris); }
+  .tarjeta button { margin-top: 12px; align-self: flex-start; background: none; border: none; color: var(--guinda-2); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; }
+  .tarjeta button:hover { text-decoration: underline; }
+  .vacio { padding: 26px; text-align: center; color: var(--gris); border: 1px dashed var(--linea); border-radius: 4px; display: none; }
+
+  /* Estructura */
+  .indice { display: grid; grid-template-columns: 1fr; gap: 0; border: 1px solid var(--linea); border-radius: 4px; overflow: hidden; }
+  details.titulo { border-bottom: 1px solid var(--linea); background: var(--tarjeta); }
+  details.titulo:last-child { border-bottom: none; }
+  details.titulo summary { cursor: pointer; padding: 15px 18px; font-weight: 700; display: flex; gap: 14px; align-items: baseline; list-style: none; }
+  details.titulo summary::-webkit-details-marker { display: none; }
+  details.titulo summary::before { content: "+"; color: var(--dorado); font-weight: 800; width: 14px; }
+  details.titulo[open] summary::before { content: "–"; }
+  details.titulo summary small { margin-left: auto; color: var(--gris); font-weight: 500; font-size: 12.5px; white-space: nowrap; }
+  details.titulo ul { margin: 0; padding: 0 18px 16px 46px; color: var(--gris); font-size: 14px; }
+  details.titulo li { margin: 4px 0; }
+
+  /* Tabla de comparación */
+  .tabla-wrap { overflow-x: auto; border: 1px solid var(--linea); border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; background: var(--tarjeta); }
+  th { background: var(--guinda); color: #fff; text-align: left; padding: 11px 14px; font-size: 13px; }
+  td { padding: 11px 14px; border-top: 1px solid var(--linea); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--gris-cl); }
+
+  .aviso { margin-top: 18px; padding: 14px 16px; border-left: 4px solid var(--dorado); background: var(--gris-cl); font-size: 14px; }
+
+  /* Modal */
+  dialog { border: none; border-radius: 6px; padding: 0; max-width: 640px; width: calc(100% - 32px); background: var(--tarjeta); color: var(--texto); box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+  dialog::backdrop { background: rgba(30,6,16,.65); }
+  dialog header { background: var(--guinda); color: #fff; padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; }
+  dialog header h4 { margin: 0; font-size: 18px; }
+  dialog header small { color: var(--dorado-cl); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 11.5px; }
+  dialog header button { margin-left: auto; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; line-height: 1; }
+  dialog .cuerpo { padding: 18px 20px 22px; }
+  dialog blockquote { margin: 0 0 14px; padding: 12px 16px; border-left: 3px solid var(--dorado); background: var(--gris-cl); font-family: "Noto Serif", Georgia, serif; font-style: italic; }
+  dialog ul { padding-left: 20px; margin: 0; }
+
+  footer { margin-top: 64px; background: var(--guinda-osc); color: #eadfd0; font-size: 13.5px; }
+  footer .wrap { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 24px; padding: 40px 16px 28px; }
+  footer h5 { color: #fff; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .08em; }
+  footer a { color: var(--dorado-cl); text-decoration: none; display: block; margin: 4px 0; }
+  footer .legal { border-top: 1px solid rgba(255,255,255,.12); padding: 14px 16px; text-align: center; font-size: 12px; color: #c9b8a2; }
+
+  @media (max-width: 860px) {
+    nav.menu { display: none; position: absolute; left: 0; right: 0; top: 100%; background: var(--guinda-osc); flex-direction: column; padding: 8px 16px 14px; }
+    nav.menu.abierto { display: flex; }
+    #btnMenu { display: block; }
+    .cifras { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    footer .wrap { grid-template-columns: 1fr; }
+    .top .wrap span:last-of-type { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Pantalla de acceso -->
+<div id="acceso" role="status" aria-live="polite">
+  <svg class="emblema" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="47" fill="none" stroke="#d4c19c" stroke-width="2"/>
+    <circle cx="50" cy="50" r="40" fill="none" stroke="#d4c19c" stroke-width="1" stroke-dasharray="2 3"/>
+    <path d="M28 40 L50 26 L72 40 Z" fill="#d4c19c"/>
+    <rect x="30" y="42" width="40" height="4" fill="#d4c19c"/>
+    <g fill="#d4c19c"><rect x="33" y="48" width="5" height="20"/><rect x="42" y="48" width="5" height="20"/><rect x="53" y="48" width="5" height="20"/><rect x="62" y="48" width="5" height="20"/></g>
+    <rect x="28" y="70" width="44" height="5" fill="#d4c19c"/>
+  </svg>
+  <h1>Portal Ciudadano</h1>
+  <p>Constitución Política de los Estados Unidos Mexicanos</p>
+  <div class="barra"><i id="progreso"></i></div>
+  <div id="estadoAcceso">Estableciendo conexión segura…</div>
+</div>
+
+<div class="top">
+  <div class="wrap">
+    <span>Guía ciudadana · Constitución de 1917 con sus reformas</span>
+    <span id="fecha"></span>
+    <button id="btnTema" type="button" aria-label="Cambiar tema">◐ Tema</button>
+  </div>
+</div>
+
+<header class="main">
+  <div class="wrap" style="position:relative">
+    <a class="marca" href="#inicio">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M28 40 L50 26 L72 40 Z" fill="#d4c19c"/>
+        <rect x="30" y="42" width="40" height="4" fill="#d4c19c"/>
+        <g fill="#d4c19c"><rect x="33" y="48" width="5" height="20"/><rect x="42" y="48" width="5" height="20"/><rect x="53" y="48" width="5" height="20"/><rect x="62" y="48" width="5" height="20"/></g>
+        <rect x="28" y="70" width="44" height="5" fill="#d4c19c"/>
+      </svg>
+      <span><b>Portal Ciudadano</b><small>Constitución · Derechos</small></span>
+    </a>
+    <button id="btnMenu" type="button" aria-expanded="false">☰ Menú</button>
+    <nav class="menu" id="menu">
+      <a href="#estructura">Constitución</a>
+      <a href="#humanos">Derechos humanos</a>
+      <a href="#politicos">Derechos políticos</a>
+      <a href="#civiles">Derechos civiles</a>
+      <a href="#obligaciones">Obligaciones</a>
+      <a href="#defensa">Cómo defenderlos</a>
+    </nav>
+  </div>
+</header>
+<div class="franja"></div>
+
+<section class="hero" id="inicio">
+  <svg class="fachada" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <g fill="#d4c19c">
+      <rect x="0" y="120" width="1200" height="180"/>
+      <rect x="520" y="40" width="160" height="90"/>
+      <rect x="575" y="10" width="50" height="34"/>
+      <rect x="596" y="0" width="8" height="12"/>
+    </g>
+    <g fill="#4a0e26">
+      <!-- ventanas superiores -->
+      <g id="vs">
+        <rect x="30" y="145" width="26" height="40" rx="13"/>
+      </g>
+      <use href="#vs" x="80"/><use href="#vs" x="160"/><use href="#vs" x="240"/><use href="#vs" x="320"/><use href="#vs" x="400"/>
+      <use href="#vs" x="720"/><use href="#vs" x="800"/><use href="#vs" x="880"/><use href="#vs" x="960"/><use href="#vs" x="1040"/><use href="#vs" x="1120"/>
+      <!-- ventanas inferiores -->
+      <g id="vi"><rect x="30" y="220" width="26" height="50"/></g>
+      <use href="#vi" x="80"/><use href="#vi" x="160"/><use href="#vi" x="240"/><use href="#vi" x="320"/><use href="#vi" x="400"/>
+      <use href="#vi" x="720"/><use href="#vi" x="800"/><use href="#vi" x="880"/><use href="#vi" x="960"/><use href="#vi" x="1040"/><use href="#vi" x="1120"/>
+      <!-- portón y balcón central -->
+      <rect x="565" y="215" width="70" height="85" rx="35"/>
+      <rect x="575" y="60" width="50" height="60" rx="25"/>
+      <rect x="555" y="138" width="90" height="56" rx="6"/>
+    </g>
+    <rect x="0" y="198" width="1200" height="5" fill="#d4c19c"/>
+  </svg>
+  <div class="wrap">
+    <div class="migas"><a href="#inicio">Inicio</a> › <a href="#estructura">Marco jurídico</a> › Constitución Política</div>
+    <h2>Constitución Política de los Estados Unidos Mexicanos</h2>
+    <p class="lead">Promulgada el 5 de febrero de 1917 en Querétaro. Conoce tus derechos humanos, políticos y civiles, las obligaciones ciudadanas y los mecanismos para defenderlos.</p>
+    <div class="cifras">
+      <div><b>136</b><span>Artículos</span></div>
+      <div><b>9</b><span>Títulos</span></div>
+      <div><b>1917</b><span>Promulgación</span></div>
+      <div><b>3</b><span>Poderes de la Unión</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="busca" role="search">
+    <label for="q">Buscar un derecho o artículo</label>
+    <input id="q" type="search" placeholder="Ej. “voto”, “artículo 16”, “educación”, “libertad”…" autocomplete="off">
+    <div class="chips" id="chips">
+      <button class="chip" type="button" data-f="todos" aria-pressed="true">Todos</button>
+      <button class="chip" type="button" data-f="humano" aria-pressed="false">Derechos humanos</button>
+      <button class="chip" type="button" data-f="politico" aria-pressed="false">Derechos políticos</button>
+      <button class="chip" type="button" data-f="civil" aria-pressed="false">Derechos civiles</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="bloque" id="estructura">
+    <div class="titulo-sec"><span class="etq">Marco jurídico</span><h3>Estructura de la Constitución</h3></div>
+    <p class="sub">La Constitución tiene una <b>parte dogmática</b> (los derechos de las personas, Título Primero) y una <b>parte orgánica</b> (cómo se organiza el poder público, Títulos Segundo a Noveno). Toca cada título para ver su contenido.</p>
+    <div class="indice" id="indice"></div>
+  </section>
+
+  <section class="bloque" id="humanos">
+    <div class="titulo-sec"><span class="etq">Título Primero · Capítulo I</span><h3>Derechos humanos y sus garantías</h3></div>
+    <p class="sub">Artículos 1º a 29. Todas las personas en México gozan de estos derechos, sin importar su nacionalidad, edad o condición. Las autoridades deben interpretarlos siempre a favor de la protección más amplia (principio <i>pro persona</i>).</p>
+    <div class="rejilla" data-grupo="humano"></div>
+  </section>
+
+  <section class="bloque" id="politicos">
+    <div class="titulo-sec"><span class="etq">Título Primero · Capítulo IV y Título Segundo</span><h3>Derechos políticos</h3></div>
+    <p class="sub">Corresponden a la ciudadanía: personas mexicanas de 18 años o más con un modo honesto de vivir (art. 34). Permiten participar en las decisiones públicas y en la elección de autoridades.</p>
+    <div class="rejilla" data-grupo="politico"></div>
+  </section>
+
+  <section class="bloque" id="civiles">
+    <div class="titulo-sec"><span class="etq">Libertades y seguridad jurídica</span><h3>Derechos civiles</h3></div>
+    <p class="sub">Protegen la libertad, la vida privada, la igualdad ante la ley y el debido proceso frente a cualquier autoridad.</p>
+    <div class="rejilla" data-grupo="civil"></div>
+  </section>
+
+  <div class="vacio" id="vacio">No se encontraron derechos con esa búsqueda. Prueba con otra palabra o número de artículo.</div>
+
+  <section class="bloque" id="obligaciones">
+    <div class="titulo-sec"><span class="etq">Artículos 31 y 36</span><h3>Obligaciones de mexicanos y ciudadanos</h3></div>
+    <p class="sub">Los derechos van acompañados de deberes con la comunidad y con el Estado.</p>
+    <div class="tabla-wrap">
+      <table>
+        <thead><tr><th>Artículo</th><th>Obligación</th><th>Quién</th></tr></thead>
+        <tbody>
+          <tr><td>31-I</td><td>Hacer que hijas, hijos o pupilos menores de 18 años asistan a la escuela.</td><td>Mexicanos</td></tr>
+          <tr><td>31-II</td><td>Recibir instrucción cívica y militar cuando la ley lo establezca.</td><td>Mexicanos</td></tr>
+          <tr><td>31-III</td><td>Alistarse y servir en los cuerpos de reserva para la defensa de la soberanía.</td><td>Mexicanos</td></tr>
+          <tr><td>31-IV</td><td>Contribuir a los gastos públicos de la Federación, entidades y municipios de manera proporcional y equitativa.</td><td>Mexicanos</td></tr>
+          <tr><td>36-I</td><td>Inscribirse en el catastro municipal e inscribirse en el Registro Nacional de Ciudadanos.</td><td>Ciudadanos</td></tr>
+          <tr><td>36-III</td><td>Votar en las elecciones, consultas populares y procesos de revocación de mandato.</td><td>Ciudadanos</td></tr>
+          <tr><td>36-IV</td><td>Desempeñar los cargos de elección popular para los que haya sido electo.</td><td>Ciudadanos</td></tr>
+          <tr><td>36-V</td><td>Desempeñar cargos concejiles del municipio, funciones electorales y de jurado.</td><td>Ciudadanos</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="bloque" id="defensa">
+    <div class="titulo-sec"><span class="etq">Garantías</span><h3>Cómo defender tus derechos</h3></div>
+    <p class="sub">Si una autoridad viola tus derechos, la Constitución prevé estos medios de defensa.</p>
+    <div class="rejilla">
+      <div class="tarjeta"><span class="art">Arts. 103 y 107</span><h4>Juicio de amparo</h4><p>Se promueve ante tribunales federales contra leyes, actos u omisiones de autoridad que violen derechos humanos. Puede pedirse la suspensión del acto reclamado.</p></div>
+      <div class="tarjeta politico"><span class="art">Art. 102-B</span><h4>Comisiones de Derechos Humanos</h4><p>La Comisión Nacional y las comisiones estatales reciben quejas contra servidores públicos y emiten recomendaciones públicas. La queja es gratuita.</p></div>
+      <div class="tarjeta civil"><span class="art">Art. 99</span><h4>Juicio para la protección de derechos político-electorales</h4><p>Ante el Tribunal Electoral del Poder Judicial de la Federación, cuando se vulnera tu derecho a votar, ser votado o asociarte políticamente.</p></div>
+      <div class="tarjeta"><span class="art">Art. 8</span><h4>Derecho de petición</h4><p>Toda autoridad debe responder por escrito, en breve término, a cualquier petición formulada de manera pacífica y respetuosa.</p></div>
+      <div class="tarjeta politico"><span class="art">Art. 6</span><h4>Acceso a la información</h4><p>Puedes solicitar información pública a cualquier autoridad, partido, sindicato u organismo que reciba recursos públicos.</p></div>
+      <div class="tarjeta civil"><span class="art">Art. 17</span><h4>Acceso a la justicia</h4><p>Tribunales con justicia pronta, completa, imparcial y gratuita, y mecanismos alternativos como la mediación.</p></div>
+    </div>
+    <p class="aviso"><b>Nota:</b> este portal es una guía educativa no oficial con resúmenes en lenguaje ciudadano. Para trámites o consultas jurídicas, revisa el texto vigente publicado en el Diario Oficial de la Federación y en la página de la Cámara de Diputados.</p>
+  </section>
+</main>
+
+<dialog id="modal" aria-labelledby="mTitulo">
+  <header><div><small id="mArt"></small><h4 id="mTitulo"></h4></div><button type="button" id="cerrar" aria-label="Cerrar">×</button></header>
+  <div class="cuerpo"><blockquote id="mCita"></blockquote><ul id="mPuntos"></ul></div>
+</dialog>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <h5>Portal Ciudadano</h5>
+      <p style="margin:0">Guía de la Constitución Política de los Estados Unidos Mexicanos para conocer, ejercer y defender tus derechos.</p>
+    </div>
+    <div>
+      <h5>Secciones</h5>
+      <a href="#estructura">Estructura</a><a href="#humanos">Derechos humanos</a><a href="#politicos">Derechos políticos</a><a href="#civiles">Derechos civiles</a>
+    </div>
+    <div>
+      <h5>Consulta el texto vigente</h5>
+      <a href="https://www.diputados.gob.mx/LeyesBiblio/ref/cpeum.htm" target="_blank" rel="noopener">Cámara de Diputados</a>
+      <a href="https://www.dof.gob.mx/" target="_blank" rel="noopener">Diario Oficial de la Federación</a>
+      <a href="https://www.cndh.org.mx/" target="_blank" rel="noopener">CNDH</a>
+    </div>
+  </div>
+  <div class="legal">Sitio educativo no oficial · Contenido de referencia, no sustituye asesoría legal.</div>
+</footer>
+
+<script>
+const TITULOS = [
+  ["Título Primero", "Derechos humanos, mexicanos, extranjeros y ciudadanos", "Arts. 1–38", ["Cap. I · De los Derechos Humanos y sus Garantías (1–29)", "Cap. II · De los Mexicanos (30–32)", "Cap. III · De las Personas Extranjeras (33)", "Cap. IV · De la Ciudadanía Mexicana (34–38)"]],
+  ["Título Segundo", "Soberanía nacional y forma de gobierno", "Arts. 39–48", ["Cap. I · De la Soberanía Nacional y de la Forma de Gobierno (39–41)", "Cap. II · De las Partes Integrantes de la Federación y del Territorio Nacional (42–48)"]],
+  ["Título Tercero", "División de poderes", "Arts. 49–107", ["Cap. I · De la División de Poderes (49)", "Cap. II · Del Poder Legislativo: Cámara de Diputados y Senado (50–79)", "Cap. III · Del Poder Ejecutivo (80–93)", "Cap. IV · Del Poder Judicial (94–107)"]],
+  ["Título Cuarto", "Responsabilidades de las personas servidoras públicas", "Arts. 108–114", ["Juicio político, declaración de procedencia y Sistema Nacional Anticorrupción"]],
+  ["Título Quinto", "Estados de la Federación y Ciudad de México", "Arts. 115–122", ["Municipio libre (115)", "Organización de los estados (116)", "Ciudad de México (122)"]],
+  ["Título Sexto", "Del trabajo y de la previsión social", "Art. 123", ["Jornada máxima, salario mínimo, seguridad social, sindicatos y huelga"]],
+  ["Título Séptimo", "Prevenciones generales", "Arts. 124–134", ["Laicidad y relación Estado–iglesias (130)", "Supremacía constitucional (133)", "Uso eficiente de recursos públicos (134)"]],
+  ["Título Octavo", "De las reformas a la Constitución", "Art. 135", ["Requiere dos terceras partes del Congreso presentes y la mayoría de las legislaturas locales"]],
+  ["Título Noveno", "De la inviolabilidad de la Constitución", "Art. 136", ["La Constitución conserva su fuerza aun si se interrumpe su observancia por una rebelión"]],
+];
+
+// [grupo, artículo, título, resumen, cita breve, puntos]
+const DERECHOS = [
+  ["humano","1","Igualdad y no discriminación","Todas las personas gozan de los derechos humanos reconocidos en la Constitución y en los tratados internacionales. Queda prohibida la esclavitud y toda discriminación.","En los Estados Unidos Mexicanos todas las personas gozarán de los derechos humanos reconocidos en esta Constitución y en los tratados internacionales…",["Principio pro persona: se aplica la norma más protectora.","Prohíbe discriminar por origen étnico, género, edad, discapacidad, condición social, salud, religión, opiniones, preferencias sexuales o estado civil.","Las autoridades deben promover, respetar, proteger y garantizar los derechos."]],
+  ["humano","2","Derechos de pueblos indígenas y afromexicanos","La Nación tiene una composición pluricultural. Se reconoce la libre determinación y autonomía de los pueblos y comunidades indígenas y afromexicanas.","La Nación Mexicana es única e indivisible, basada en la grandeza de sus pueblos y culturas.",["Derecho a sus sistemas normativos internos.","Preservar y enriquecer sus lenguas y cultura.","Consulta previa sobre medidas que les afecten."]],
+  ["humano","3","Derecho a la educación","Toda persona tiene derecho a la educación. El Estado imparte educación desde inicial hasta superior; la pública es laica y gratuita.","Toda persona tiene derecho a la educación.",["La educación inicial, preescolar, primaria, secundaria y media superior son obligatorias.","La educación pública es gratuita y laica.","Debe ser universal, inclusiva, equitativa y de excelencia."]],
+  ["humano","4","Salud, vivienda, agua, medio ambiente y familia","Reconoce igualdad entre mujeres y hombres y los derechos a la salud, alimentación, agua, medio ambiente sano, vivienda digna, identidad, cultura, deporte y movilidad.","La mujer y el hombre son iguales ante la ley.",["Derecho a decidir de manera libre, responsable e informada sobre el número de hijos.","Interés superior de la niñez.","Pensión para personas adultas mayores y apoyo a personas con discapacidad permanente."]],
+  ["humano","5","Libertad de trabajo","A ninguna persona se le puede impedir que se dedique a la profesión, industria, comercio o trabajo que le acomode, siendo lícitos.","Nadie podrá ser obligado a prestar trabajos personales sin la justa retribución y sin su pleno consentimiento.",["Nadie puede ser privado del producto de su trabajo sino por resolución judicial.","Prohíbe contratos que impliquen pérdida de la libertad."]],
+  ["humano","22","Prohibición de penas crueles","Quedan prohibidas las penas de muerte, mutilación, infamia, marca, azotes, tormento, multas excesivas y confiscación de bienes.","Toda pena deberá ser proporcional al delito que sancione y al bien jurídico afectado.",["Prohíbe la tortura y los tratos inhumanos.","Regula la extinción de dominio sobre bienes de origen ilícito."]],
+  ["humano","29","Límites a la suspensión de derechos","Sólo en caso de invasión o perturbación grave de la paz puede restringirse el ejercicio de derechos, con aprobación del Congreso y por tiempo limitado.","No podrán restringirse ni suspenderse el ejercicio de los derechos a la no discriminación, al reconocimiento de la personalidad jurídica, a la vida…",["Nunca se suspenden: vida, integridad personal, nombre, nacionalidad, derechos de la niñez, libertad de religión, prohibición de tortura y esclavitud.","La Suprema Corte revisa de oficio los decretos."]],
+  ["humano","123","Derecho al trabajo digno","Toda persona tiene derecho al trabajo digno y socialmente útil, con jornada máxima, salario mínimo y seguridad social.","Toda persona tiene derecho al trabajo digno y socialmente útil.",["Jornada máxima de 8 horas (7 la nocturna).","Un día de descanso por cada seis de trabajo.","Derecho a sindicalizarse y a la huelga; reparto de utilidades."]],
+
+  ["politico","34","Ciudadanía mexicana","Son ciudadanas y ciudadanos las personas mexicanas que hayan cumplido 18 años y tengan un modo honesto de vivir.","Son ciudadanas y ciudadanos de la República los varones y mujeres que, teniendo la calidad de mexicanos, reúnan… haber cumplido 18 años.",["La ciudadanía da acceso a los derechos políticos.","Se acredita ordinariamente con la credencial para votar."]],
+  ["politico","35-I","Derecho a votar","Votar en las elecciones populares para elegir a las autoridades federales, estatales y municipales.","Son derechos de la ciudadanía: I. Votar en las elecciones populares.",["El voto es universal, libre, secreto, directo, personal e intransferible (art. 41).","Las personas mexicanas en el extranjero también pueden votar."]],
+  ["politico","35-II","Derecho a ser votado","Poder ser electo para cargos de elección popular, a través de partidos o como candidatura independiente.","Poder ser votada en condiciones de paridad para todos los cargos de elección popular…",["Paridad de género en candidaturas.","Candidaturas independientes con requisitos legales."]],
+  ["politico","35-III","Asociación política","Asociarse individual y libremente para tomar parte en forma pacífica en los asuntos políticos del país.","Asociarse individual y libremente para tomar parte en forma pacífica en los asuntos políticos del país.",["Incluye formar y afiliarse a partidos políticos.","La afiliación es libre e individual (art. 41)."]],
+  ["politico","35-VII","Iniciativa ciudadana","La ciudadanía puede presentar iniciativas de ley ante el Congreso de la Unión.","Iniciar leyes, en los términos y con los requisitos que señalen esta Constitución y la Ley del Congreso.",["Requiere el respaldo de al menos el 0.13% de la lista nominal de electores (art. 71)."]],
+  ["politico","35-VIII","Consulta popular","Votar en consultas populares sobre temas de trascendencia nacional o regional.","Votar en las consultas populares sobre temas de trascendencia nacional o regional.",["No pueden consultarse restricciones a derechos humanos ni la materia electoral o fiscal.","El resultado es vinculante si participa al menos el 40% de la lista nominal."]],
+  ["politico","35-IX","Revocación de mandato","Participar en los procesos de revocación de mandato del titular del Ejecutivo.","Participar en los procesos de revocación de mandato.",["Se solicita con firmas de al menos 3% de la lista nominal.","Para ser vinculante requiere participación de al menos 40%."]],
+  ["politico","35-VI","Acceso a cargos públicos","Poder ser nombrado para cualquier empleo o comisión del servicio público, teniendo las calidades que establezca la ley.","Poder ser nombrado para cualquier empleo o comisión del servicio público…",["Con igualdad de oportunidades y paridad."]],
+  ["politico","39","Soberanía popular","La soberanía nacional reside esencial y originariamente en el pueblo, que tiene en todo tiempo el derecho de alterar o modificar la forma de su gobierno.","La soberanía nacional reside esencial y originariamente en el pueblo.",["Todo poder público dimana del pueblo y se instituye para su beneficio."]],
+  ["politico","40","República democrática","México es una república representativa, democrática, laica y federal, compuesta por estados libres y soberanos y la Ciudad de México.","Es voluntad del pueblo mexicano constituirse en una República representativa, democrática, laica y federal.",["Los estados son libres y soberanos en su régimen interior, unidos en una federación."]],
+
+  ["civil","6","Libertad de expresión e información","La manifestación de las ideas no puede ser objeto de inquisición judicial o administrativa. Toda persona tiene derecho a la información y al acceso a internet.","La manifestación de las ideas no será objeto de ninguna inquisición judicial o administrativa…",["Límites: ataques a la moral, vida privada o derechos de terceros, provocar delito o perturbar el orden público.","Derecho de réplica.","Acceso a tecnologías de la información, banda ancha e internet."]],
+  ["civil","7","Libertad de prensa","Es inviolable la libertad de difundir opiniones, información e ideas a través de cualquier medio. No hay censura previa.","Es inviolable la libertad de difundir opiniones, información e ideas, a través de cualquier medio.",["Ninguna ley ni autoridad puede establecer la previa censura."]],
+  ["civil","9","Reunión y asociación","No se puede coartar el derecho de asociarse o reunirse pacíficamente con cualquier objeto lícito.","No se podrá coartar el derecho de asociarse o reunirse pacíficamente con cualquier objeto lícito…",["Solo la ciudadanía puede reunirse para tomar parte en asuntos políticos.","Las manifestaciones son legítimas si no hay violencia ni amenazas."]],
+  ["civil","11","Libertad de tránsito y asilo","Toda persona puede entrar, salir, viajar y mudar de residencia en el país sin pasaporte ni salvoconducto. Se reconoce el derecho a buscar asilo.","Toda persona tiene derecho para entrar en la República, salir de ella, viajar por su territorio y mudar de residencia…",["Sujeto a autoridades judiciales y administrativas en materia migratoria y de salud.","Reconocimiento de la condición de refugiado."]],
+  ["civil","14","Debido proceso e irretroactividad","Nadie puede ser privado de la libertad, propiedades o derechos sin juicio previo ante tribunales establecidos. Las leyes no se aplican retroactivamente en perjuicio de nadie.","A ninguna ley se dará efecto retroactivo en perjuicio de persona alguna.",["Se deben cumplir las formalidades esenciales del procedimiento.","En materia penal no hay penas por analogía."]],
+  ["civil","16","Privacidad, domicilio y datos personales","Nadie puede ser molestado en su persona, familia, domicilio, papeles o posesiones sin orden escrita, fundada y motivada de autoridad competente.","Nadie puede ser molestado en su persona, familia, domicilio, papeles o posesiones, sino en virtud de mandamiento escrito de la autoridad competente…",["Protección de datos personales: acceso, rectificación, cancelación y oposición (ARCO).","Las comunicaciones privadas son inviolables.","Cateos solo con orden judicial."]],
+  ["civil","17","Acceso a la justicia","Nadie puede hacerse justicia por sí mismo. Los tribunales imparten justicia pronta, completa, imparcial y gratuita.","Ninguna persona podrá hacerse justicia por sí misma, ni ejercer violencia para reclamar su derecho.",["Nadie puede ir a prisión por deudas de carácter puramente civil.","Mecanismos alternativos de solución de controversias."]],
+  ["civil","20","Presunción de inocencia","El proceso penal es acusatorio y oral. Toda persona imputada se presume inocente mientras no se declare su responsabilidad por sentencia.","…A que se presuma su inocencia mientras no se declare su responsabilidad mediante sentencia emitida por el juez de la causa.",["Derecho a guardar silencio y a una defensa adecuada.","Derechos de la víctima a la reparación del daño."]],
+  ["civil","23","Cosa juzgada","Ningún juicio criminal puede tener más de tres instancias y nadie puede ser juzgado dos veces por el mismo delito.","Nadie puede ser juzgado dos veces por el mismo delito, ya sea que en el juicio se le absuelva o se le condene.",["Prohíbe la práctica de absolver de la instancia."]],
+  ["civil","24","Libertad de religión y conciencia","Toda persona tiene derecho a la libertad de convicciones éticas, de conciencia y de religión, y a tener o adoptar la de su agrado.","Toda persona tiene derecho a la libertad de convicciones éticas, de conciencia y de religión…",["El Congreso no puede dictar leyes que establezcan o prohíban religión alguna.","Los actos de culto público se celebran ordinariamente en templos."]],
+  ["civil","12","Igualdad sin títulos de nobleza","En México no se conceden títulos de nobleza ni prerrogativas y honores hereditarios.","En los Estados Unidos Mexicanos no se concederán títulos de nobleza, ni prerrogativas y honores hereditarios…",["Refuerza la igualdad de todas las personas ante la ley."]],
+  ["civil","27","Derecho de propiedad","La propiedad de tierras y aguas corresponde originariamente a la Nación, que puede transmitir su dominio a particulares constituyendo la propiedad privada.","La propiedad de las tierras y aguas… corresponde originariamente a la Nación…",["Las expropiaciones solo por causa de utilidad pública y mediante indemnización.","Reconoce la propiedad ejidal y comunal."]],
+];
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+$("#indice").innerHTML = TITULOS.map(([t, nombre, arts, caps], i) =>
+  `<details class="titulo"${i === 0 ? " open" : ""}><summary><span>${t}</span><span style="font-weight:500">${nombre}</span><small>${arts}</small></summary><ul>${caps.map((c) => `<li>${c}</li>`).join("")}</ul></details>`
+).join("");
+
+document.querySelectorAll(".rejilla[data-grupo]").forEach((rej) => {
+  const g = rej.dataset.grupo;
+  rej.innerHTML = DERECHOS.map((d, i) => d[0] !== g ? "" :
+    `<article class="tarjeta ${g}" data-i="${i}"><span class="art">Artículo ${d[1]}</span><h4>${esc(d[2])}</h4><p>${esc(d[3])}</p><button type="button" data-i="${i}">Leer más →</button></article>`
+  ).join("");
+});
+
+let filtro = "todos";
+function aplicar() {
+  const q = norm($("#q").value.trim()).replace(/^art(iculo|\.)?\s*/, "");
+  let visibles = 0;
+  document.querySelectorAll(".rejilla[data-grupo]").forEach((rej) => {
+    const grupoOk = filtro === "todos" || rej.dataset.grupo === filtro;
+    let n = 0;
+    rej.querySelectorAll(".tarjeta").forEach((card) => {
+      const d = DERECHOS[card.dataset.i];
+      const texto = norm([d[1], d[2], d[3], d[4], ...d[5]].join(" "));
+      const ok = grupoOk && (!q || texto.includes(q) || d[1].split("-")[0] === q);
+      card.hidden = !ok;
+      if (ok) n++;
+    });
+    rej.closest("section").hidden = n === 0;
+    visibles += n;
+  });
+  $("#vacio").style.display = visibles ? "none" : "block";
+}
+$("#q").addEventListener("input", aplicar);
+$("#chips").addEventListener("click", (e) => {
+  const b = e.target.closest(".chip");
+  if (!b) return;
+  filtro = b.dataset.f;
+  document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
+  aplicar();
+});
+
+const modal = $("#modal");
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".tarjeta button[data-i]");
+  if (!b) return;
+  const d = DERECHOS[b.dataset.i];
+  $("#mArt").textContent = "Artículo " + d[1] + " constitucional";
+  $("#mTitulo").textContent = d[2];
+  $("#mCita").textContent = "“" + d[4] + "”";
+  $("#mPuntos").innerHTML = d[5].map((p) => `<li>${esc(p)}</li>`).join("");
+  modal.showModal();
+});
+$("#cerrar").addEventListener("click", () => modal.close());
+modal.addEventListener("click", (e) => { if (e.target === modal) modal.close(); });
+
+$("#btnMenu").addEventListener("click", () => {
+  const m = $("#menu");
+  m.classList.toggle("abierto");
+  $("#btnMenu").setAttribute("aria-expanded", String(m.classList.contains("abierto")));
+});
+$("#menu").addEventListener("click", (e) => { if (e.target.tagName === "A") $("#menu").classList.remove("abierto"); });
+
+$("#btnTema").addEventListener("click", () => {
+  const root = document.documentElement;
+  const oscuro = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = oscuro ? "light" : "dark";
+  try { localStorage.setItem("tema-constitucion", root.dataset.theme); } catch {}
+});
+try { const t = localStorage.getItem("tema-constitucion"); if (t) document.documentElement.dataset.theme = t; } catch {}
+
+$("#fecha").textContent = new Date().toLocaleDateString("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
+// Secuencia de acceso
+const pasos = ["Estableciendo conexión segura…", "Verificando certificado TLS…", "Cargando marco jurídico…", "Cargando Título Primero: derechos humanos…", "Preparando portal ciudadano…", "Acceso concedido ✓"];
+let p = 0;
+const timer = setInterval(() => {
+  p++;
+  $("#progreso").style.width = Math.min(100, (p / pasos.length) * 100) + "%";
+  $("#estadoAcceso").textContent = pasos[Math.min(p, pasos.length - 1)];
+  if (p >= pasos.length) { clearInterval(timer); setTimeout(() => $("#acceso").classList.add("fuera"), 450); }
+}, 420);
+</script>
+</body>
+</html>
