@@ -1140,3 +1140,71 @@ body.tm-fs-lock { overflow: hidden; }
 .tm-toast b { margin-right: 6px; }
 .tm-toast.gone { opacity: 0; transition: .4s; }
 @keyframes tmToast { from { opacity: 0; transform: translateX(-50%) translateY(-8px); } }
+
+/* ===================================================================
+   NIKOLAI GRANJA — agricultura (tierras, semillas, cosecha)
+   =================================================================== */
+.fm-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.fm-brand b { font-size: 19px; letter-spacing: .5px; color: #7dd36b; display: block; }
+.fm-brand span { font-size: 11px; color: var(--ice-dim); }
+.fm-wallet { background: var(--glass); border: 1px solid var(--line); border-radius: 99px; padding: 7px 14px; font-size: 14px; }
+.fm-wallet b { color: var(--gold); } .fm-coin { color: var(--gold); }
+.fm-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.fm-tab { flex: 1 1 auto; min-width: 80px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass); color: var(--ice-dim); font: inherit; font-size: 13px; cursor: pointer; }
+.fm-tab.on { background: #4e9c3a; color: #fff; border-color: #4e9c3a; font-weight: 700; }
+.fm-body { display: flex; flex-direction: column; gap: 12px; }
+/* parcelas */
+.fm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.fm-plot { position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 6px; cursor: pointer;
+  background: linear-gradient(#6b8e4e, #3f5d2e); display: flex; flex-direction: column; align-items: center; gap: 4px; transition: transform .1s, box-shadow .15s; aspect-ratio: 1 / 1.05; }
+.fm-plot:hover { transform: translateY(-2px); }
+.fm-plot.empty { background: linear-gradient(#7a6a4a, #4a3a26); }
+.fm-plot.ready { box-shadow: 0 0 0 2px #ffd24d, 0 0 18px rgba(255,210,77,.5); animation: fmBounce 1.2s ease-in-out infinite; }
+@keyframes fmBounce { 50% { transform: translateY(-3px); } }
+.fm-soil { width: 100%; flex: 1; display: grid; place-items: center; min-height: 0; }
+.fm-soil svg { width: 70%; height: 100%; max-height: 72px; }
+.fm-crop .fm-plant { transform-origin: 30px 61px; transform: scaleY(calc(.25 + var(--g) * .75)); transition: transform .4s; }
+.fm-crop .fm-fruit { opacity: calc((var(--g) - .7) * 3.3); transition: opacity .4s; }
+.fm-crop.mini { width: 40px; height: 44px; }
+.fm-crop.mini .fm-plant { transform: scaleY(1); } .fm-crop.mini .fm-fruit { opacity: 1; }
+.fm-prog { width: 100%; height: 5px; background: rgba(0,0,0,.35); border-radius: 3px; overflow: hidden; }
+.fm-prog i { display: block; height: 100%; background: linear-gradient(90deg, #8bd36b, #ffd24d); transition: width .9s linear; }
+.fm-plabel { font-size: 10px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.fm-plabel.fm-dim { color: rgba(255,255,255,.7); }
+.fm-pname { font-size: 10px; color: #fff; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.fm-plot.ready .fm-plabel { color: #241a05; background: #ffd24d; border-radius: 6px; padding: 0 6px; font-weight: 800; }
+.fm-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.fm-hint { font-size: 11px; color: var(--ice-dim); margin: 0; line-height: 1.5; }
+/* picker */
+.fm-picker { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(0,0,0,.5); padding: 14px; }
+.fm-picker[hidden] { display: none; }
+.fm-card { background: var(--bg-1, #12114a); border: 1px solid var(--line); border-radius: 16px; padding: 16px; max-width: 420px; width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.fm-card > b { color: #8bd36b; }
+.fm-seedgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
+.fm-seed { background: var(--glass); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; cursor: pointer; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 2px; font: inherit; }
+.fm-seed:hover { border-color: #8bd36b; }
+.fm-seed small { font-size: 11px; } .fm-seed em { font-size: 10px; color: var(--ice-dim); font-style: normal; }
+.fm-seedart svg { width: 42px; height: 46px; }
+/* tienda / mercado */
+.fm-store { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.fm-item { display: flex; align-items: center; gap: 10px; background: var(--glass); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+.fm-itemart { flex: none; width: 46px; height: 50px; display: grid; place-items: center; background: rgba(0,0,0,.2); border-radius: 10px; }
+.fm-itemart svg { width: 40px; height: 46px; }
+.fm-iteminfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fm-iteminfo b { font-size: 14px; } .fm-iteminfo small { font-size: 11px; color: var(--ice-dim); }
+.fm-item .nw-mini { flex: none; }
+.fm-dim { color: var(--ice-dim); }
+.fm-card2 { background: var(--glass); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.fm-ph { font-size: 12px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: #8bd36b; }
+.fm-grow { flex: 1; }
+/* agrónomo */
+.fm-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.fm-chip { background: var(--glass); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font: inherit; font-size: 12px; color: var(--ice); cursor: pointer; }
+.fm-chip:hover { border-color: #8bd36b; }
+.fm-askrow { display: flex; gap: 6px; }
+.fm-ask { flex: 1; }
+.fm-ai { background: rgba(0,0,0,.22); border: 1px solid var(--line-faint); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; color: #d9f0cf; min-height: 20px; }
+.fm-ai:empty { display: none; }
+.fm-toast { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 40; background: #4e9c3a; color: #fff; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 99px; box-shadow: 0 6px 20px rgba(0,0,0,.5); animation: fmToast .3s; }
+.fm-toast.gone { opacity: 0; transition: .4s; }
+@keyframes fmToast { from { opacity: 0; transform: translateX(-50%) translateY(8px); } }

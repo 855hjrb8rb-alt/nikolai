@@ -26,6 +26,7 @@ import { watchOpeningBell, ringBell, exchangeStatus, EXCHANGES } from "./wallstr
 import { memory, renderMemory, addMemory, forgetMatching, memoriesForBrain } from "./memory.js";
 import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
 import { renderTerminal, termSummary, stopTerminal } from "./terminal.js";
+import { renderFarm, farmSummary, stopFarm } from "./farm.js";
 import {
   profile, daysToBirthday, renderProfile, renderSos, dial, shareLocation, renderWeather, weather, loadWeather, wmo,
   weatherSentence, renderTools, timer, startTimer, fmtTime, renderNews, calc,
@@ -86,6 +87,7 @@ const ICON = {
   projects: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
   bots: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4M9 13h.01M15 13h.01M9.5 16.5h5M3 12v3M21 12v3"/><circle cx="12" cy="3.5" r="1"/>',
   terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 2.5L7 14M12.5 14h4"/>',
+  farm: '<path d="M12 21V11M12 11c0-2.5-2-4.5-4.5-4.5M12 11c0-2 1.6-3.6 3.6-3.6M4 21h16M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>',
   watch: '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4M10 8.5v5l4.5-2.5z"/>',
   studio: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 15.5l-5-5-9 8.5"/><path d="M17.5 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>',
   persona: '<circle cx="8" cy="9" r="3.2"/><path d="M2.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="7.5" r="2.7"/><path d="M14.5 12.6c.6-.2 1.3-.3 2-.3 2.4 0 4.3 1.6 4.9 4.4"/>',
@@ -195,12 +197,12 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.22-a";
+const APP_VERSION = "2026.10.22-b";
 const MODULES = [
-  "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
+  "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "farm", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
 ];
-const WIDE = new Set(["bots", "terminal", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
+const WIDE = new Set(["bots", "terminal", "farm", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -245,6 +247,7 @@ function cardBody(id) {
     case "music": return `<p class="desc" data-bind="musicNow" style="flex:1"></p><div class="stats">${stat("sp_account", "musicAccount")}${stat("sp_device", "musicDevice", "accent")}</div>`;
     case "markets": return spark("btc", "BTC") + `<div class="stats">${stat("btc", "btcPrice")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
     case "terminal": return `<div class="big-code mono" data-bind="tmBtc">—</div><div class="stats">${stat("tm_cmd", "tmHint")}${stat("ex_nyse", "nyseState", "accent")}</div>`;
+    case "farm": return `<div class="big-code mono" data-bind="fmMoneyK">—</div><div class="stats">${stat("fm_ready", "fmReady")}${stat("fm_plots", "fmPlots", "accent")}</div>`;
     case "bots": return `<div class="big-code mono bot-code" data-bind="botActive">0</div><div class="stats">${stat("bot_status", "botState")}${stat("bot_pnlK", "botPnl", "accent")}</div>`;
     case "watch": return `<p class="desc" data-bind="wtInfo" style="flex:1"></p><div class="stats">${stat("wt_now", "wtNow")}${stat("wt_minute", "wtMin", "accent")}</div>`;
     case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
@@ -346,6 +349,9 @@ function values() {
     btcPrice: btc ? fmtMoney(btc.price) : "—",
     tmBtc: termSummary().price,
     tmHint: "<GO>",
+    fmMoneyK: "$" + Math.round(farmSummary().money).toLocaleString("en-US"),
+    fmReady: String(farmSummary().ready),
+    fmPlots: String(farmSummary().plots),
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
     personaName: t("personaShort_" + settings.persona),
@@ -457,6 +463,7 @@ function openPanel(id) {
   if (!MODULES.includes(id)) return;
   if (openId === "bots" && id !== "bots") stopBots();
   if (openId === "terminal" && id !== "terminal") stopTerminal();
+  if (openId === "farm" && id !== "farm") stopFarm();
   clearInterval(panelTimer);
   openId = id;
   setFocus(MODULES.indexOf(id));
@@ -474,6 +481,7 @@ function closePanel() {
   clearInterval(panelTimer);
   if (openId === "bots") stopBots();
   if (openId === "terminal") stopTerminal();
+  if (openId === "farm") stopFarm();
   openId = null;
   ui.panel.hidden = true;
   ui.stage.classList.remove("dimmed");
@@ -695,6 +703,9 @@ const PANEL = {
 
   terminal(body) {
     renderTerminal(body, { ...moduleCtx(), lang: getLang() });
+  },
+  farm(body) {
+    renderFarm(body, { ...moduleCtx(), lang: getLang() });
   },
   markets(body) {
     renderMarkets(body, {
