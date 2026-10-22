@@ -3,13 +3,13 @@
 // - Recursos externos pesados (detector de manos, fuentes, fórmulas): caché primero.
 // - «Preparar modo sin conexión» descarga por adelantado esos recursos externos.
 
-const SHELL = "nikolai-shell-v32";
+const SHELL = "nikolai-shell-v33";
 const ASSETS = "nikolai-assets-v1";
 
 const SHELL_FILES = [
   "./", "index.html", "style.css", "manifest.webmanifest", "icon.svg", "vendor/anthropic-sdk.mjs",
   "js/app.js", "js/brain.js", "js/brain-core.js", "js/extras.js", "js/gestures.js", "js/i18n.js", "js/markets.js",
-  "js/md.js", "js/memory.js", "js/offline.js", "js/spotify.js", "js/study.js", "js/voice.js", "js/wallstreet.js", "js/weather.js", "js/news.js", "js/business.js", "js/call.js", "js/studio.js", "js/watch.js", "js/bots.js", "js/terminal.js", "js/farm.js",
+  "js/md.js", "js/memory.js", "js/offline.js", "js/spotify.js", "js/study.js", "js/voice.js", "js/wallstreet.js", "js/weather.js", "js/news.js", "js/business.js", "js/call.js", "js/studio.js", "js/watch.js", "js/bots.js", "js/terminal.js",
 ];
 
 const VISION = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";

@@ -21,7 +21,14 @@ const TAPE = [
   { proName: "FX_IDC:USDMXN", title: "USD/MXN" }, { proName: "FX:EURUSD", title: "EUR/USD" },
   { proName: "BINANCE:BTCUSDT", title: "Bitcoin" }, { proName: "BINANCE:ETHUSDT", title: "Ether" },
 ];
-const FUNCS = { HELP: "help", H: "help", "?": "help", MON: "home", HOME: "home", TOP: "news", N: "news", NEWS: "news", WEI: "wei", DES: "des", GP: "gp", GIP: "gp", Q: "quote", CLR: "home", HEAT: "heat", HM: "heat", CAL: "cal", ECO: "cal", SCR: "scr", FX: "fx", CONV: "conv", WATCH: "watch", WL: "watch", ALERT: "alerts", AL: "alerts", FS: "fs" };
+// Mercado agrícola: materias primas (TradingView) con su símbolo y unidad.
+const AGRI = [
+  { s: "CBOT:ZC1!", d: "Maíz", u: "¢/bu" }, { s: "CBOT:ZW1!", d: "Trigo", u: "¢/bu" }, { s: "CBOT:ZS1!", d: "Soja", u: "¢/bu" },
+  { s: "CBOT:ZR1!", d: "Arroz", u: "$/cwt" }, { s: "CBOT:ZO1!", d: "Avena", u: "¢/bu" }, { s: "ICEUS:KC1!", d: "Café", u: "¢/lb" },
+  { s: "ICEUS:SB1!", d: "Azúcar", u: "¢/lb" }, { s: "ICEUS:CT1!", d: "Algodón", u: "¢/lb" }, { s: "ICEUS:CC1!", d: "Cacao", u: "$/t" },
+  { s: "ICEUS:OJ1!", d: "Jugo naranja", u: "¢/lb" }, { s: "CME:LE1!", d: "Ganado", u: "¢/lb" }, { s: "CME:HE1!", d: "Cerdo", u: "¢/lb" },
+];
+const FUNCS = { HELP: "help", H: "help", "?": "help", MON: "home", HOME: "home", TOP: "news", N: "news", NEWS: "news", WEI: "wei", DES: "des", GP: "gp", GIP: "gp", Q: "quote", CLR: "home", HEAT: "heat", HM: "heat", CAL: "cal", ECO: "cal", SCR: "scr", FX: "fx", CONV: "conv", WATCH: "watch", WL: "watch", ALERT: "alerts", AL: "alerts", FS: "fs", AGRO: "agro", AGRI: "agro", COMM: "agro", AG: "agro" };
 const TFS = [["1H", "60"], ["1D", "D"], ["1S", "W"], ["1M", "M"]];
 
 const TKEY = "nikolai.term";
@@ -44,7 +51,7 @@ export function renderTerminal(body, ctx) {
   Promise.resolve(loadFearGreed()).catch(() => {});
   if (!news.items.length) Promise.resolve(loadFeed(ctx.lang)).catch(() => {});
   const { t, esc } = ctx;
-  const menu = [["1", "HELP"], ["2", "MON"], ["3", "WEI"], ["4", "HEAT"], ["5", "SCR"], ["6", "CAL"], ["7", "FX"], ["8", "CONV"], ["9", "WATCH"], ["10", "NEWS"]];
+  const menu = [["1", "HELP"], ["2", "MON"], ["3", "WEI"], ["4", "HEAT"], ["5", "AGRO"], ["6", "SCR"], ["7", "CAL"], ["8", "FX"], ["9", "CONV"], ["10", "WATCH"]];
   body.innerHTML = `
     <div class="tm">
       <div class="tm-head">
@@ -154,7 +161,7 @@ function exec(raw) {
     const fn = FUNCS[first];
     if (fn === "des" || fn === "gp" || fn === "quote") { if (tokens[1]) state.sym = tokens[1]; return ({ des, gp, quote }[fn])(); }
     if (fn === "fs") return toggleFs();
-    return ({ help, home, news: newsView, wei, heat, cal, scr, fx, conv: convertView, watch: watchView, alerts: alertView }[fn])();
+    return ({ help, home, news: newsView, wei, heat, cal, scr, fx, agro, conv: convertView, watch: watchView, alerts: alertView }[fn])();
   }
   if (/^[A-Z0-9.:/-]{1,12}$/.test(first)) {
     state.sym = first;
@@ -418,7 +425,7 @@ function help() {
   const { t, esc } = ctxRef;
   const rows = [
     ["AAPL", t("tm_h_sym")], ["BTC", t("tm_h_crypto")], ["DES AAPL", t("tm_h_des")], ["GP TSLA", t("tm_h_gp")],
-    ["WEI", t("tm_h_wei")], ["HEAT", t("tm_h_heat")], ["SCR", t("tm_h_scr")], ["CAL", t("tm_h_cal")],
+    ["WEI", t("tm_h_wei")], ["AGRO", t("tm_h_agro")], ["HEAT", t("tm_h_heat")], ["SCR", t("tm_h_scr")], ["CAL", t("tm_h_cal")],
     ["FX", t("tm_h_fx")], ["CONV 2 BTC USD", t("tm_h_conv")], ["W AAPL", t("tm_h_watch")], ["ALERT BTC 70000", t("tm_h_alert")],
     ["TOP / N", t("tm_h_news")], ["MON", t("tm_h_mon")], ["Q BTC", t("tm_h_q")], ["FS", t("tm_h_fs")],
     [t("tm_h_freeHdr"), t("tm_h_free")],
@@ -473,6 +480,25 @@ function fx() {
   tvWidget(bodyRef.querySelector("#tmFx"), "forex-cross-rates", { currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "CAD", "MXN", "CNY"], isTransparent: true, colorTheme: "dark", width: "100%", height: "100%", locale: ctxRef.lang || "es" });
 }
 function offline() { const m = bodyRef?.querySelector(".tm-grow div[id]"); if (m) m.innerHTML = `<div class="tm-dim mono" style="padding:16px">${esc2(ctxRef.t("tm_offline"))}</div>`; }
+// ---------- Mercado agrícola ----------
+function agro() {
+  const { t, esc } = ctxRef;
+  out(`<div class="tm-sechead"><b>AGRO</b> <span class="tm-dim">${esc(t("tm_agriMkt"))}</span></div>
+    <div class="tm-two">
+      <div class="tm-panel"><div class="tm-ph">${esc(t("tm_commodities"))}</div>
+        <div class="tm-thead mono"><span>CULTIVO</span><span>SÍMBOLO</span><span>UNIDAD</span></div>
+        <div class="tm-mon mono">${AGRI.map((a) => `<div class="tm-trow" data-cmd="GP ${esc(a.s)}"><span class="tm-sym">${esc(a.d)}</span><span class="tm-dim">${esc(a.s.split(":")[1] || a.s)}</span><span class="tm-dim">${esc(a.u)}</span></div>`).join("")}</div></div>
+      <div class="tm-panel"><div class="tm-ph">${esc(t("tm_agriTape"))}</div><div id="tmAgT" style="height:360px"></div></div>
+    </div>
+    <div class="tm-panel tm-grow"><div class="tm-ph">AGRO · ${esc(t("tm_agriOverview"))}</div><div id="tmAgO" style="height:320px"></div></div>
+    <p class="tm-dim mono" style="padding:2px 4px">${esc(t("tm_agriHint"))}</p>`);
+  if (!navigator.onLine) return offline();
+  tvWidget(bodyRef.querySelector("#tmAgT"), "tickers", { symbols: AGRI.map((a) => ({ proName: a.s, title: a.d })), isTransparent: true, colorTheme: "dark", locale: ctxRef.lang || "es" });
+  tvWidget(bodyRef.querySelector("#tmAgO"), "market-overview", { colorTheme: "dark", showChart: true, isTransparent: true, dateRange: "1D", locale: ctxRef.lang || "es",
+    tabs: [{ title: t("tm_grains"), symbols: [{ s: "CBOT:ZC1!", d: "Maíz" }, { s: "CBOT:ZW1!", d: "Trigo" }, { s: "CBOT:ZS1!", d: "Soja" }, { s: "CBOT:ZR1!", d: "Arroz" }, { s: "CBOT:ZO1!", d: "Avena" }] },
+      { title: t("tm_soft"), symbols: [{ s: "ICEUS:KC1!", d: "Café" }, { s: "ICEUS:SB1!", d: "Azúcar" }, { s: "ICEUS:CT1!", d: "Algodón" }, { s: "ICEUS:CC1!", d: "Cacao" }, { s: "ICEUS:OJ1!", d: "Jugo naranja" }] },
+      { title: t("tm_livestock"), symbols: [{ s: "CME:LE1!", d: "Ganado" }, { s: "CME:HE1!", d: "Cerdo" }, { s: "CME:GF1!", d: "Becerros" }] }] });
+}
 
 // ---------- Convertidor ----------
 const priceUSD = (sym) => { if (sym === "USD" || sym === "USDT" || sym === "USDC") return 1; const p = market.live[`${sym}USDT`]?.price; if (p) return p; const c = coinOf(sym); return c?.price || null; };
