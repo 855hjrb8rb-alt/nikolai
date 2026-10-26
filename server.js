@@ -55,6 +55,7 @@ const MIME = {
   ".wasm": "application/wasm",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  ".jpg": "image/jpeg",
   ".ico": "image/x-icon",
 };
 

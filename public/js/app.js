@@ -169,7 +169,7 @@ function setPersona(p, announce) {
 function noviaCard() {
   const photo = store.get("noviaPhoto", "");
   return `
-    <div class="novia-face">${photo ? `<img src="${photo}" alt="">` : `<span class="mono">${esc(t("novia_noPhoto"))}</span>`}</div>
+    <div class="novia-face"><img src="${photo || NOVIA_DEFAULT}" alt=""></div>
     <label class="novia-field"><span class="mono">${esc(t("novia_name"))}</span><input data-target data-nv="noviaName" maxlength="40" value="${esc(settings.noviaName)}"></label>
     <label class="novia-field"><span class="mono">${esc(t("novia_pet"))}</span><input data-target data-nv="noviaPet" maxlength="40" value="${esc(settings.noviaPet)}"></label>
     <label class="novia-field"><span class="mono">${esc(t("novia_about"))}</span><textarea data-target data-nv="noviaAbout" maxlength="600" rows="2" placeholder="${esc(t("novia_aboutPh"))}">${esc(settings.noviaAbout)}</textarea></label>
@@ -211,15 +211,18 @@ function bindNoviaCard(body) {
   });
   body.querySelector("[data-nv-del]")?.addEventListener("click", () => {
     store.set("noviaPhoto", ""); store.set("noviaFace", null);
-    portrait.set("");
+    portrait.set(NOVIA_DEFAULT).catch(() => {});
     refreshPanel();
   });
 }
 
 // Cara de la novia: la foto que sube el usuario, animada (los puntos de la cara se guardan).
 const portrait = new Portrait();
+// Si no subió ninguna, se usa la cara por defecto (img/novia.jpg).
+const NOVIA_DEFAULT = "img/novia.jpg";
 const noviaPhoto = store.get("noviaPhoto", "");
-if (noviaPhoto) portrait.set(noviaPhoto, store.get("noviaFace", null)).then((f) => f && store.set("noviaFace", f)).catch(() => {});
+portrait.set(noviaPhoto || NOVIA_DEFAULT, noviaPhoto ? store.get("noviaFace", null) : null)
+  .then((f) => noviaPhoto && f && store.set("noviaFace", f)).catch(() => {});
 const call = new CallView({
   t, esc, icon, jfkPhoto: JFK_PHOTO, portrait,
   getState: () => state,

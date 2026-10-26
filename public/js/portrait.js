@@ -12,8 +12,8 @@ const FACE_MODEL =
 // Índices de la malla de 478 puntos de MediaPipe.
 const IDX = {
   eyes: [
-    { l: 33, r: 133, up: 159, low: 145 },
-    { l: 362, r: 263, up: 386, low: 374 },
+    { l: 33, r: 133, up: 159, low: 145, brow: 52 },
+    { l: 362, r: 263, up: 386, low: 374, brow: 282 },
   ],
   mouth: { l: 61, r: 291, up: 13, low: 14 },
   chin: 152, top: 10, cheeks: [50, 280],
@@ -39,7 +39,7 @@ export async function detectFace(img) {
   if (!pts) return null;
   const p = (i) => ({ x: pts[i].x, y: pts[i].y });
   return {
-    eyes: IDX.eyes.map((e) => ({ l: p(e.l), r: p(e.r), up: p(e.up), low: p(e.low) })),
+    eyes: IDX.eyes.map((e) => ({ l: p(e.l), r: p(e.r), up: p(e.up), low: p(e.low), brow: p(e.brow) })),
     mouth: { l: p(IDX.mouth.l), r: p(IDX.mouth.r), up: p(IDX.mouth.up), low: p(IDX.mouth.low) },
     chin: p(IDX.chin), top: p(IDX.top), cheeks: IDX.cheeks.map(p),
   };
@@ -79,6 +79,8 @@ export class Portrait {
     this.work = document.createElement("canvas");
     this.layer = document.createElement("canvas");
     this.blinkAt = performance.now() + 1500;
+    // Cabeza: mira a distintos lados, ladea e inclina; se mueve suave hacia cada objetivo.
+    this.head = { x: 0, y: 0, r: 0, tx: 0, ty: 0, tr: 0, next: 0 };
   }
 
   get ready() { return Boolean(this.img); }
@@ -111,7 +113,9 @@ export class Portrait {
 
     if (f) {
       const k = Math.max(0.3, st.intensity || 0.5);
-      this.#mouth(wg, f, st.mouth);
+      // Al llorar, la barbilla tiembla y la boca se entreabre en sollozos.
+      const sob = st.mood === "crying" ? Math.max(0, Math.sin(T * 5.5)) * 0.25 * k + Math.random() * 0.04 : 0;
+      this.#mouth(wg, f, Math.max(st.mouth || 0, sob));
       const lid = Math.min(1, Math.max(this.#blink(now), (MOOD_LIDS[st.mood] || 0) * k));
       for (const e of f.eyes) this.#lid(wg, e, lid);
       this.#mood(wg, f, st.mood, k, T);
@@ -126,11 +130,24 @@ export class Portrait {
     const sx = Math.min(W - sw, Math.max(0, fx - sw / 2));
     const sy = Math.min(H - sh, Math.max(0, fy - sh / 2));
 
-    // Respiración, balanceo y un leve asentir mientras habla.
-    const scale = (w / sw) * (1.03 + Math.sin(T * 1.5) * 0.004);
-    const rot = Math.sin(T * 0.37) * 0.007 + Math.sin(T * 0.91) * 0.003;
-    const dx = Math.sin(T * 0.5) * faceH * 0.006;
-    const dy = Math.sin(T * 1.5) * faceH * 0.004 - (st.mouth || 0) * faceH * 0.005;
+    // Movimiento de cabeza: mira a los lados, ladea, asiente al hablar y reacciona a su emoción.
+    const hd = this.head;
+    if (now > hd.next) {
+      const talk = (st.mouth || 0) > 0.05;
+      hd.tx = (Math.random() - 0.5) * (talk ? 0.03 : 0.05);
+      hd.ty = (Math.random() - 0.5) * 0.02;
+      hd.tr = (Math.random() - 0.5) * (talk ? 0.05 : 0.07);
+      if (st.mood === "sad" || st.mood === "crying" || st.mood === "missing") { hd.ty += 0.025; hd.tr *= 0.5; }
+      if (st.mood === "jealous" || st.mood === "annoyed") { hd.tx = (Math.random() < 0.5 ? -1 : 1) * 0.03; hd.tr = -Math.sign(hd.tx) * 0.05; }
+      if (st.mood === "playful" || st.mood === "loving") hd.tr = (Math.random() < 0.5 ? -1 : 1) * 0.06;
+      hd.next = now + 1800 + Math.random() * 3500;
+    }
+    hd.x += (hd.tx - hd.x) * 0.03; hd.y += (hd.ty - hd.y) * 0.03; hd.r += (hd.tr - hd.r) * 0.03;
+    const sobbing = st.mood === "crying" ? Math.abs(Math.sin(T * 5.5)) * 0.006 : 0;
+    const scale = (w / sw) * (1.04 + Math.sin(T * 1.5) * 0.004);
+    const rot = hd.r + Math.sin(T * 0.37) * 0.006;
+    const dx = (hd.x + Math.sin(T * 0.5) * 0.005) * faceH;
+    const dy = (hd.y + Math.sin(T * 1.5) * 0.004 + sobbing) * faceH - (st.mouth || 0) * faceH * 0.012 * Math.abs(Math.sin(T * 3.1));
     g.save();
     g.beginPath(); g.rect(x, y, w, h); g.clip();
     g.translate(x + w / 2, y + h / 2);
@@ -149,7 +166,7 @@ export class Portrait {
   #px(face, W, H) {
     const q = (p) => ({ x: p.x * W, y: p.y * H });
     return {
-      eyes: face.eyes.map((e) => ({ l: q(e.l), r: q(e.r), up: q(e.up), low: q(e.low) })),
+      eyes: face.eyes.map((e) => ({ l: q(e.l), r: q(e.r), up: q(e.up), low: q(e.low), brow: e.brow ? q(e.brow) : null })),
       mouth: { l: q(face.mouth.l), r: q(face.mouth.r), up: q(face.mouth.up), low: q(face.mouth.low) },
       chin: q(face.chin), top: q(face.top), cheeks: face.cheeks.map(q),
     };
@@ -210,6 +227,17 @@ export class Portrait {
     const gr = wg.createRadialGradient(cx, my, 0, cx, my, mw * 0.36);
     gr.addColorStop(0, "#5a2628"); gr.addColorStop(0.6, "#3a1517"); gr.addColorStop(1, "#24090b");
     wg.fillStyle = gr; wg.fill();
+    // Lengua: asoma en la parte de abajo cuando la boca se abre bastante.
+    if (bot - top > mw * 0.05) {
+      wg.save();
+      wg.clip();
+      const th = (bot - top) * 0.5;
+      const tg = wg.createRadialGradient(cx, bot - th * 0.3, 0, cx, bot - th * 0.3, mw * 0.26);
+      tg.addColorStop(0, "#c8646b"); tg.addColorStop(0.7, "#a04650"); tg.addColorStop(1, "#6e2730");
+      wg.fillStyle = tg;
+      wg.beginPath(); wg.ellipse(cx, bot - th * 0.15, mw * 0.24, th, tilt, Math.PI, 0); wg.fill();
+      wg.restore();
+    }
     wg.filter = "none";
     if (closed) {
       wg.clip();
@@ -238,11 +266,13 @@ export class Portrait {
     const cx = (e.l.x + e.r.x) / 2;
     const top = e.up.y, bot = e.low.y;
     const eh = Math.max(ew * 0.18, bot - top);
-    const srcTop = top - eh * 1.5, srcH = eh * 1.1;
+    // Piel del párpado: entre la ceja y el ojo, sin tocar la ceja.
+    const gap = e.brow ? Math.max(eh * 0.5, top - e.brow.y) : eh * 1.2;
+    const srcTop = top - gap * 0.6, srcH = gap * 0.45;
     const lidY = top + b * (bot - top) * 1.08;
     const lg = this.#clearLayer();
     lg.drawImage(this.img, cx - ew * 0.7, srcTop, ew * 1.4, srcH, cx - ew * 0.7, srcTop, ew * 1.4, lidY - srcTop);
-    this.#feather(lg, cx, (srcTop + lidY) / 2 + eh * 0.2, ew * 0.66, (lidY - srcTop) / 2 + eh * 0.55, 0.6);
+    this.#feather(lg, cx, (srcTop + lidY) / 2 + eh * 0.1, ew * 0.66, (lidY - srcTop) / 2 + eh * 0.35, 0.6);
     wg.drawImage(this.layer, 0, 0);
     // Línea de pestañas en el borde del párpado.
     wg.save();
@@ -290,20 +320,33 @@ export class Portrait {
         gr.addColorStop(0, "rgba(255,185,185,.7)"); gr.addColorStop(1, "rgba(255,185,185,0)");
         wg.fillStyle = gr; wg.fillRect(ex - ew, ey - ew, ew * 2, ew * 2);
         wg.restore();
+        // Ojos húmedos: un brillo sobre el borde del párpado inferior.
+        wg.save();
+        wg.globalCompositeOperation = "screen";
+        wg.strokeStyle = `rgba(255,255,255,${0.35 + Math.sin(T * 2) * 0.1})`;
+        wg.lineWidth = Math.max(1, ew * 0.035);
+        wg.beginPath(); wg.moveTo(e.l.x + ew * 0.2, e.low.y - ew * 0.01); wg.quadraticCurveTo(ex, e.low.y + ew * 0.05, e.r.x - ew * 0.2, e.low.y - ew * 0.01); wg.stroke();
+        wg.restore();
         // Lágrimas que brillan y bajan por la mejilla.
-        const n = mood === "crying" ? 2 : 1;
+        const n = mood === "crying" ? 3 : 1;
         for (let i = 0; i < n; i++) {
           const ph = (T * 0.35 + i * 0.5 + (e === f.eyes[0] ? 0 : 0.27)) % 1;
           const tx = ex + ew * (e === f.eyes[0] ? -0.1 : 0.1), ty = ey + ph * ew * 1.6;
           const rr = ew * 0.07;
           wg.save();
           wg.globalAlpha = 1 - ph * 0.8;
-          wg.strokeStyle = "rgba(255,255,255,.22)"; wg.lineWidth = rr * 0.7;
-          wg.beginPath(); wg.moveTo(tx, ey); wg.lineTo(tx, ty); wg.stroke();
-          wg.fillStyle = "rgba(220,235,255,.35)";
-          wg.beginPath(); wg.ellipse(tx, ty, rr, rr * 1.3, 0, 0, Math.PI * 2); wg.fill();
-          wg.fillStyle = "rgba(255,255,255,.8)";
-          wg.beginPath(); wg.arc(tx - rr * 0.35, ty - rr * 0.4, rr * 0.3, 0, Math.PI * 2); wg.fill();
+          // Rastro húmedo: un brillo tenue que se desvanece hacia arriba.
+          const trail = wg.createLinearGradient(0, ey, 0, ty);
+          trail.addColorStop(0, "rgba(255,255,255,0)"); trail.addColorStop(1, "rgba(255,255,255,.16)");
+          wg.strokeStyle = trail; wg.lineWidth = rr * 1.1; wg.lineCap = "round";
+          wg.beginPath(); wg.moveTo(tx, ey); wg.quadraticCurveTo(tx + rr * 0.6, (ey + ty) / 2, tx, ty); wg.stroke();
+          // Gota: casi transparente, con sombra abajo y un reflejo pequeño.
+          wg.fillStyle = "rgba(0,0,0,.08)";
+          wg.beginPath(); wg.ellipse(tx, ty + rr * 0.35, rr * 0.85, rr * 0.9, 0, 0, Math.PI * 2); wg.fill();
+          wg.fillStyle = "rgba(235,242,255,.18)";
+          wg.beginPath(); wg.ellipse(tx, ty, rr * 0.8, rr, 0, 0, Math.PI * 2); wg.fill();
+          wg.fillStyle = "rgba(255,255,255,.7)";
+          wg.beginPath(); wg.arc(tx - rr * 0.25, ty - rr * 0.35, rr * 0.22, 0, Math.PI * 2); wg.fill();
           wg.restore();
         }
       }
