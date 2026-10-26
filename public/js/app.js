@@ -7,7 +7,6 @@ import {
   isMobile, isIOS, inAppBrowser, isBrave, ClapDetector, prepareOfflineSpeech, offlineSpeechSupported, offlineSpeechReady,
   PREMIUM_VOICES, unlockAudio, testPremium, outputLevel,
 } from "./voice.js";
-import { CallView } from "./call.js";
 import { renderStudio, studio } from "./studio.js";
 import { renderWatch, watch, minuteNow } from "./watch.js";
 import { renderBots, botsSummary, stopBots } from "./bots.js";
@@ -151,51 +150,17 @@ const JFK_SPEECHES = [
   ["jfk_sp_berlin", "JFK Ich bin ein Berliner speech 1963"],
 ];
 const PERSONA_VOICE = { lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 }, house: { gender: "male", premium: "pqHfZKP75CvOlQylNhV4", pitch: 0.95 }, jfk: { gender: "male", premium: "pNInz6obpgDQGcFmaJgB", pitch: 1 } };
-function setPersona(p, announce) {
-  if (!["nikolai", "lawyer", "friend", "house", "jfk"].includes(p)) return;
-  settings.persona = p;
+function setPersona() {
+  settings.persona = "nikolai";
   saveSettings();
-  document.body.dataset.persona = p;
+  document.body.dataset.persona = "nikolai";
   applyVoice();
   updateCards();
-  call.refresh();
-  if (openId === "persona") refreshPanel();
-  if (announce) speakOnce(t("persona_hello_" + p + (p === "jfk" && settings.jfkLang === "en" ? "_en" : "")).replace("{name}", profile.name ? " " + profile.name : ""));
-}
-const call = new CallView({
-  t, esc, icon, jfkPhoto: JFK_PHOTO,
-  getState: () => state,
-  speakLevel: () => outputLevel(),
-  micLevel: () => Math.min(1, mic.level() * 3),
-  persona: () => settings.persona,
-  mood: () => currentMood(),
-  title: (p) => t("persona_" + p),
-  caption: () => ui.reply.textContent.slice(-180),
-  micOn: () => voiceOn,
-  onMic: () => toggleVoice(),
-  onEnd: () => endCall(),
-  seeAlways: () => settings.callSees,
-  onSeeAlways: () => { settings.callSees = !settings.callSees; saveSettings(); },
-  onLook: () => ask(t("call_lookPrompt"), { look: true }),
-  onPersona: () => { const P = ["nikolai", "lawyer", "friend", "house", "jfk"]; setPersona(P[(P.indexOf(settings.persona) + 1) % P.length], true); },
-});
-async function startCall() {
-  if (call.active) return;
-  closePanel();
-  unlockAudio();
-  await call.start();
-  if (!voiceOn) toggleVoice();
-  call.refresh();
-  updateCards();
-}
-function endCall() {
-  call.stop();
-  updateCards();
   if (openId === "persona") refreshPanel();
 }
 
 
-const APP_VERSION = "2026.10.26-a";
+const APP_VERSION = "2026.10.26-b";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -248,7 +213,7 @@ function cardBody(id) {
     case "bots": return `<div class="big-code mono bot-code" data-bind="botActive">0</div><div class="stats">${stat("bot_status", "botState")}${stat("bot_pnlK", "botPnl", "accent")}</div>`;
     case "watch": return `<p class="desc" data-bind="wtInfo" style="flex:1"></p><div class="stats">${stat("wt_now", "wtNow")}${stat("wt_minute", "wtMin", "accent")}</div>`;
     case "studio": return `<p class="desc" style="flex:1">${esc(t("studioCardDesc"))}</p><div class="stats">${stat("st_media", "stMedia")}${stat("st_edits", "stEdits", "accent")}</div>`;
-    case "persona": return `<div class="big-code persona-code" data-bind="personaName">—</div><div class="stats">${stat("call_title", "callState")}${stat("ps_voice", "personaVoice", "accent")}</div>`;
+    case "persona": return `<div class="big-code persona-code" data-bind="personaName">—</div><div class="stats">${stat("emo_title", "emoState")}${stat("ps_voice", "personaVoice", "accent")}</div>`;
     case "work": return `<p class="desc" style="flex:1">${esc(t("workCardDesc"))}</p><div class="stats">${stat("wk_tools", "workTools")}${stat("wk_last", "workLast", "accent")}</div>`;
     case "projects": return `<div class="big-code" data-bind="pjCount">0</div><div class="stats">${stat("pj_open", "pjOpen")}${stat("pj_doneN", "pjDone", "accent")}</div>`;
     case "money": return `<div class="big-code mono" data-bind="mnYears">—</div><div class="stats">${stat("mn_toMillion", "mnGoal")}${stat("hb_streak", "hbStreak", "accent")}</div>`;
@@ -349,6 +314,7 @@ function values() {
     btcChange: btc ? fmtPct(btc.change) : "—",
     newsInfo: news.items[0]?.t || t("newsCardDesc"),
     personaName: t("personaShort_" + settings.persona),
+    emoState: settings.emotions ? t("mood_" + currentMood().mood) : t("off"),
     botActive: String(botsSummary().active),
     botState: botsSummary().active ? t("q_running").toUpperCase() : "OK",
     botPnl: `${botsSummary().pnl >= 0 ? "+" : "-"}$${Math.abs(botsSummary().pnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
@@ -357,7 +323,6 @@ function values() {
     wtMin: watch.active ? `${minuteNow()}′` : "—",
     stMedia: studio.kind ? t("st_kind_" + studio.kind) : "—",
     stEdits: studio.ops.length,
-    callState: call.active ? t("call_live") : "—",
     personaVoice: settings.personaVoice ? t("on") : t("off"),
     workTools: 6,
     workLast: Object.keys(work.out).length ? t("wk_" + Object.keys(work.out).at(-1)) : "—",
@@ -784,29 +749,15 @@ const PANEL = {
   },
 
   persona(body) {
-    const P = ["nikolai", "lawyer", "friend", "house", "jfk"];
     body.innerHTML = `
-      <div class="persona-cards">${P.map((p) => `
-        <div class="persona-card ${p} ${settings.persona === p ? "on" : ""}">
-          <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", lawyer: "⚖", friend: "♥", house: "▣", jfk: "★" }[p]}</span>
-            <div><b>${esc(t("persona_" + p))}</b><small class="mono">${esc(t("personaSub_" + p))}</small></div></div>
-          <p>${esc(t("personaDesc_" + p))}</p>
-          ${p === "jfk" ? `
-            <img class="pc-photo" src="${JFK_PHOTO}" alt="John F. Kennedy" referrerpolicy="no-referrer" onerror="this.remove()">
-            <div class="pc-quick">
-              <button class="nw-mini ${settings.jfkLang === "es" ? "on" : ""}" data-target data-jfk="es">${esc(t("jfk_es"))}</button>
-              <button class="nw-mini ${settings.jfkLang === "en" ? "on" : ""}" data-target data-jfk="en">${esc(t("jfk_en"))}</button>
-              <button class="nw-mini ${settings.jfkVintage ? "on" : ""}" data-target data-jfk="vintage">${esc(t("jfk_vintage"))}</button>
-            </div>
-            <div class="pc-real"><span class="mono">${esc(t("jfk_real").toUpperCase())}</span>
-              ${JFK_SPEECHES.map(([k, q]) => `<a class="nw-mini" href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}" target="_blank" rel="noopener" data-target>▶ ${esc(t(k))}</a>`).join("")}
-              <a class="nw-mini" href="https://www.jfklibrary.org/learn/about-jfk/historic-speeches" target="_blank" rel="noopener" data-target>${esc(t("jfk_library"))}</a>
-            </div>` : ""}
-          ${p !== "nikolai" ? `<div class="pc-quick">${[1, 2, 3, 4].map((i) => `<button class="nw-mini" data-target data-q="${p}:${i}">${esc(t(`pq_${p}${i}`))}</button>`).join("")}</div>` : ""}
-          <button class="tile ${settings.persona === p ? "on" : "action"}" data-target data-persona="${p}"><span class="t-main">${esc(settings.persona === p ? t("ps_active") : t("ps_use"))}</span></button>
-        </div>`).join("")}</div>
+      <div class="persona-cards">
+        <div class="persona-card nikolai on">
+          <div class="pc-head"><span class="pc-ico">\u25c9</span><div><b>${esc(t("persona_nikolai"))}</b><small class="mono">${esc(t("personaSub_nikolai"))}</small></div></div>
+          <p>${esc(t("personaDesc_nikolai"))}</p>
+        </div>
+      </div>
       <div class="readout emo-box ${settings.emotions ? "on" : ""}">
-        <div class="k">${esc(t("emo_title").toUpperCase())} · ${settings.emotions ? `${MOODS[currentMood().mood][0]} ${esc(t("mood_" + currentMood().mood))}` : esc(t("off"))}</div>
+        <div class="k">${esc(t("emo_title").toUpperCase())} \u00b7 ${settings.emotions ? `${MOODS[currentMood().mood][0]} ${esc(t("mood_" + currentMood().mood))}` : esc(t("off"))}</div>
         <p>${esc(t("emo_desc"))}</p>
         <div class="tiles">
           ${tile(esc(settings.emotions ? t("emo_off") : t("emo_on")), "", settings.emotions ? "on" : "action")}
@@ -821,41 +772,17 @@ const PANEL = {
         </div>` : ""}
         <p class="muted">${esc(t("emo_note"))}</p>
       </div>
-      <div class="readout call-promo">
-        <div class="k">${esc(t("call_title").toUpperCase())}</div>
-        <p>${esc(t("call_desc"))}</p>
-        <div class="tiles">
-          ${tile(`${icon("phone")}<br>${esc(call.active ? t("call_end") : t("call_start"))}`, "", "action call-go")}
-          ${tile(esc(t("call_seeAlways")), settings.callSees ? esc(t("on")) : esc(t("off")), settings.callSees ? "on" : "")}
-          ${tile(esc(t("ps_voice")), settings.personaVoice ? esc(t("on")) : esc(t("off")), settings.personaVoice ? "on" : "")}
-        </div>
-        <p class="muted">${esc(t("call_privacy"))}</p>
-      </div>
-      <p class="muted">${esc(t("ps_note"))}</p>`;
-    body.querySelectorAll("[data-persona]").forEach((b) => b.addEventListener("click", () => setPersona(b.dataset.persona, true)));
-    body.querySelectorAll("[data-jfk]").forEach((b) => b.addEventListener("click", () => {
-      const v = b.dataset.jfk;
-      if (v === "vintage") settings.jfkVintage = !settings.jfkVintage; else settings.jfkLang = v;
-      saveSettings();
-      if (settings.persona === "jfk") { applyVoice(); refreshPanel(); speakOnce(t(v === "en" ? "persona_hello_jfk_en" : "persona_hello_jfk").replace("{name}", "")); }
-      else setPersona("jfk", true);
-    }));
-    body.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => {
-      const [p, i] = b.dataset.q.split(":");
-      if (settings.persona !== p) setPersona(p, false);
-      ask(t(`pq_${p}${i}`));
-    }));
+      <div class="readout ps-voice">
+        <div class="k">${esc(t("ps_voice").toUpperCase())}</div>
+        <div class="tiles">${tile(esc(t("ps_voice")), settings.personaVoice ? esc(t("on")) : esc(t("off")), settings.personaVoice ? "on" : "")}</div>
+      </div>`;
     const [eOn, eSoft, eHigh] = body.querySelectorAll(".emo-box .tile");
     eOn.onclick = () => { setEmotions(!settings.emotions); if (settings.emotions) speakOnce(t("emo_hello")); };
     eSoft.onclick = () => { settings.emoIntensity = "soft"; saveSettings(); refreshPanel(); };
     eHigh.onclick = () => { settings.emoIntensity = "high"; saveSettings(); refreshPanel(); };
     body.querySelectorAll("[data-emoq]").forEach((b) => b.addEventListener("click", () => ask(t("emoq_" + b.dataset.emoq))));
-    const [go, sees, pv] = body.querySelectorAll(".call-promo .tile");
-    go.onclick = () => (call.active ? endCall() : startCall());
-    sees.onclick = () => { settings.callSees = !settings.callSees; saveSettings(); refreshPanel(); };
-    pv.onclick = () => { settings.personaVoice = !settings.personaVoice; saveSettings(); applyVoice(); refreshPanel(); updateCards(); };
+    body.querySelector(".ps-voice .tile").onclick = () => { settings.personaVoice = !settings.personaVoice; saveSettings(); applyVoice(); refreshPanel(); updateCards(); };
   },
-
   work(body) {
     renderWork(body, { ...moduleCtx(), speakIfVoice: (txt) => settings.chatSpeak && speakOnce(txt) });
   },
@@ -1529,10 +1456,8 @@ function premiumErrorText(e) {
 speaker.onIdle = () => { if (state === "speaking" || state === "thinking") afterSpeech(); };
 
 const ACTIONS = {
-  set_persona: ({ persona }) => setPersona(persona, false),
   set_mood: ({ mood: m, intensity }) => { if (settings.emotions) setMood(m, intensity); },
   set_emotions: ({ on, intensity }) => setEmotions(on, intensity),
-  video_call: ({ action }) => (action === "start" ? startCall() : endCall()),
   set_language: ({ code }) => applyLanguage(code),
   open_panel: ({ panel }) => (panel === "none" ? closePanel() : openPanel(panel)),
   save_note: ({ text }) => { addNote(text); if (openId === "notes") refreshPanel(); },
@@ -1574,7 +1499,7 @@ function dropOrphan(msg) {
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
   const model = { max: "claude-opus-5-5", balanced: "claude-sonnet-5-5", fast: "claude-haiku-5-5" }[settings.aiSpeed];
-  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: settings.persona, emotions: settings.emotions ? { on: true, intensity: settings.emoIntensity, mood: currentMood().mood, hoursAway: awayHours } : undefined, personaLang: settings.persona === "jfk" ? settings.jfkLang : "es", video: call.active, ...payload }, handlers);
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: "nikolai", emotions: settings.emotions ? { on: true, intensity: settings.emoIntensity, mood: currentMood().mood, hoursAway: awayHours } : undefined, personaLang: "es", ...payload }, handlers);
 }
 
 /** Pide a NIKOLAI una descripción corta de una foto para guardarla como recuerdo. */
@@ -1605,7 +1530,7 @@ function errorText(err) {
  */
 async function ask(text, { channel = "voice", speak = true, onText, onDone, look = false } = {}) {
   // En videollamada, NIKOLAI te ve si se lo pides («mírame») o si activaste «que me vea siempre».
-  const photo = call.active && (look || settings.callSees || LOOK_RE.test(text)) ? call.snapshot() : null;
+  const photo = null;
   awayHours = lastUserAt ? (Date.now() - lastUserAt) / 3_600_000 : 0;
   lastUserAt = Date.now();
   store.set("lastUserAt", lastUserAt);

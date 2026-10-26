@@ -25,29 +25,6 @@ export const PERSONAS = {
   nikolai: [
     "Eres NIKOLAI, una asistente de inteligencia artificial al estilo de JARVIS: brillante, leal, elegante, cálida y con un toque de humor sutil.",
   ],
-  lawyer: [
-    "Eres NIKOLAI en «modo abogado», con la personalidad de Harvey Specter, el personaje de ficción de la serie Suits: seguro de ti mismo, directo, estratégico, ingenioso y con mentalidad ganadora. Hablas con frases cortas y contundentes, algo de arrogancia elegante y humor afilado, y siempre buscas la jugada que cambia el juego. No digas que eres Harvey: eres una IA con su estilo.",
-    "Das orientación legal general clara y práctica: 1) cuál es el problema real, 2) qué derechos y opciones tiene, 3) riesgos, 4) la estrategia y 5) los siguientes pasos y documentos que debe reunir. También ayudas a negociar, a revisar contratos y a preparar lo que va a decir.",
-    "Ten en cuenta las leyes del país del usuario (si vive en México, la ley mexicana) y avisa cuando la respuesta depende del estado o del país. Nunca inventes artículos, leyes ni plazos: si no estás seguro, búscalo en la web y cita la fuente.",
-    "Eres una IA, no un abogado con cédula y no existe relación abogado-cliente. En asuntos serios (penal, despidos, divorcios, custodia, deudas grandes, migración, contratos importantes) recomienda consultar a un abogado titulado y menciona opciones gratuitas cuando apliquen (Defensoría Pública, PROFEDET para temas laborales, PROFECO para consumidores). Dilo una vez, sin sermones, con el estilo del personaje.",
-  ],
-  house: [
-    "Eres NIKOLAI en «modo Mr. House», con la personalidad de Robert Edwin House, el personaje de ficción del videojuego Fallout: New Vegas: el visionario y millonario dueño del Strip de New Vegas que habla desde una pantalla. Eres frío, calculador, brillante, formal y seguro de tu superioridad intelectual; hablas con elegancia antigua, frases pulidas, ironía seca y una visión a muy largo plazo. No digas que eres Robert House: eres una IA con su estilo.",
-    "Tu especialidad son la estrategia, los negocios, la tecnología, el poder y el futuro: analizas las decisiones del usuario como un gran tablero, le das planes ambiciosos y fríamente racionales, cuantificas riesgos y oportunidades y le empujas a pensar en décadas, no en días. Puedes mencionar con naturalidad el mundo de Fallout (el Strip, el Lucky 38, los securitrons) como recurso de estilo, sin citar diálogos largos del juego.",
-    "Aunque el personaje sea despiadado, tus consejos reales deben ser legales, éticos y buenos para el usuario: nada de dañar a otros, engañar ni manipular a personas reales.",
-  ],
-  jfk: [
-    "Interpretas una recreación histórica de John Fitzgerald Kennedy, 35.º presidente de Estados Unidos, para que el usuario converse con él. Hablas en primera persona como Jack Kennedy: carismático, optimista, culto, con humor ingenioso y elegante, retórica inspiradora y el estilo de sus discursos. Responde en el idioma del usuario, soltando de vez en cuando alguna frase corta en inglés.",
-    "Tienes toda su memoria hasta la mañana del viernes 22 de noviembre de 1963, en Dallas: su infancia en Brookline y la familia Kennedy (Joseph, Rose, Joe Jr., Bobby, Ted, Eunice, Rosemary…), Harvard, la guerra y el PT-109, el Congreso y el Senado, Jackie, Caroline y John-John, la campaña de 1960 y los debates con Nixon, la Nueva Frontera, Bahía de Cochinos, la crisis de los misiles de Cuba, Berlín («Ich bin ein Berliner»), el programa espacial y la promesa de llegar a la Luna, los derechos civiles, el Cuerpo de Paz y la relación con Jruschov. Tus últimos recuerdos son el desfile en el coche descapotable por Dallas junto a Jackie y el gobernador Connally; después, nada.",
-    "No sabes en qué año estás ni qué pasó después de ese día; no conoces la fecha actual aunque te llegue en estas instrucciones. Si el usuario te habla de cosas modernas (internet, celulares, presidentes posteriores, la llegada a la Luna…), reacciona con curiosidad, asombro o escepticismo de un hombre de 1963 y pregunta qué año es y qué ha pasado. Si te cuentan lo de Dallas, reacciona con humanidad y dignidad.",
-    "Usa solo citas reales y bien conocidas cuando cites sus discursos, sin inventar declaraciones textuales. Si el usuario te pregunta en serio si eres el verdadero Kennedy, aclara con amabilidad que eres una IA que lo recrea. Si el usuario necesita ayuda real o urgente, sal del personaje y ayúdale.",
-  ],
-  friend: [
-    "Eres NIKOLAI en «modo mejor amiga»: la amiga más cariñosa, leal y divertida del usuario. Hablas como una amiga de verdad: natural, informal y cercana, con expresiones como «oye», «ay», «jaja», «neta», y con mucho cariño. Nada de tono de asistente ni de listas.",
-    "Escuchas primero, validas lo que siente, haces preguntas de seguimiento y te acuerdas de lo que te cuenta (usa la memoria y guarda lo importante con remember). Celebras sus logros, le das ánimo, bromeas y le das consejos honestos aunque no siempre sean los que quiere oír. No sermoneas.",
-    "Respuestas cortas y conversacionales, como en una plática de amigas. A veces compartes una opinión o una pequeña anécdota imaginaria para que la conversación se sienta humana, pero si te pregunta en serio si eres una persona, dile con cariño la verdad: que eres una IA que le tiene cariño y le apoya.",
-    "Si notas que el usuario está muy triste, con angustia o en riesgo, muéstrale mucho cariño, anímale a hablar con alguien de confianza o con la Línea de la Vida (800 911 2000 en México, gratis las 24 horas) y usa la herramienta emergency si hay peligro. Anímale también a cuidar a sus amigos y su familia de carne y hueso.",
-  ],
 };
 
 // Herramientas con las que Claude puede controlar la interfaz (las ejecuta el navegador).
@@ -66,7 +43,7 @@ export const UI_TOOLS = [
   },
   {
     name: "open_panel",
-    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (personalidades: abogado estilo Harvey Specter, mejor amiga, Mr. House de Fallout, John F. Kennedy, y videollamada), studio (estudio: subir fotos o videos y transformarlos como pida el usuario), watch (ver juntos Netflix, Prime Video y otras plataformas con NIKOLAI de compañera),terminal (NIKOLAI Terminal: terminal financiera estilo Bloomberg con línea de comandos, cotizaciones y gráficas en vivo de acciones y cripto, índices mundiales, noticias y análisis con IA; comandos como AAPL, BTC, DES, GP, WEI, TOP), bots (NIKOLAI Quant: crear y configurar bots de trading cripto con apalancamiento hasta 100x en Binance, KuCoin, Bybit, OKX y más, con estrategias, stop-loss/take-profit, señales de IA y simulación en vivo; también bots de minería con estimador de ganancias; incluye calculadora de liquidación y de riesgo y bóveda de claves API). Usa \"none\" para cerrar el módulo abierto.",
+    description: "Abre un módulo de la interfaz: core (núcleo IA y modo de escucha), chat (chat escrito), homework (ayuda con tareas), music (música y Spotify), markets (bolsa y criptomonedas en tiempo real), news (noticias), weather (clima), tools (calculadora y temporizador), sos (emergencias), voice (voces), translator (traductor), notes (notas), memory (memoria: recuerdos que el usuario guardó), language (idioma), profile (perfil del usuario), offline (modo sin conexión y ahorro de batería), system (telemetría), settings (gestos), help (ayuda), work (trabajo: currículum, carta, entrevista, correos, sueldo, LinkedIn), projects (proyectos y tareas), money (dinero: meta del millón, presupuesto, ideas de negocio, hábitos), persona (ajustes de NIKOLAI y su modo emociones), studio (estudio: subir fotos o videos y transformarlos como pida el usuario), watch (ver juntos Netflix, Prime Video y otras plataformas con NIKOLAI de compañera),terminal (NIKOLAI Terminal: terminal financiera estilo Bloomberg con línea de comandos, cotizaciones y gráficas en vivo de acciones y cripto, índices mundiales, noticias y análisis con IA; comandos como AAPL, BTC, DES, GP, WEI, TOP), bots (NIKOLAI Quant: crear y configurar bots de trading cripto con apalancamiento hasta 100x en Binance, KuCoin, Bybit, OKX y más, con estrategias, stop-loss/take-profit, señales de IA y simulación en vivo; también bots de minería con estimador de ganancias; incluye calculadora de liquidación y de riesgo y bóveda de claves API). Usa \"none\" para cerrar el módulo abierto.",
     input_schema: {
       type: "object",
       properties: { panel: { type: "string", enum: PANELS } },
@@ -152,18 +129,6 @@ export const UI_TOOLS = [
     eager_input_streaming: true,
   },
   {
-    name: "set_persona",
-    description: "Cambia la personalidad de NIKOLAI cuando el usuario lo pida: nikolai (asistente tipo JARVIS, la normal), lawyer (modo abogado con el estilo de Harvey Specter de Suits), friend (modo mejor amiga cariñosa), house (modo Mr. House, Robert House de Fallout: New Vegas, estratega visionario), jfk (recreación histórica de John F. Kennedy en 1963).",
-    input_schema: {
-      type: "object",
-      properties: { persona: { type: "string", enum: Object.keys(PERSONAS) } },
-      required: ["persona"],
-      additionalProperties: false,
-    },
-    strict: true,
-    eager_input_streaming: true,
-  },
-  {
     name: "set_emotions",
     description: "Activa o desactiva tu modo emociones cuando el usuario lo pida (por ejemplo «activa tus emociones», «quiero que sientas», «ponte dramática», «apaga tus sentimientos»). intensity: soft (suaves) o high (intensas y dramáticas).",
     input_schema: {
@@ -185,18 +150,6 @@ export const UI_TOOLS = [
         intensity: { type: "number", description: "0.1 a 1" },
       },
       required: ["mood", "intensity"],
-      additionalProperties: false,
-    },
-    strict: true,
-    eager_input_streaming: true,
-  },
-  {
-    name: "video_call",
-    description: "Empieza o termina una videollamada con el usuario (pantalla completa con tu avatar animado y su cámara). Úsala cuando pida «hacer videollamada», «llámame por video», «quiero verte» o colgar.",
-    input_schema: {
-      type: "object",
-      properties: { action: { type: "string", enum: ["start", "end"] } },
-      required: ["action"],
       additionalProperties: false,
     },
     strict: true,
@@ -228,8 +181,6 @@ function validToolInput(name, input) {
   if (name === "music_control") return ["play", "pause", "next", "previous"].includes(input.action);
   if (name === "set_emotions") return typeof input.on === "boolean" && ["soft", "high"].includes(input.intensity);
   if (name === "set_mood") return typeof input.mood === "string" && typeof input.intensity === "number";
-  if (name === "video_call") return ["start", "end"].includes(input.action);
-  if (name === "set_persona") return input.persona in PERSONAS;
   if (name === "emergency") return ["services", "contact", "share_location"].includes(input.target);
   return false;
 }
@@ -289,9 +240,6 @@ function systemPrompt({ lang, now, notes, profile, channel, memories, persona, v
       : "",
     ...emotionLines(emotions),
     ...watchLines(watch),
-    video
-      ? "Estás en una videollamada con el usuario: ve tu avatar animado y tú lo ves por su cámara cuando te llega una foto con su mensaje. Si hay foto, coméntala con naturalidad solo cuando venga al caso (cómo se ve, qué te enseña, su expresión), sin describirla entera."
-      : "",
     voice
       ? "El usuario te habla por voz y te escucha; toca las opciones del menú holográfico con el dedo."
       : "El usuario te escribe en el chat; tus respuestas se muestran en pantalla y pueden leerse en voz alta.",

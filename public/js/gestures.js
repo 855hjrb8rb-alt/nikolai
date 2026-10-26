@@ -76,7 +76,15 @@ export class GestureController {
         audio: false,
       });
     } catch (err) {
-      throw Object.assign(err, { stage: "camera" });
+      // Muchos equipos rechazan el facingMode (no hay cámara trasera, o la restricción
+      // es demasiado estricta). En vez de fallar, reintenta con la cámara que haya.
+      const soft = ["OverconstrainedError", "ConstraintNotSatisfiedError", "NotFoundError", "TypeError"].includes(err?.name);
+      if (soft) {
+        try { stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); }
+        catch (err2) { throw Object.assign(err2, { stage: "camera" }); }
+      } else {
+        throw Object.assign(err, { stage: "camera" });
+      }
     }
     this.mirror = facingMode === "user";
     this.video.srcObject = stream;
