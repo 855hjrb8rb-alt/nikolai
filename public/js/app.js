@@ -160,7 +160,7 @@ function setPersona() {
 }
 
 
-const APP_VERSION = "2026.10.26-c";
+const APP_VERSION = "2026.10.26-d";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
