@@ -221,7 +221,9 @@ const portrait = new Portrait();
 // Si no subió ninguna, se usa la cara por defecto (img/novia.jpg).
 const NOVIA_DEFAULT = "img/novia.jpg";
 const noviaPhoto = store.get("noviaPhoto", "");
-portrait.set(noviaPhoto || NOVIA_DEFAULT, noviaPhoto ? store.get("noviaFace", null) : null)
+// (Los puntos guardados por una versión anterior no traen el iris: se vuelven a detectar.)
+const noviaFace = store.get("noviaFace", null);
+portrait.set(noviaPhoto || NOVIA_DEFAULT, noviaPhoto && noviaFace?.eyes?.[0]?.contour ? noviaFace : null)
   .then((f) => noviaPhoto && f && store.set("noviaFace", f)).catch(() => {});
 const call = new CallView({
   t, esc, icon, jfkPhoto: JFK_PHOTO, portrait,

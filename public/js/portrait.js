@@ -17,6 +17,12 @@ const IDX = {
   ],
   mouth: { l: 61, r: 291, up: 13, low: 14 },
   chin: 152, top: 10, cheeks: [50, 280],
+  // Contorno de cada ojo (para recortar el iris al moverlo) e iris (centro + borde).
+  contours: [
+    [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7],
+    [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382],
+  ],
+  irises: [[468, 469], [473, 474]],
 };
 
 let landmarkerP = null;
@@ -38,8 +44,15 @@ export async function detectFace(img) {
   const pts = lm.detect(img).faceLandmarks?.[0];
   if (!pts) return null;
   const p = (i) => ({ x: pts[i].x, y: pts[i].y });
+  const irises = pts.length > 473 ? IDX.irises.map(([c, edge]) => ({ c: p(c), edge: p(edge) })) : [];
   return {
-    eyes: IDX.eyes.map((e) => ({ l: p(e.l), r: p(e.r), up: p(e.up), low: p(e.low), brow: p(e.brow) })),
+    eyes: IDX.eyes.map((e, i) => {
+      const contour = IDX.contours[i].map(p);
+      const mid = { x: (pts[e.l].x + pts[e.r].x) / 2, y: (pts[e.l].y + pts[e.r].y) / 2 };
+      // El iris que cae más cerca de este ojo.
+      const iris = irises.slice().sort((a, b) => Math.hypot(a.c.x - mid.x, a.c.y - mid.y) - Math.hypot(b.c.x - mid.x, b.c.y - mid.y))[0] || null;
+      return { l: p(e.l), r: p(e.r), up: p(e.up), low: p(e.low), brow: p(e.brow), contour, iris };
+    }),
     mouth: { l: p(IDX.mouth.l), r: p(IDX.mouth.r), up: p(IDX.mouth.up), low: p(IDX.mouth.low) },
     chin: p(IDX.chin), top: p(IDX.top), cheeks: IDX.cheeks.map(p),
   };
@@ -70,12 +83,85 @@ function loadImage(src) {
 }
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/**
+ * Amplía la foto (hasta ~1100 px) en pasos suaves y la enfoca (máscara de enfoque),
+ * para que a pantalla completa no se vea borrosa ni pixelada.
+ */
+function enhance(img) {
+  const W0 = img.naturalWidth, H0 = img.naturalHeight;
+  const k = Math.max(1, Math.min(4, 1100 / Math.max(W0, H0)));
+  let src = img, w = W0, h = H0;
+  const step = () => {
+    const c = document.createElement("canvas");
+    w = Math.min(Math.round(W0 * k), w * 2); h = Math.min(Math.round(H0 * k), h * 2);
+    c.width = w; c.height = h;
+    const cg = c.getContext("2d");
+    cg.imageSmoothingQuality = "high";
+    cg.drawImage(src, 0, 0, w, h);
+    src = c;
+  };
+  do step(); while (w < Math.round(W0 * k));
+  if (k <= 1.05) return src;
+  // Máscara de enfoque: original + cantidad × (original − desenfocado).
+  const out = src;
+  const og = out.getContext("2d", { willReadFrequently: true });
+  const blur = document.createElement("canvas");
+  blur.width = w; blur.height = h;
+  const bg = blur.getContext("2d", { willReadFrequently: true });
+  bg.filter = `blur(${(k * 0.5).toFixed(1)}px)`;
+  bg.drawImage(out, 0, 0);
+  const a = og.getImageData(0, 0, w, h), b = bg.getImageData(0, 0, w, h).data, d = a.data;
+  const amt = 0.8;
+  for (let i = 0; i < d.length; i += 4) {
+    for (let j = 0; j < 3; j++) {
+      const diff = d[i + j] - b[i + j];
+      if (diff > 2 || diff < -2) d[i + j] = Math.max(0, Math.min(255, d[i + j] + amt * diff));
+    }
+  }
+  og.putImageData(a, 0, 0);
+  return out;
+}
+
+/** Color del blanco del ojo: promedio de unos píxeles entre la esquina y el iris. */
+function scleraColor(base, e) {
+  if (!e.iris) return null;
+  const g = base.getContext("2d", { willReadFrequently: true });
+  let r = 0, gr = 0, b = 0, n = 0;
+  for (const corner of [e.l, e.r]) {
+    for (const t of [0.35, 0.5]) {
+      const px = Math.round(corner.x + (e.iris.c.x - corner.x) * t), py = Math.round(corner.y + (e.iris.c.y - corner.y) * t);
+      const d = g.getImageData(px, py, 1, 1).data;
+      r += d[0]; gr += d[1]; b += d[2]; n++;
+    }
+  }
+  const lift = (v) => Math.min(255, Math.round((v / n) * 1.12));
+  return `rgb(${lift(r)},${lift(gr)},${lift(b)})`;
+}
+
+/** Textura de ruido para el grano de cámara. */
+function makeGrain() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const g = c.getContext("2d");
+  const im = g.createImageData(256, 256);
+  for (let i = 0; i < im.data.length; i += 4) {
+    const v = 128 + (Math.random() - 0.5) * 110;
+    im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255;
+  }
+  g.putImageData(im, 0, 0);
+  return c;
+}
 const MOOD_LIDS = { annoyed: 0.22, jealous: 0.28, angry: 0.18, sad: 0.2, crying: 0.3, missing: 0.12, loving: 0.1 };
 
 export class Portrait {
   constructor() {
     this.img = null;
+    this.base = null; // la foto ampliada y enfocada: es la que se anima
     this.face = null;
+    this.sclera = [];
+    this.gaze = { x: 0, y: 0, tx: 0, ty: 0, next: 0 };
+    this.grain = makeGrain();
     this.work = document.createElement("canvas");
     this.layer = document.createElement("canvas");
     this.blinkAt = performance.now() + 1500;
@@ -87,12 +173,15 @@ export class Portrait {
 
   /** Carga la foto. Si no se pasa `face`, la detecta (y la devuelve para guardarla). */
   async set(dataUrl, face = null) {
-    if (!dataUrl) { this.img = null; this.face = null; return null; }
+    if (!dataUrl) { this.img = null; this.base = null; this.face = null; return null; }
     const img = await loadImage(dataUrl);
-    this.img = img;
-    this.work.width = this.layer.width = img.naturalWidth;
-    this.work.height = this.layer.height = img.naturalHeight;
+    const base = enhance(img);
+    this.work.width = this.layer.width = base.width;
+    this.work.height = this.layer.height = base.height;
     this.face = face || await detectFace(img).catch(() => null);
+    this.base = base;
+    this.img = img;
+    this.sclera = this.face ? this.#px(this.face, base.width, base.height).eyes.map((e) => scleraColor(base, e)) : [];
     return this.face;
   }
 
@@ -101,10 +190,10 @@ export class Portrait {
    * st = { mouth: 0-1, mood, intensity, speaking }
    */
   draw(g, x, y, w, h, now, st) {
-    const img = this.img;
+    const img = this.base;
     if (!img) return;
     const T = now / 1000;
-    const W = img.naturalWidth, H = img.naturalHeight;
+    const W = img.width, H = img.height;
     const f = this.face && this.#px(this.face, W, H);
     const wg = this.work.getContext("2d");
     wg.globalCompositeOperation = "source-over";
@@ -116,6 +205,7 @@ export class Portrait {
       // Al llorar, la barbilla tiembla y la boca se entreabre en sollozos.
       const sob = st.mood === "crying" ? Math.max(0, Math.sin(T * 5.5)) * 0.25 * k + Math.random() * 0.04 : 0;
       this.#mouth(wg, f, Math.max(st.mouth || 0, sob));
+      this.#look(wg, f, now, st);
       const lid = Math.min(1, Math.max(this.#blink(now), (MOOD_LIDS[st.mood] || 0) * k));
       for (const e of f.eyes) this.#lid(wg, e, lid);
       this.#mood(wg, f, st.mood, k, T);
@@ -150,6 +240,7 @@ export class Portrait {
     const dy = (hd.y + Math.sin(T * 1.5) * 0.004 + sobbing) * faceH - (st.mouth || 0) * faceH * 0.012 * Math.abs(Math.sin(T * 3.1));
     g.save();
     g.beginPath(); g.rect(x, y, w, h); g.clip();
+    g.imageSmoothingQuality = "high";
     g.translate(x + w / 2, y + h / 2);
     g.rotate(rot);
     g.scale(scale, scale);
@@ -157,19 +248,74 @@ export class Portrait {
     g.drawImage(this.work, -(sx + sw / 2 - dx), -(sy + sh / 2 - dy));
     g.filter = "none";
     g.restore();
-    // Viñeta suave, como luz de cámara frontal.
-    const v = g.createRadialGradient(x + w / 2, y + h * 0.45, Math.min(w, h) * 0.35, x + w / 2, y + h / 2, Math.max(w, h) * 0.75);
-    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.45)");
+    // Grano fino de cámara (cambia en cada cuadro, como un video real) y viñeta suave.
+    g.save();
+    g.beginPath(); g.rect(x, y, w, h); g.clip();
+    g.globalAlpha = 0.07;
+    g.globalCompositeOperation = "overlay";
+    g.fillStyle = g.createPattern(this.grain, "repeat");
+    g.translate((Math.random() * 256) | 0, (Math.random() * 256) | 0);
+    g.fillRect(x - 256, y - 256, w + 256, h + 256);
+    g.restore();
+    const v = g.createRadialGradient(x + w / 2, y + h * 0.45, Math.min(w, h) * 0.4, x + w / 2, y + h / 2, Math.max(w, h) * 0.8);
+    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.3)");
     g.fillStyle = v; g.fillRect(x, y, w, h);
   }
 
   #px(face, W, H) {
     const q = (p) => ({ x: p.x * W, y: p.y * H });
     return {
-      eyes: face.eyes.map((e) => ({ l: q(e.l), r: q(e.r), up: q(e.up), low: q(e.low), brow: e.brow ? q(e.brow) : null })),
+      eyes: face.eyes.map((e) => ({
+        l: q(e.l), r: q(e.r), up: q(e.up), low: q(e.low), brow: e.brow ? q(e.brow) : null,
+        contour: e.contour ? e.contour.map(q) : null,
+        iris: e.iris ? { c: q(e.iris.c), rad: Math.hypot((e.iris.edge.x - e.iris.c.x) * W, (e.iris.edge.y - e.iris.c.y) * H) } : null,
+      })),
       mouth: { l: q(face.mouth.l), r: q(face.mouth.r), up: q(face.mouth.up), low: q(face.mouth.low) },
       chin: q(face.chin), top: q(face.top), cheeks: face.cheeks.map(q),
     };
+  }
+
+  /**
+   * Mirada: los ojos hacen pequeños saltos rápidos (como una persona real), miran a la
+   * cámara casi siempre que habla y compensan cuando la cabeza gira.
+   */
+  #look(wg, f, now, st) {
+    const gz = this.gaze;
+    if (now > gz.next) {
+      const talk = (st.mouth || 0) > 0.05;
+      const away = talk ? Math.random() < 0.2 : Math.random() < 0.6;
+      gz.tx = away ? (Math.random() - 0.5) * 0.7 : (Math.random() - 0.5) * 0.08;
+      gz.ty = away ? (Math.random() - 0.5) * 0.25 : 0;
+      if (st.mood === "sad" || st.mood === "crying") gz.ty = 0.2;
+      if (st.mood === "jealous" || st.mood === "annoyed") gz.tx = -Math.sign(this.head.x || 1) * 0.35;
+      gz.next = now + (away ? 500 + Math.random() * 1200 : 1200 + Math.random() * 2600);
+    }
+    gz.x += (gz.tx - gz.x) * 0.45; gz.y += (gz.ty - gz.y) * 0.45; // sacada: rápida
+    const hx = -this.head.x * 4; // si gira la cabeza, los ojos siguen mirándote
+    f.eyes.forEach((e, i) => {
+      if (!e.iris || !e.contour || !this.sclera[i]) return;
+      const r = e.iris.rad;
+      const ox = Math.max(-0.45, Math.min(0.45, gz.x + hx)) * r, oy = gz.y * r * 0.6;
+      if (Math.abs(ox) < 0.3 && Math.abs(oy) < 0.3) return;
+      const { c } = e.iris;
+      wg.save();
+      wg.beginPath();
+      e.contour.forEach((p, k) => (k ? wg.lineTo(p.x, p.y) : wg.moveTo(p.x, p.y)));
+      wg.closePath();
+      wg.clip();
+      // Tapa el iris original con el blanco del ojo (más oscuro arriba, por la sombra del párpado).
+      const sc = this.sclera[i];
+      wg.fillStyle = sc;
+      wg.beginPath(); wg.arc(c.x, c.y, r * 1.08, 0, Math.PI * 2); wg.fill();
+      const sh = wg.createLinearGradient(0, c.y - r, 0, c.y + r * 0.4);
+      sh.addColorStop(0, "rgba(40,25,20,.35)"); sh.addColorStop(1, "rgba(40,25,20,0)");
+      wg.fillStyle = sh;
+      wg.fillRect(c.x - r * 1.5, c.y - r * 1.2, r * 3, r * 1.6);
+      // El iris en su nueva posición.
+      wg.beginPath(); wg.arc(c.x + ox, c.y + oy, r * 1.02, 0, Math.PI * 2); wg.clip();
+      wg.drawImage(this.base, ox, oy);
+      wg.restore();
+    });
   }
 
   /** Parpadeo natural: cada 2-6 s, a veces doble. Devuelve cuánto está cerrado (0-1). */
@@ -247,7 +393,7 @@ export class Portrait {
     wg.restore();
     // Mandíbula: copia de la foto desplazada hacia abajo, fundida con la cara.
     const lg = this.#clearLayer();
-    lg.drawImage(this.img, 0, d);
+    lg.drawImage(this.base, 0, d);
     const jawH = Math.max(f.chin.y - low.y, mw * 0.6);
     this.#feather(lg, cx, low.y + d + jawH * 0.45, mw * 1.05, jawH * 0.95, 0.5);
     lg.save();
@@ -271,7 +417,7 @@ export class Portrait {
     const srcTop = top - gap * 0.6, srcH = gap * 0.45;
     const lidY = top + b * (bot - top) * 1.08;
     const lg = this.#clearLayer();
-    lg.drawImage(this.img, cx - ew * 0.7, srcTop, ew * 1.4, srcH, cx - ew * 0.7, srcTop, ew * 1.4, lidY - srcTop);
+    lg.drawImage(this.base, cx - ew * 0.7, srcTop, ew * 1.4, srcH, cx - ew * 0.7, srcTop, ew * 1.4, lidY - srcTop);
     this.#feather(lg, cx, (srcTop + lidY) / 2 + eh * 0.1, ew * 0.66, (lidY - srcTop) / 2 + eh * 0.35, 0.6);
     wg.drawImage(this.layer, 0, 0);
     // Línea de pestañas en el borde del párpado.
