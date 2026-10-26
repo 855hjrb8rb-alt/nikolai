@@ -83,7 +83,18 @@ export class GestureController {
     this.video.muted = true;
     this.video.setAttribute("playsinline", "");
     await this.video.play().catch(() => {});
+    // La cámara YA está encendida. El detector de manos se carga aparte
+    // (en segundo plano): si falla, la cámara sigue prendida, solo sin gestos.
+    this.canvas.width = this.video.videoWidth || 640;
+    this.canvas.height = this.video.videoHeight || 480;
+    this.running = true;
+    this.gesturesReady = false;
+    this.#loop();
+    this.#loadModel();
+  }
 
+  // Carga el modelo de manos sin bloquear ni apagar la cámara.
+  async #loadModel() {
     try {
       const { FilesetResolver, HandLandmarker, wasm } = await loadVision();
       const vision = await FilesetResolver.forVisionTasks(wasm);
@@ -96,19 +107,22 @@ export class GestureController {
         minTrackingConfidence: 0.5,
       });
       // La GPU es más rápida, pero falla en algunos teléfonos: plan B con CPU.
+      let lm;
       try {
-        this.landmarker = await HandLandmarker.createFromOptions(vision, options("GPU"));
+        lm = await HandLandmarker.createFromOptions(vision, options("GPU"));
       } catch {
-        this.landmarker = await HandLandmarker.createFromOptions(vision, options("CPU"));
+        lm = await HandLandmarker.createFromOptions(vision, options("CPU"));
       }
+      if (!this.running) { lm.close?.(); return; } // la apagaron mientras cargaba
+      this.canvas.width = this.video.videoWidth || this.canvas.width;
+      this.canvas.height = this.video.videoHeight || this.canvas.height;
+      this.landmarker = lm;
+      this.gesturesReady = true;
+      this.onEvent?.({ type: "gesturesReady" });
     } catch (err) {
-      stream.getTracks().forEach((t) => t.stop());
-      throw Object.assign(err instanceof Error ? err : new Error(String(err)), { stage: "model" });
+      this.gesturesReady = false;
+      this.onEvent?.({ type: "gesturesUnavailable", error: String(err?.message || err) });
     }
-    this.canvas.width = this.video.videoWidth;
-    this.canvas.height = this.video.videoHeight;
-    this.running = true;
-    this.#loop();
   }
 
   // La cámara frontal se ve en espejo; la trasera no.
@@ -120,6 +134,9 @@ export class GestureController {
     this.running = false;
     this.video.srcObject?.getTracks().forEach((t) => t.stop());
     this.video.srcObject = null;
+    this.landmarker?.close?.();
+    this.landmarker = null;
+    this.gesturesReady = false;
   }
 
   #loop() {
@@ -130,8 +147,12 @@ export class GestureController {
       const now = performance.now();
       if (this.video.currentTime !== this.lastVideoTime) {
         this.lastVideoTime = this.video.currentTime;
-        const result = this.landmarker.detectForVideo(this.video, now);
-        this.#process(result.landmarks?.[0], now);
+        if (this.landmarker) {
+          try {
+            const result = this.landmarker.detectForVideo(this.video, now);
+            this.#process(result.landmarks?.[0], now);
+          } catch { /* fotograma suelto; la cámara sigue */ }
+        }
         frames++;
       }
       if (now - last >= 1000) {

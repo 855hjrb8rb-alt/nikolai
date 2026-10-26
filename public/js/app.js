@@ -195,7 +195,7 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.22-e";
+const APP_VERSION = "2026.10.26-a";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -1857,6 +1857,18 @@ function onGesture(ev) {
       if (ev.gesture === "fist") { if (!interrupt() && openId) closePanel(); }
       else if (ev.gesture === "victory") toggleVoice();
       else if (ev.gesture === "palm" && !openId) openPanel(MODULES[focus]);
+      break;
+    case "gesturesReady":
+      lastCamError = "";
+      renderSides();
+      if (openId === "settings" || openId === "system") refreshPanel();
+      break;
+    case "gesturesUnavailable":
+      // La cámara quedó encendida; solo no cargó el detector de manos.
+      lastCamError = "";
+      ui.reply.textContent = t("camNoGestures");
+      renderSides();
+      if (openId === "settings" || openId === "system") refreshPanel();
       break;
   }
 }
