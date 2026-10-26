@@ -1,0 +1,19 @@
+{
+  "name": "novia-ia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mi novia IA personal: cara realista animada, voz, memoria y emociones",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check brain.js && for f in web/js/*.js; do node --check \"$f\" || exit 1; done"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "@mediapipe/tasks-vision": "0.10.14"
+  }
+}

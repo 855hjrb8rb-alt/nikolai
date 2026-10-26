@@ -1,0 +1,80 @@
+:root {
+  --bg: #0b0709;
+  --ink: #fff6f8;
+  --dim: #c9b3ba;
+  --rose: #ff8fab;
+  --glass: rgba(20, 12, 16, .55);
+  --line: rgba(255, 255, 255, .14);
+  --font: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font); overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.stage { position: fixed; inset: 0; }
+#face { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px; padding: max(14px, env(safe-area-inset-top)) 16px 30px; background: linear-gradient(rgba(0,0,0,.55), transparent); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 10px #4ade80; }
+.dot.off { background: #888; box-shadow: none; }
+.who { display: flex; flex-direction: column; line-height: 1.2; }
+.who b { font-size: 18px; }
+.who small { font-size: 12px; color: var(--dim); }
+.mood { margin-left: 4px; font-size: 13px; color: var(--dim); }
+.icon-btn { margin-left: auto; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: var(--glass); display: grid; place-items: center; backdrop-filter: blur(8px); }
+
+
+.caption { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); width: min(92vw, 760px); margin: 0; text-align: center; font-size: clamp(16px, 2.4vw, 21px); line-height: 1.4; text-shadow: 0 2px 10px #000, 0 0 2px #000; max-height: 30vh; overflow: hidden; }
+.caption .me { display: block; font-size: .8em; color: var(--dim); margin-bottom: 4px; }
+
+.bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 10px; padding: 30px 14px max(16px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,.6)); }
+.round { flex: none; width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--line); background: var(--glass); display: grid; place-items: center; backdrop-filter: blur(8px); }
+.round.on { border-color: var(--rose); color: var(--rose); }
+.mic.on { background: var(--rose); color: #2a0b14; border-color: var(--rose); box-shadow: 0 0 0 0 rgba(255,143,171,.6); animation: ring 1.6s infinite; }
+@keyframes ring { 70% { box-shadow: 0 0 0 14px rgba(255,143,171,0); } 100% { box-shadow: 0 0 0 0 rgba(255,143,171,0); } }
+.chat { flex: 1; display: flex; min-width: 0; border: 1px solid var(--line); border-radius: 26px; background: var(--glass); backdrop-filter: blur(8px); }
+.chat input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: 16px var(--font); padding: 14px 18px; outline: none; }
+.chat button { border: 0; background: none; padding: 0 16px; color: var(--rose); }
+
+.gate { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: radial-gradient(circle at 50% 40%, #2a1520, var(--bg) 70%); z-index: 5; padding: 16px; text-align: center; }
+.gate img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 2px solid var(--rose); box-shadow: 0 0 40px rgba(255,143,171,.35); }
+.gate button { padding: 14px 44px; border-radius: 30px; border: 0; background: var(--rose); color: #2a0b14; font-weight: 700; font-size: 17px; }
+.gate small { color: var(--dim); }
+.gate[hidden] { display: none; }
+
+dialog { border: 1px solid var(--line); border-radius: 18px; background: #160d12; color: var(--ink); padding: 0; width: min(94vw, 520px); max-height: 90vh; }
+dialog::backdrop { background: rgba(0,0,0,.6); }
+.sheet { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.sheet h2 { margin: 0 0 4px; }
+.sheet h3 { margin: 10px 0 0; font-size: 14px; color: var(--rose); text-transform: uppercase; letter-spacing: .06em; }
+.sheet label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--dim); }
+.sheet label.row { flex-direction: row; align-items: flex-start; gap: 8px; color: var(--ink); font-size: 14px; }
+.sheet label.small { font-size: 12px; }
+.sheet input:not([type]), .sheet textarea { font: 15px var(--font); color: var(--ink); background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; resize: vertical; }
+.sheet input[type="checkbox"] { accent-color: var(--rose); margin-top: 2px; }
+.face-row { display: flex; gap: 14px; align-items: flex-start; }
+.face-row img { width: 96px; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); flex: none; }
+.face-row > div { display: flex; flex-direction: column; gap: 8px; }
+.btn { display: inline-flex; justify-content: center; padding: 10px 16px; border-radius: 22px; border: 0; background: var(--rose); color: #2a0b14; font-weight: 600; font-size: 14px; cursor: pointer; }
+.btn.ghost { background: none; border: 1px solid var(--line); color: var(--ink); font-weight: 500; }
+.btn.danger { color: #ff9a9a; }
+.btn.off { opacity: .45; }
+.note { margin: 0; font-size: 12px; color: var(--dim); }
+.mem { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow: auto; }
+.mem li { display: flex; gap: 8px; align-items: center; font-size: 14px; background: rgba(255,255,255,.05); border-radius: 10px; padding: 8px 10px; }
+.mem li span { flex: 1; }
+.mem li button { border: 0; background: none; color: var(--dim); font-size: 16px; }
+.mem .empty { color: var(--dim); background: none; }
+.actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; }
+
+@media (max-width: 560px) {
+  .caption { bottom: 88px; }
+  .round { width: 46px; height: 46px; }
+}
+
+/* Tu cámara: invisible, pero activa para que ella te vea. */
+.cam-hidden { position: absolute; width: 2px; height: 2px; opacity: 0; pointer-events: none; }
+
+/* Tu cámara: invisible, pero activa para que ella te vea. */
+.cam-hidden { position: absolute; width: 2px; height: 2px; opacity: 0; pointer-events: none; }

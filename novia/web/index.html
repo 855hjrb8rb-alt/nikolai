@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0709">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Mi novia</title>
+  <link rel="icon" href="img/novia.jpg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="stage">
+    <canvas id="face" aria-label="Su cara"></canvas>
+
+    <header class="top">
+      <span class="dot" id="dot"></span>
+      <div class="who"><b id="herName">Valeria</b><small id="status">en línea</small></div>
+      <span class="mood" id="mood"></span>
+      <button class="icon-btn" id="settingsBtn" aria-label="Ajustes">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </header>
+
+    <!-- Tu cámara no se muestra en pantalla: solo se usa para que ella te vea. -->
+    <video id="video" playsinline muted autoplay class="cam-hidden"></video>
+
+    <p class="caption" id="caption"></p>
+
+    <footer class="bar">
+      <button class="round" id="camBtn" aria-label="Que te vea">
+        <svg viewBox="0 0 24 24"><path d="M3 7h3l2-2.5h8L18 7h3v12H3z"/><circle cx="12" cy="13" r="3.8"/></svg>
+      </button>
+      <form class="chat" id="chat">
+        <input id="input" autocomplete="off" placeholder="Escríbele…" maxlength="2000">
+        <button aria-label="Enviar"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button>
+      </form>
+      <button class="round mic" id="micBtn" aria-label="Hablar con ella">
+        <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+    </footer>
+
+    <div class="gate" id="gate">
+      <img src="img/novia.jpg" alt="" id="gateImg">
+      <button id="enter">Entrar</button>
+      <small>Activa el micrófono y el sonido para hablar con ella</small>
+    </div>
+  </main>
+
+  <dialog id="settings">
+    <form method="dialog" class="sheet">
+      <h2>Ajustes</h2>
+      <label>Su nombre<input id="sName" maxlength="40"></label>
+      <label>Cómo te llama<input id="sPet" maxlength="40"></label>
+      <label>Su personalidad (opcional)<textarea id="sAbout" rows="3" maxlength="600" placeholder="De dónde es, qué le gusta, cómo habla…"></textarea></label>
+      <label class="row"><input type="checkbox" id="sVoice"> Que hable en voz alta</label>
+
+      <h3>Su cara</h3>
+      <div class="face-row">
+        <img id="sPhoto" alt="">
+        <div>
+          <label class="row small"><input type="checkbox" id="sRule"> Confirmo que es una imagen generada por IA de una mujer claramente adulta, y no la foto de una persona real.</label>
+          <label class="btn" id="sUpload">Cambiar foto<input type="file" accept="image/*" hidden disabled></label>
+          <button type="button" class="btn ghost" id="sReset">Usar la de siempre</button>
+          <p class="note" id="sPhotoNote"></p>
+        </div>
+      </div>
+
+      <h3>Lo que recuerda de ti</h3>
+      <ul id="sMem" class="mem"></ul>
+
+      <div class="actions">
+        <button type="button" class="btn ghost danger" id="sClear">Borrar conversación</button>
+        <button class="btn" id="sSave">Listo</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
