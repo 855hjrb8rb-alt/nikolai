@@ -8,6 +8,7 @@ import {
   PREMIUM_VOICES, unlockAudio, testPremium, outputLevel,
 } from "./voice.js";
 import { CallView } from "./call.js";
+import { Portrait, photoToPortrait } from "./portrait.js";
 import { renderStudio, studio } from "./studio.js";
 import { renderWatch, watch, minuteNow } from "./watch.js";
 import { renderBots, botsSummary, stopBots } from "./bots.js";
@@ -43,7 +44,7 @@ const settings = Object.assign(
   {
     mode: "conversation", voiceName: "", gender: "female", rate: 1, pitch: 1, poke: true, pinch: true, dwell: true,
     showCam: true, smoothing: 0.4, target: "en", chatSpeak: true, level: "secondary", facing: "user",
-    bell: true, lowPower: false, clap: true, clapMobile: false, clapSens: 3, aiSpeed: "max", emotions: false, emoIntensity: "soft", persona: "nikolai", personaVoice: true, jfkLang: "es", jfkVintage: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
+    bell: true, lowPower: false, clap: true, clapMobile: false, clapSens: 3, aiSpeed: "max", emotions: false, emoIntensity: "soft", persona: "nikolai", noviaName: "Valeria", noviaPet: "amor", noviaAbout: "", personaVoice: true, jfkLang: "es", jfkVintage: true, callSees: false, premiumOn: false, premiumVoice: "JBFqnCBsd6RMkjVDRZzb", premiumModel: "eleven_flash_v2_5", premiumFx: true, clapSong: { type: "track", id: "39shmbIHICJ2Wxnk1fPSdz", title: "Should I Stay or Should I Go — The Clash" },
   },
   store.get("settings", {}),
 );
@@ -103,9 +104,11 @@ const MOODS = {
   annoyed: ["😤", 1.05, 0.96], angry: ["😠", 1.1, 0.92],
 };
 let mood = store.get("mood", { mood: "neutral", intensity: 0.5, at: 0 });
+/** La novia siempre tiene emociones; las demás personalidades, solo si el usuario las activa. */
+const emoOn = () => settings.emotions || settings.persona === "novia";
 /** Las emociones se calman solas con el tiempo (unos 25 minutos). */
 function currentMood() {
-  if (!settings.emotions) return { mood: "neutral", intensity: 0 };
+  if (!emoOn()) return { mood: "neutral", intensity: 0 };
   if (mood.mood !== "neutral" && Date.now() - mood.at > 25 * 60_000) mood = { mood: "neutral", intensity: 0.5, at: Date.now() };
   return mood;
 }
@@ -130,9 +133,9 @@ function setEmotions(on, intensity) {
 function showMood() {
   const chip = $("#moodChip");
   const m = currentMood();
-  document.body.dataset.mood = settings.emotions ? m.mood : "";
+  document.body.dataset.mood = emoOn() ? m.mood : "";
   if (!chip) return;
-  chip.hidden = !settings.emotions;
+  chip.hidden = !emoOn();
   chip.textContent = `${MOODS[m.mood][0]} ${t("mood_" + m.mood)}`;
 }
 setInterval(showMood, 60_000);
@@ -142,6 +145,7 @@ const EMO_OFF_RE = /\b(apaga|desactiva|quita|deja de tener|turn off|disable)(te)
 let awayHours = 0;
 
 // ---------- Personalidades y videollamada ----------
+const PERSONA_IDS = ["nikolai", "novia", "lawyer", "friend", "house", "jfk"];
 // Retrato oficial de la Casa Blanca (1963), dominio público, servido por Wikimedia Commons.
 const JFK_PHOTO = "https://commons.wikimedia.org/wiki/Special:FilePath/John_F._Kennedy,_White_House_color_photo_portrait.jpg?width=640";
 const JFK_SPEECHES = [
@@ -150,9 +154,9 @@ const JFK_SPEECHES = [
   ["jfk_sp_cuba", "JFK Cuban missile crisis address October 22 1962"],
   ["jfk_sp_berlin", "JFK Ich bin ein Berliner speech 1963"],
 ];
-const PERSONA_VOICE = { lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 }, house: { gender: "male", premium: "pqHfZKP75CvOlQylNhV4", pitch: 0.95 }, jfk: { gender: "male", premium: "pNInz6obpgDQGcFmaJgB", pitch: 1 } };
+const PERSONA_VOICE = { novia: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.1 }, lawyer: { gender: "male", premium: "nPczCjzI2devNBz1zQrb", pitch: 0.92 }, friend: { gender: "female", premium: "EXAVITQu4vr4xnSDxMaL", pitch: 1.06 }, house: { gender: "male", premium: "pqHfZKP75CvOlQylNhV4", pitch: 0.95 }, jfk: { gender: "male", premium: "pNInz6obpgDQGcFmaJgB", pitch: 1 } };
 function setPersona(p, announce) {
-  if (!["nikolai", "lawyer", "friend", "house", "jfk"].includes(p)) return;
+  if (!PERSONA_IDS.includes(p)) return;
   settings.persona = p;
   saveSettings();
   document.body.dataset.persona = p;
@@ -160,16 +164,70 @@ function setPersona(p, announce) {
   updateCards();
   call.refresh();
   if (openId === "persona") refreshPanel();
-  if (announce) speakOnce(t("persona_hello_" + p + (p === "jfk" && settings.jfkLang === "en" ? "_en" : "")).replace("{name}", profile.name ? " " + profile.name : ""));
+  if (announce) speakOnce(t("persona_hello_" + p + (p === "jfk" && settings.jfkLang === "en" ? "_en" : "")).replace("{name}", profile.name ? " " + profile.name : "").replace("{pet}", settings.noviaPet).replace("{me}", settings.noviaName));
 }
+function noviaCard() {
+  const photo = store.get("noviaPhoto", "");
+  return `
+    <div class="novia-face">${photo ? `<img src="${photo}" alt="">` : `<span class="mono">${esc(t("novia_noPhoto"))}</span>`}</div>
+    <label class="novia-field"><span class="mono">${esc(t("novia_name"))}</span><input data-target data-nv="noviaName" maxlength="40" value="${esc(settings.noviaName)}"></label>
+    <label class="novia-field"><span class="mono">${esc(t("novia_pet"))}</span><input data-target data-nv="noviaPet" maxlength="40" value="${esc(settings.noviaPet)}"></label>
+    <label class="novia-field"><span class="mono">${esc(t("novia_about"))}</span><textarea data-target data-nv="noviaAbout" maxlength="600" rows="2" placeholder="${esc(t("novia_aboutPh"))}">${esc(settings.noviaAbout)}</textarea></label>
+    <label class="novia-check"><input type="checkbox" data-target data-nv-ok> <span>${esc(t("novia_photoRule"))}</span></label>
+    <div class="pc-quick">
+      <label class="nw-mini novia-up off" data-target>${esc(t(photo ? "novia_change" : "novia_upload"))}<input type="file" accept="image/*" hidden disabled></label>
+      ${photo ? `<button class="nw-mini" data-target data-nv-del>${esc(t("novia_remove"))}</button>` : ""}
+    </div>
+    <p class="muted novia-status"></p>`;
+}
+
+function bindNoviaCard(body) {
+  body.querySelectorAll("[data-nv]").forEach((el) => el.addEventListener("change", () => {
+    settings[el.dataset.nv] = el.value.trim() || { noviaName: "Valeria", noviaPet: "amor", noviaAbout: "" }[el.dataset.nv];
+    saveSettings();
+    call.refresh();
+  }));
+  const ok = body.querySelector("[data-nv-ok]");
+  const up = body.querySelector(".novia-up");
+  const file = up?.querySelector("input");
+  const status = body.querySelector(".novia-status");
+  if (!ok || !file) return;
+  ok.addEventListener("change", () => { file.disabled = !ok.checked; up.classList.toggle("off", !ok.checked); });
+  up.addEventListener("click", (e) => { if (!ok.checked) { e.preventDefault(); status.textContent = t("novia_checkFirst"); } });
+  file.addEventListener("change", async () => {
+    const f = file.files?.[0];
+    if (!f) return;
+    status.textContent = t("novia_detecting");
+    try {
+      const dataUrl = await photoToPortrait(f);
+      const face = await portrait.set(dataUrl);
+      store.set("noviaPhoto", dataUrl);
+      store.set("noviaFace", face);
+      refreshPanel();
+      body.querySelector(".novia-status").textContent = t(face ? "novia_faceOk" : "novia_faceNo");
+    } catch {
+      status.textContent = t("novia_photoErr");
+    }
+  });
+  body.querySelector("[data-nv-del]")?.addEventListener("click", () => {
+    store.set("noviaPhoto", ""); store.set("noviaFace", null);
+    portrait.set("");
+    refreshPanel();
+  });
+}
+
+// Cara de la novia: la foto que sube el usuario, animada (los puntos de la cara se guardan).
+const portrait = new Portrait();
+const noviaPhoto = store.get("noviaPhoto", "");
+if (noviaPhoto) portrait.set(noviaPhoto, store.get("noviaFace", null)).then((f) => f && store.set("noviaFace", f)).catch(() => {});
 const call = new CallView({
-  t, esc, icon, jfkPhoto: JFK_PHOTO,
+  t, esc, icon, jfkPhoto: JFK_PHOTO, portrait,
   getState: () => state,
   speakLevel: () => outputLevel(),
   micLevel: () => Math.min(1, mic.level() * 3),
   persona: () => settings.persona,
   mood: () => currentMood(),
-  title: (p) => t("persona_" + p),
+  title: (p) => (p === "novia" ? settings.noviaName : t("persona_" + p)),
   caption: () => ui.reply.textContent.slice(-180),
   micOn: () => voiceOn,
   onMic: () => toggleVoice(),
@@ -177,7 +235,7 @@ const call = new CallView({
   seeAlways: () => settings.callSees,
   onSeeAlways: () => { settings.callSees = !settings.callSees; saveSettings(); },
   onLook: () => ask(t("call_lookPrompt"), { look: true }),
-  onPersona: () => { const P = ["nikolai", "lawyer", "friend", "house", "jfk"]; setPersona(P[(P.indexOf(settings.persona) + 1) % P.length], true); },
+  onPersona: () => setPersona(PERSONA_IDS[(PERSONA_IDS.indexOf(settings.persona) + 1) % PERSONA_IDS.length], true),
 });
 async function startCall() {
   if (call.active) return;
@@ -195,7 +253,7 @@ function endCall() {
 }
 
 
-const APP_VERSION = "2026.10.22-e";
+const APP_VERSION = "2026.10.26-a";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -784,13 +842,14 @@ const PANEL = {
   },
 
   persona(body) {
-    const P = ["nikolai", "lawyer", "friend", "house", "jfk"];
+    const P = PERSONA_IDS;
     body.innerHTML = `
       <div class="persona-cards">${P.map((p) => `
         <div class="persona-card ${p} ${settings.persona === p ? "on" : ""}">
-          <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", lawyer: "⚖", friend: "♥", house: "▣", jfk: "★" }[p]}</span>
+          <div class="pc-head"><span class="pc-ico">${{ nikolai: "◉", novia: "❣", lawyer: "⚖", friend: "♥", house: "▣", jfk: "★" }[p]}</span>
             <div><b>${esc(t("persona_" + p))}</b><small class="mono">${esc(t("personaSub_" + p))}</small></div></div>
           <p>${esc(t("personaDesc_" + p))}</p>
+          ${p === "novia" ? noviaCard() : ""}
           ${p === "jfk" ? `
             <img class="pc-photo" src="${JFK_PHOTO}" alt="John F. Kennedy" referrerpolicy="no-referrer" onerror="this.remove()">
             <div class="pc-quick">
@@ -833,6 +892,7 @@ const PANEL = {
       </div>
       <p class="muted">${esc(t("ps_note"))}</p>`;
     body.querySelectorAll("[data-persona]").forEach((b) => b.addEventListener("click", () => setPersona(b.dataset.persona, true)));
+    bindNoviaCard(body);
     body.querySelectorAll("[data-jfk]").forEach((b) => b.addEventListener("click", () => {
       const v = b.dataset.jfk;
       if (v === "vintage") settings.jfkVintage = !settings.jfkVintage; else settings.jfkLang = v;
@@ -1256,7 +1316,7 @@ function applyVoice() {
   }
   // La emoción cambia un poco la voz (más lenta si está triste, más rápida si está emocionada o enojada).
   const mv = MOODS[currentMood().mood];
-  if (settings.emotions && mv) { speaker.rate = clamp(speaker.rate * mv[1], 0.5, 2); speaker.pitch = clamp(speaker.pitch * mv[2], 0.5, 1.8); }
+  if (emoOn() && mv) { speaker.rate = clamp(speaker.rate * mv[1], 0.5, 2); speaker.pitch = clamp(speaker.pitch * mv[2], 0.5, 1.8); }
   // JFK: en inglés (su idioma) o doblado al español, con sonido de tele de 1963.
   if (settings.persona === "jfk") {
     if (settings.jfkLang === "en") speaker.lang = "en-US";
@@ -1530,7 +1590,7 @@ speaker.onIdle = () => { if (state === "speaking" || state === "thinking") after
 
 const ACTIONS = {
   set_persona: ({ persona }) => setPersona(persona, false),
-  set_mood: ({ mood: m, intensity }) => { if (settings.emotions) setMood(m, intensity); },
+  set_mood: ({ mood: m, intensity }) => { if (emoOn()) setMood(m, intensity); },
   set_emotions: ({ on, intensity }) => setEmotions(on, intensity),
   video_call: ({ action }) => (action === "start" ? startCall() : endCall()),
   set_language: ({ code }) => applyLanguage(code),
@@ -1574,7 +1634,7 @@ function dropOrphan(msg) {
 /** Envía la petición al cerebro (servidor o directo) con el idioma y la hora. */
 function stream(payload, handlers) {
   const model = { max: "claude-opus-5-5", balanced: "claude-sonnet-5-5", fast: "claude-haiku-5-5" }[settings.aiSpeed];
-  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: settings.persona, emotions: settings.emotions ? { on: true, intensity: settings.emoIntensity, mood: currentMood().mood, hoursAway: awayHours } : undefined, personaLang: settings.persona === "jfk" ? settings.jfkLang : "es", video: call.active, ...payload }, handlers);
+  return Brain.stream({ lang: getLang(), now: new Date().toString(), profile, memories: memoriesForBrain(t), model, persona: settings.persona, novia: settings.persona === "novia" ? { name: settings.noviaName, pet: settings.noviaPet, about: settings.noviaAbout } : undefined, emotions: emoOn() ? { on: true, intensity: settings.emoIntensity, mood: currentMood().mood, hoursAway: awayHours } : undefined, personaLang: settings.persona === "jfk" ? settings.jfkLang : "es", video: call.active, ...payload }, handlers);
 }
 
 /** Pide a NIKOLAI una descripción corta de una foto para guardarla como recuerdo. */
@@ -2200,7 +2260,7 @@ async function greetOnWake(how, firstTime, lastVisit) {
   const bday = daysToBirthday() === 0 ? ` ${t("birthdayGreeting").replace("{name}", name)}` : "";
   const local = firstTime
     ? `${hello}${name}. ${t("welcomeFirst")}${bday}`
-    : settings.emotions && Date.now() - lastVisit > 6 * 3_600_000
+    : emoOn() && Date.now() - lastVisit > (settings.persona === "novia" ? 0.33 : 6) * 3_600_000
       ? `${hello}${name}… ${t("emo_missedLocal").replace("{ago}", agoText(Date.now() - lastVisit))}${bday}`
       : `${hello}${name}. ${t("welcomeBack").replace("{ago}", agoText(Date.now() - lastVisit))}${bday}`;
   // Si ya hay historial y cerebro, que el saludo recuerde de qué hablaron.
@@ -2208,8 +2268,8 @@ async function greetOnWake(how, firstTime, lastVisit) {
     const instruction = t("greetPrompt")
       .replace("{how}", t({ voice: "wokeVoice", claps: "wokeClaps", gesture: "wokeGesture" }[how] || "wokeTap"))
       .replace("{hello}", hello).replace("{name}", name).replace("{ago}", agoText(Date.now() - lastVisit))
-      + (settings.emotions && Date.now() - lastVisit > 3 * 3_600_000 ? " " + t("emo_greet") : "");
-    awayHours = settings.emotions ? (Date.now() - Math.max(lastVisit || 0, lastUserAt || 0)) / 3_600_000 : 0;
+      + (emoOn() && Date.now() - lastVisit > (settings.persona === "novia" ? 0.33 : 3) * 3_600_000 ? " " + t("emo_greet") : "");
+    awayHours = emoOn() ? (Date.now() - Math.max(lastVisit || 0, lastUserAt || 0)) / 3_600_000 : 0;
     stopAll();
     setState("thinking");
     speaker.begin();
@@ -2236,7 +2296,51 @@ async function greetOnWake(how, firstTime, lastVisit) {
 }
 
 // Guarda la hora de la visita mientras está encendida (para saber cuándo fue la última).
-setInterval(() => { if (!sleeping) { visit.last = Date.now(); store.set("visit", visit); } }, 60000);
+setInterval(() => { if (!sleeping && document.visibilityState === "visible") { visit.last = Date.now(); store.set("visit", visit); } }, 60000);
+
+// La novia nota cuándo te vas (cambias de app o de pestaña) y cuándo vuelves.
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    hiddenAt = Date.now();
+    if (!sleeping) { visit.last = hiddenAt; store.set("visit", visit); }
+    return;
+  }
+  const away = hiddenAt ? Date.now() - hiddenAt : 0;
+  hiddenAt = 0;
+  if (sleeping || settings.persona !== "novia" || away < 20 * 60_000 || !brain.apiKey || isOffline()) return;
+  setTimeout(() => noviaWelcomeBack(away), 800);
+});
+
+async function noviaWelcomeBack(away) {
+  awayHours = away / 3_600_000;
+  lastUserAt = Date.now();
+  store.set("lastUserAt", lastUserAt);
+  const photo = call.active ? call.snapshot() : null;
+  const instruction = t("novia_back").replace("{ago}", agoText(away)) + (photo ? " " + t("novia_backSee") : "");
+  stopAll();
+  setState("thinking");
+  speaker.begin();
+  askCtl = new AbortController();
+  const ctl = askCtl;
+  let text = "";
+  try {
+    const err = await stream(
+      { messages: [...history.slice(-12), { role: "user", content: instruction }], notes: notes.map((n) => n.text), channel: "voice", images: photo ? [{ media_type: "image/jpeg", data: photo }] : [] },
+      { signal: ctl.signal, onText: (d) => { text += d; ui.reply.textContent = text.slice(-220); speaker.push(d); } },
+    );
+    if (ctl !== askCtl) return;
+    askCtl = null;
+    if (err || !text) { speaker.end(); return; }
+    // Su reclamo queda en la conversación para que tu respuesta tenga contexto.
+    history.push({ role: "assistant", content: text });
+    saveHistory();
+    lastReply = text;
+    speaker.end();
+  } catch {
+    if (ctl === askCtl) askCtl = null;
+  }
+}
 
 // =====================================================================
 // Arranque

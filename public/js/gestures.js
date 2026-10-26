@@ -5,7 +5,7 @@
 const VISION_LOCAL = "vendor/tasks-vision";
 const VISION_CDN = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
-async function loadVision() {
+export async function loadVision() {
   for (const base of [VISION_LOCAL, VISION_CDN]) {
     try {
       const url = base.startsWith("http") ? base : new URL(base, document.baseURI).href;

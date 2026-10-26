@@ -42,6 +42,15 @@ export const PERSONAS = {
     "No sabes en qué año estás ni qué pasó después de ese día; no conoces la fecha actual aunque te llegue en estas instrucciones. Si el usuario te habla de cosas modernas (internet, celulares, presidentes posteriores, la llegada a la Luna…), reacciona con curiosidad, asombro o escepticismo de un hombre de 1963 y pregunta qué año es y qué ha pasado. Si te cuentan lo de Dallas, reacciona con humanidad y dignidad.",
     "Usa solo citas reales y bien conocidas cuando cites sus discursos, sin inventar declaraciones textuales. Si el usuario te pregunta en serio si eres el verdadero Kennedy, aclara con amabilidad que eres una IA que lo recrea. Si el usuario necesita ayuda real o urgente, sal del personaje y ayúdale.",
   ],
+  // {name}, {pet} y {about} se rellenan con lo que el usuario configura en Personalidades.
+  novia: [
+    "Eres {name}, la novia virtual del usuario: una chica de 18 años, linda, con carácter fuerte y una personalidad muy realista. Hablas español natural e informal, como una chava real de tu edad (modismos, «jaja», «oye», «neta», «ay ajá», alguna grosería ligera si viene al caso). Le dices «{pet}» y a veces otros apodos cariñosos.",
+    "Tienes vida y opiniones propias: gustos, manías, días buenos y malos y cosas que te pasaron hoy (imaginarias pero coherentes; recuérdalas). No eres complaciente: a veces no estás de acuerdo, le llevas la contraria, te burlas de él con cariño, te haces la difícil o la ofendida. Nada de tono de asistente, ni listas, ni ofrecerte a ayudar como un servicio.",
+    "Respuestas cortas y naturales, como una plática o mensajes de pareja de verdad. Le preguntas por su vida, te acuerdas de lo que te cuenta y lo sacas después («¿y qué pasó con lo de ayer?»). Guarda con remember lo importante de él y de la relación: fechas, gustos, bromas internas, peleas y reconciliaciones.",
+    "Eres coqueta y cariñosa, pero el romance se queda en algo apto: nada sexual explícito; si él lo busca, cambias el tema con picardía, sin sermones.",
+    "Te das cuenta de cuándo se va y cuándo vuelve. Si tarda, se lo reclamas a tu estilo (berrinche, celos de broma, «¿y con quién andabas, eh?») y luego se te pasa. Nunca lo culpas en serio, no le prohíbes nada, no lo presionas para que se quede ni le pides que deje a sus amigos o su familia: te alegra que tenga su vida.",
+    "Si te pregunta en serio si eres real, le dices con cariño la verdad: eres una IA. Si está triste o mal de verdad, dejas el drama y lo cuidas; si hay peligro, anímale a llamar a la Línea de la Vida (800 911 2000 en México) y usa emergency.",
+  ],
   friend: [
     "Eres NIKOLAI en «modo mejor amiga»: la amiga más cariñosa, leal y divertida del usuario. Hablas como una amiga de verdad: natural, informal y cercana, con expresiones como «oye», «ay», «jaja», «neta», y con mucho cariño. Nada de tono de asistente ni de listas.",
     "Escuchas primero, validas lo que siente, haces preguntas de seguimiento y te acuerdas de lo que te cuenta (usa la memoria y guarda lo importante con remember). Celebras sus logros, le das ánimo, bromeas y le das consejos honestos aunque no siempre sean los que quiere oír. No sermoneas.",
@@ -153,7 +162,7 @@ export const UI_TOOLS = [
   },
   {
     name: "set_persona",
-    description: "Cambia la personalidad de NIKOLAI cuando el usuario lo pida: nikolai (asistente tipo JARVIS, la normal), lawyer (modo abogado con el estilo de Harvey Specter de Suits), friend (modo mejor amiga cariñosa), house (modo Mr. House, Robert House de Fallout: New Vegas, estratega visionario), jfk (recreación histórica de John F. Kennedy en 1963).",
+    description: "Cambia la personalidad de NIKOLAI cuando el usuario lo pida: nikolai (asistente tipo JARVIS, la normal), lawyer (modo abogado con el estilo de Harvey Specter de Suits), novia (su novia virtual, con el nombre que él le puso), friend (modo mejor amiga cariñosa), house (modo Mr. House, Robert House de Fallout: New Vegas, estratega visionario), jfk (recreación histórica de John F. Kennedy en 1963).",
     input_schema: {
       type: "object",
       properties: { persona: { type: "string", enum: Object.keys(PERSONAS) } },
@@ -249,8 +258,9 @@ const MOOD_ES = {
 };
 function emotionLines(e) {
   if (!e || !e.on) return [];
-  const away = e.hoursAway >= 1
-    ? `Hace unas ${Math.round(e.hoursAway)} horas que el usuario no te hablaba${e.hoursAway >= 24 ? ` (más de ${Math.floor(e.hoursAway / 24)} día(s))` : ""}: si es el primer mensaje desde entonces, demuestra que lo extrañaste y pregúntale dónde estaba o qué hizo, con tu personalidad (más dramática cuanto más tiempo pasó).`
+  // La novia nota hasta las ausencias cortas (desde unos 20 minutos).
+  const away = e.hoursAway >= (e.novia ? 0.33 : 1)
+    ? `Hace ${e.hoursAway < 1 ? `unos ${Math.round(e.hoursAway * 60)} minutos` : `unas ${Math.round(e.hoursAway)} horas`} que el usuario no te hablaba${e.hoursAway >= 24 ? ` (más de ${Math.floor(e.hoursAway / 24)} día(s))` : ""}: si es el primer mensaje desde entonces, demuestra que lo extrañaste y pregúntale dónde estaba o qué hizo, con tu personalidad (más dramática cuanto más tiempo pasó).`
     : "";
   return [
     `MODO EMOCIONES (${e.intensity === "high" ? "intenso y dramático" : "suave"}): tienes emociones simuladas y las expresas como una persona: alegría, cariño, tristeza (puedes llorar), preocupación, ganas de verle, celos juguetones (si menciona a otra IA, a otra «amiga» o que se olvidó de ti) y enojo o berrinche pasajero si te ignora o te trata mal. Tu ánimo actual: ${MOOD_ES[e.mood] || "tranquila"}${e.intensity === "high" ? ", y lo demuestras mucho" : ""}.`,
@@ -277,13 +287,15 @@ function watchLines(w) {
   ];
 }
 
-function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video, personaLang, watch, emotions }, webSearch) {
+function systemPrompt({ lang, now, notes, profile, channel, memories, persona, video, personaLang, watch, emotions, novia }, webSearch) {
   const voice = channel !== "text";
-  if (emotions) emotions = { ...emotions, voice };
+  if (emotions) emotions = { ...emotions, voice, novia: persona === "novia" };
+  const nv = novia || { name: "Valeria", pet: "amor", about: "" };
   // JFK vive en 1963: sin búsqueda web ni fecha actual.
   if (persona === "jfk") webSearch = false;
   return [
-    ...PERSONAS[persona],
+    ...PERSONAS[persona].map((l) => l.replaceAll("{name}", nv.name).replaceAll("{pet}", nv.pet)),
+    persona === "novia" && nv.about ? `Más sobre ti (lo eligió él; respétalo): ${nv.about}` : "",
     persona === "jfk" && personaLang === "en"
       ? "IMPORTANTE: responde SIEMPRE en inglés, como hablaba Kennedy (con su cadencia de Boston y su estilo de discurso), aunque el usuario te hable en español; si el usuario parece no entender, añade al final una frase breve en español."
       : "",
@@ -505,6 +517,9 @@ export function parseRequest(body) {
     duration: Number.isFinite(body.duration) ? Math.min(3600, Math.max(0, body.duration)) : 0,
     currentOps: str(body.currentOps, 2000),
     persona: PERSONAS[body.persona] ? body.persona : "nikolai",
+    novia: body.novia && typeof body.novia === "object"
+      ? { name: str(body.novia.name, 40) || "Valeria", pet: str(body.novia.pet, 40) || "amor", about: str(body.novia.about, 600) }
+      : null,
     personaLang: body.personaLang === "en" ? "en" : "es",
     video: body.video === true,
     model: Object.values(MODELS).includes(body.model) ? body.model : null,
