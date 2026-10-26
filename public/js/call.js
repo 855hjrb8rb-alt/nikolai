@@ -5,7 +5,6 @@
 const COLORS = {
   nikolai: { main: "#79e3ff", accent: "#ffcc5c", glow: "rgba(121,227,255,.55)" },
   lawyer: { main: "#ffcc5c", accent: "#cfe3ff", glow: "rgba(255,204,92,.5)" },
-  novia: { main: "#ff8fab", accent: "#ffd1dc", glow: "rgba(255,143,171,.55)" },
   friend: { main: "#ff9ad5", accent: "#c9b8ff", glow: "rgba(255,154,213,.55)" },
   jfk: { main: "#eef1f6", accent: "#a9b4c8", glow: "rgba(220,228,240,.45)" },
   house: { main: "#7dffb2", accent: "#b8ffd8", glow: "rgba(125,255,178,.55)" },
@@ -213,18 +212,6 @@ export class CallView {
     }
     this.mouth += (target - this.mouth) * 0.35;
     const mic = state === "listening" ? this.o.micLevel() : 0;
-
-    // La novia: su foto animada a pantalla completa (sin efectos de holograma).
-    const pt = this.o.portrait;
-    if (p === "novia" && pt?.ready) {
-      const md = this.o.mood?.() || { mood: "neutral", intensity: 0 };
-      pt.draw(g, 0, 0, w, h, now, { mouth: this.mouth, mood: md.mood, intensity: md.intensity });
-      if (mic > 0.05) {
-        g.save(); g.strokeStyle = col.main; g.globalAlpha = Math.min(0.8, mic); g.lineWidth = 3;
-        g.strokeRect(1.5, 1.5, w - 3, h - 3); g.restore();
-      }
-      return;
-    }
     const S = Math.min(w, h) / 2.3;
     const cx = w / 2, cy = h / 2 + S * 0.05 + Math.sin(T * 1.3) * 2;
 
@@ -344,7 +331,7 @@ export class CallView {
   }
 
   #face(g, cx, cy, S, now, col, p) {
-    const girl = p === "friend" || p === "novia";
+    const girl = p === "friend";
     const house = p === "house";
     const jfk = p === "jfk";
     // Parpadeo y mirada

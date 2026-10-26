@@ -1151,19 +1151,3 @@ body.tm-fs-lock { overflow: hidden; }
 .tm-lg:hover { background: rgba(255,255,255,.04); }
 .tm-lgdot { width: 10px; height: 10px; border-radius: 2px; }
 .tm-lg .tm-sym { color: #fff; }
-
-/* Novia: tarjeta con su foto y videollamada con su cara realista */
-.persona-card.novia { --pc: #ff8fab; }
-body[data-persona="novia"] .brand span { color: #ff8fab; }
-.novia-face { aspect-ratio: 3 / 4; max-height: 300px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #0b0c1e; display: grid; place-items: center; }
-.novia-face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
-.novia-face span { padding: 16px; text-align: center; font-size: 12px; color: var(--ice-dim); }
-.novia-field { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--ice-dim); }
-.novia-field input, .novia-field textarea { font: 14px var(--font-display, inherit); color: #fff; background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; resize: vertical; }
-.novia-check { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: var(--ice); }
-.novia-check input { margin-top: 2px; accent-color: #ff8fab; }
-.novia-up { cursor: pointer; }
-.novia-up.off { opacity: .5; }
-.call[data-persona="novia"] { background: #000; }
-.call[data-persona="novia"] .call-avatar { width: 100%; }
-.call[data-persona="novia"] .call-caption { position: absolute; bottom: 110px; }
