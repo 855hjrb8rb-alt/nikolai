@@ -132,30 +132,32 @@ export function renderMemory(body, ctx) {
   const q = memory.filter.toLowerCase();
   const list = memory.items.filter((m) => !q || `${m.text} ${m.desc} ${t("mem_" + m.category)}`.toLowerCase().includes(q));
   body.innerHTML = `
+    <div class="readout mem-add">
+      <div class="k">${esc(t("memNew").toUpperCase())}</div>
+      <textarea class="field mem-text" id="memText" rows="4" placeholder="${esc(t("memPlaceholder"))}">${esc(d.text)}</textarea>
+      <div class="mem-catrow"><span class="mem-catlabel">${esc(t("memCatLabel"))}</span>
+        <div class="tiles mem-cats">${CATEGORIES.map((c) => tile(esc(t("mem_" + c)), "", d.category === c ? "on" : "")).join("")}</div></div>
+      <div class="mem-row">
+        <label class="mem-date">${esc(t("memDate"))}<input class="field" type="date" id="memDate" value="${esc(d.date)}"></label>
+        ${d.photo ? `<div class="mem-thumb"><img src="${d.photo}" alt=""><button class="tile" data-target id="memNoPhoto" aria-label="${esc(t("remove"))}">${icon("trash")}</button></div>` : ""}
+      </div>
+      <button class="tile action mem-save" data-target id="memSaveBtn"><span class="t-main">${icon("send")} ${esc(t("memSaveBtn"))}</span></button>
+      <div class="tiles mem-actions2">
+        ${tile(`${icon("mic")} ${esc(t("hw_dictate"))}`, "", "")}
+        ${tile(`${icon("camera")} ${esc(t("memPhoto"))}`, "", "")}
+      </div>
+      <input type="file" id="memFile" accept="image/*" hidden>
+      <input type="file" id="memImportFile" accept="application/json,.json" hidden>
+      <p class="mem-ok ${memory._justSaved ? "show" : ""}">${esc(t("memSaved"))}</p>
+      ${memory.error ? `<p class="notice-err">${esc(t(memory.error === "full" ? "memFull" : "memImportError"))}</p>` : ""}
+    </div>
+
     <div class="tiles mem-top">
       ${tile(esc(memory.enabled ? t("memOn") : t("memOff")), esc(t("memory").toUpperCase()), memory.enabled ? "on" : "")}
       ${tile(`${icon("install")}<br>${esc(t("memExport"))}`, "", "")}
       ${tile(`${icon("send")}<br>${esc(t("memImport"))}`, "", "")}
     </div>
     <p class="muted">${esc(memory.enabled ? t("memExplainOn") : t("memExplainOff"))}</p>
-
-    <div class="readout mem-add">
-      <div class="k">${esc(t("memNew").toUpperCase())}</div>
-      <textarea class="field" id="memText" rows="2" placeholder="${esc(t("memPlaceholder"))}">${esc(d.text)}</textarea>
-      <div class="tiles mem-cats">${CATEGORIES.map((c) => tile(esc(t("mem_" + c)), "", d.category === c ? "on" : "")).join("")}</div>
-      <div class="mem-row">
-        <label class="mem-date">${esc(t("memDate"))}<input class="field" type="date" id="memDate" value="${esc(d.date)}"></label>
-        ${d.photo ? `<div class="mem-thumb"><img src="${d.photo}" alt=""><button class="tile" data-target id="memNoPhoto" aria-label="${esc(t("remove"))}">${icon("trash")}</button></div>` : ""}
-      </div>
-      <div class="tiles mem-actions">
-        ${tile(`${icon("mic")}<br>${esc(t("hw_dictate"))}`, "", "action")}
-        ${tile(`${icon("camera")}<br>${esc(t("memPhoto"))}`, "", "action")}
-        ${tile(`${icon("send")}<br>${esc(t("save"))}`, "", "action")}
-      </div>
-      <input type="file" id="memFile" accept="image/*" hidden>
-      <input type="file" id="memImportFile" accept="application/json,.json" hidden>
-      ${memory.error ? `<p class="notice-err">${esc(t(memory.error === "full" ? "memFull" : "memImportError"))}</p>` : ""}
-    </div>
 
     <div class="form-row two">
       <input class="field" id="memSearch" placeholder="${esc(t("memSearch"))}" value="${esc(memory.filter)}">
@@ -188,21 +190,29 @@ export function renderMemory(body, ctx) {
     ctx.onChange?.();
   });
 
-  body.querySelectorAll(".mem-cats .tile").forEach((el, i) => el.addEventListener("click", () => { d.category = CATEGORIES[i]; rerender(); }));
-  const [dictate, photo, saveBtn] = body.querySelectorAll(".mem-actions .tile");
-  dictate.addEventListener("click", () => ctx.dictate((said) => { d.text = (d.text ? d.text + " " : "") + said; rerender(); }));
+  // Elegir categoría SIN recargar el panel (así no se cierra el teclado del móvil al escribir).
+  body.querySelectorAll(".mem-cats .tile").forEach((el, i) => el.addEventListener("click", () => {
+    d.text = text.value; d.category = CATEGORIES[i];
+    body.querySelectorAll(".mem-cats .tile").forEach((x, j) => x.classList.toggle("on", j === i));
+  }));
+  const [dictate, photo] = body.querySelectorAll(".mem-actions2 .tile");
+  dictate.addEventListener("click", () => { d.text = text.value; ctx.dictate?.((said) => { d.text = (d.text ? d.text + " " : "") + said; rerender(); }); });
   const file = body.querySelector("#memFile");
-  photo.addEventListener("click", () => file.click());
+  photo.addEventListener("click", () => { d.text = text.value; file.click(); });
   file.addEventListener("change", async () => {
     try { d.photo = await photoToDataUrl(file.files[0]); } catch { /* imagen no válida */ }
     rerender();
   });
   body.querySelector("#memNoPhoto")?.addEventListener("click", () => { d.photo = ""; rerender(); });
+  const saveBtn = body.querySelector("#memSaveBtn");
   saveBtn.addEventListener("click", async () => {
+    d.text = text.value; // toma lo escrito ahora mismo
     const item = addMemory({ text: d.text, category: d.category, date: d.date, photo: d.photo });
     if (!item) { rerender(); return; }
     memory.draft = { text: "", category: d.category, date: "", photo: "" };
+    memory._justSaved = true;
     rerender();
+    setTimeout(() => { memory._justSaved = false; const ok = body.querySelector(".mem-ok"); ok?.classList.remove("show"); }, 2200);
     ctx.onChange?.();
     // Con foto: NIKOLAI la describe una vez para poder recordarla en las conversaciones.
     if (item.photo && ctx.describe) {

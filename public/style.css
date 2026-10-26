@@ -1151,3 +1151,19 @@ body.tm-fs-lock { overflow: hidden; }
 .tm-lg:hover { background: rgba(255,255,255,.04); }
 .tm-lgdot { width: 10px; height: 10px; border-radius: 2px; }
 .tm-lg .tm-sym { color: #fff; }
+
+/* ===== Memoria: escribir recuerdos más fácil ===== */
+.mem-add { display: flex; flex-direction: column; gap: 10px; }
+.mem-text { width: 100%; box-sizing: border-box; min-height: 90px; font-size: 15px; line-height: 1.5; resize: vertical; }
+.mem-catrow { display: flex; flex-direction: column; gap: 6px; }
+.mem-catlabel { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--ice-dim); }
+.mem-cats { gap: 6px; flex-wrap: wrap; }
+.mem-cats .tile { flex: 0 0 auto; padding: 7px 12px; font-size: 13px; }
+.mem-save { width: 100%; padding: 14px; font-size: 16px; font-weight: 700; }
+.mem-save .t-main { display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+.mem-save svg { width: 20px; height: 20px; }
+.mem-actions2 { gap: 8px; }
+.mem-actions2 .tile { flex: 1; padding: 9px; font-size: 13px; }
+.mem-actions2 .tile .t-main { display: inline-flex; align-items: center; gap: 7px; justify-content: center; }
+.mem-ok { color: var(--green, #7dffb2); font-weight: 600; font-size: 13px; margin: 0; opacity: 0; max-height: 0; overflow: hidden; transition: opacity .25s, max-height .25s; }
+.mem-ok.show { opacity: 1; max-height: 24px; }
