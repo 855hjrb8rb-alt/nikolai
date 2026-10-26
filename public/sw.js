@@ -66,6 +66,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  if (url.origin === location.origin && url.pathname.includes("/novia/")) return; // otra app: no la toca
   if (url.origin === location.origin) e.respondWith(networkFirst(req));
   else if (ASSET_HOSTS.includes(url.hostname)) e.respondWith(cacheFirst(req));
 });

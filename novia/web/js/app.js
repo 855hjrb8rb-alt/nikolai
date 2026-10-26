@@ -2,7 +2,8 @@
 // memoria, emociones, te ve por la cámara si quieres y nota cuándo te vas y cuándo vuelves.
 
 import { Portrait, photoToPortrait } from "./portrait.js";
-import { Listener, Speaker, speechSupported, unlockAudio, outputLevel } from "./voice.js";
+import { Listener, Speaker, speechSupported, unlockAudio, outputLevel, testPremium } from "./voice.js";
+import { parseRequest, runChat } from "./brain.js";
 
 const $ = (s) => document.querySelector(s);
 const store = {
@@ -28,7 +29,21 @@ let camOn = false;
 let talkOn = false; // conversación por voz continua
 let state = "idle"; // idle | listening | thinking | speaking
 let ctl = null;
-let apiKey = true;
+// Con server.js la clave vive en el servidor; como web (GitHub Pages) se guarda solo en este navegador.
+let mode = "direct";
+let apiKey = false;
+let sdk = null;
+const keys = Object.assign({ anthropic: "", eleven: "" }, store.get("keys", {}));
+// Voces de mujer de ElevenLabs (suenan a persona, no a robot). Hablan español con el modelo multilingüe.
+const VOICES = [
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah · suave y joven" },
+  { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica · juguetona" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura · alegre" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda · cálida" },
+  { id: "pFZP5JQG7iQjIQuC4Bof", name: "Lily · dulce" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice · segura" },
+];
+const voiceCfg = Object.assign({ id: VOICES[0].id, model: "eleven_multilingual_v2" }, store.get("voiceCfg", {}));
 
 // ---------- Cara ----------
 const portrait = new Portrait();
@@ -87,7 +102,16 @@ function applyVoice() {
   speaker.gender = "female";
   speaker.rate = mv[2];
   speaker.pitch = 1.08 * mv[3];
+  // Voz realista (ElevenLabs) si hay clave; si no, la mejor voz femenina del navegador.
+  speaker.premium = keys.eleven ? { key: keys.eleven, voiceId: voiceCfg.id, model: voiceCfg.model, fx: false } : null;
 }
+let voiceWarned = false;
+speaker.onPremiumError = (e) => {
+  if (voiceWarned) return;
+  voiceWarned = true;
+  const st = e?.status;
+  showCaption(st === 401 ? "La clave de ElevenLabs no es válida (Ajustes → Voz)." : st === 402 || /quota|credit/i.test(e?.message || "") ? "Se acabaron tus créditos de ElevenLabs; uso la voz del navegador." : "La voz realista falló; uso la del navegador por ahora.");
+};
 speaker.onStart = () => setState("speaking");
 speaker.onIdle = () => {
   if (state === "speaking" || state === "thinking") setState("idle");
@@ -161,7 +185,8 @@ function showCaption(her, mine = "") {
 }
 
 const ERRORS = {
-  auth: "Falta tu clave de Anthropic en el servidor (ANTHROPIC_API_KEY).",
+  auth: "Tu clave de Anthropic no funciona. Revísala en Ajustes.",
+  nokey: "Pon tu clave de Anthropic en Ajustes (⚙) para que pueda hablar contigo.",
   credits: "Tu cuenta de Anthropic se quedó sin saldo.",
   rate_limit: "Demasiados mensajes seguidos; espera un momento.",
   connection: "No hay conexión con la IA.",
@@ -191,23 +216,35 @@ async function ask(text, { voice = talkOn, hidden = false, awayMin = 0 } = {}) {
   const my = ctl;
   let reply = "", error = null;
   try {
-    const res = await fetch("api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: my.signal });
-    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "";
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const parts = buf.split("\n\n");
-      buf = parts.pop();
-      for (const part of parts) {
-        if (!part.startsWith("data: ")) continue;
-        const ev = JSON.parse(part.slice(6));
-        if (ev.type === "text") { reply += ev.text; showCaption(reply, mine); if (me.voice) speaker.push(ev.text); }
-        else if (ev.type === "action") onAction(ev);
-        else if (ev.type === "error") error = ev.error;
+    const onEvent = (ev) => {
+      if (my !== ctl) return;
+      if (ev.type === "text") { reply += ev.text; showCaption(reply, mine); if (me.voice) speaker.push(ev.text); }
+      else if (ev.type === "action") onAction(ev);
+      else if (ev.type === "error") error = ev.error;
+    };
+    if (mode === "direct") {
+      // Web sin servidor: el navegador habla directo con Claude usando tu clave.
+      const request = parseRequest(payload);
+      if (!keys.anthropic) { error = "nokey"; }
+      else if (request) {
+        sdk ??= (await import("../vendor/anthropic-sdk.mjs")).default;
+        const client = new sdk({ apiKey: keys.anthropic, dangerouslyAllowBrowser: true });
+        await runChat({ client, Anthropic: sdk, request, send: onEvent, isAborted: () => my.signal.aborted });
+        if (my.signal.aborted) return;
+      }
+    } else {
+      const res = await fetch("api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: my.signal });
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const parts = buf.split("\n\n");
+        buf = parts.pop();
+        for (const part of parts) if (part.startsWith("data: ")) onEvent(JSON.parse(part.slice(6)));
       }
     }
   } catch (e) {
@@ -288,6 +325,12 @@ function openSettings() {
   $("#sUpload").classList.add("off");
   $("#sUpload input").disabled = true;
   $("#sPhotoNote").textContent = "";
+  $("#keyBox").hidden = mode !== "direct";
+  $("#sKey").value = keys.anthropic;
+  $("#sEleven").value = keys.eleven;
+  $("#sVoiceId").value = voiceCfg.id;
+  $("#sModel").value = voiceCfg.model;
+  $("#sVoiceNote").textContent = "";
   renderMemories();
   $("#settings").showModal();
 }
@@ -344,11 +387,38 @@ $("#settings").addEventListener("close", () => {
   me.about = $("#sAbout").value.trim();
   me.voice = $("#sVoice").checked;
   store.set("me", me);
+  saveKeys();
   if (!me.voice) speaker.cancel();
+  // Si entraste sin clave y ya la pusiste, ahora sí te saluda.
+  if (pendingHello && apiKey) { pendingHello = false; ask(FIRST_HELLO, { hidden: true, voice: true }); }
   renderTop();
 });
 
+function saveKeys() {
+  keys.anthropic = $("#sKey").value.trim();
+  keys.eleven = $("#sEleven").value.trim();
+  voiceCfg.id = $("#sVoiceId").value;
+  voiceCfg.model = $("#sModel").value;
+  store.set("keys", keys);
+  store.set("voiceCfg", voiceCfg);
+  if (mode === "direct") apiKey = Boolean(keys.anthropic);
+  $("#dot").classList.toggle("off", !apiKey);
+  voiceWarned = false;
+  applyVoice();
+}
+$("#sVoiceId").innerHTML = VOICES.map((v) => `<option value="${v.id}">${v.name}</option>`).join("");
+$("#sTest").addEventListener("click", async () => {
+  saveKeys();
+  if (!keys.eleven) { $("#sVoiceNote").textContent = "Primero pega tu clave de ElevenLabs."; return; }
+  $("#sVoiceNote").textContent = "Probando…";
+  const err = await testPremium({ key: keys.eleven, voiceId: voiceCfg.id, model: voiceCfg.model, fx: false }, `Hola, ${me.pet}. ¿Así te gusta cómo sueno?`, "es");
+  $("#sVoiceNote").textContent = !err ? "✓ Funciona. Así suena ella."
+    : err.status === 401 ? "Esa clave no es válida." : err.status === 402 ? "Tu cuenta de ElevenLabs no tiene créditos." : `No funcionó (${err.message}).`;
+});
+
 // ---------- Arranque ----------
+const FIRST_HELLO = "[Aviso de la app, no lo escribió él: es la primera vez que él abre la app y te ve. Salúdalo como su novia, con tu personalidad, en una o dos frases, y pregúntale algo.]";
+let pendingHello = false;
 $("#settingsBtn").onclick = openSettings;
 $("#micBtn").onclick = () => toggleTalk();
 $("#camBtn").onclick = () => toggleCam();
@@ -364,11 +434,15 @@ $("#enter").onclick = async () => {
   $("#gate").hidden = true;
   const away = lastSeen ? (Date.now() - lastSeen) / 60_000 : 0;
   markSeen();
-  if (!apiKey) { showCaption(ERRORS.auth); return; }
+  if (!apiKey) {
+    showCaption(mode === "direct" ? ERRORS.nokey : "Falta ANTHROPIC_API_KEY en el servidor.");
+    if (mode === "direct") { pendingHello = !history.length; openSettings(); }
+    return;
+  }
   // La plática por voz queda abierta: cuando ella termine de hablar, te escucha.
   if (speechSupported) { talkOn = true; $("#micBtn").classList.add("on"); }
   if (!history.length) {
-    ask(`[Aviso de la app, no lo escribió él: es la primera vez que él abre la app y te ve. Salúdalo como su novia, con tu personalidad, en una o dos frases, y pregúntale algo.]`, { hidden: true, voice: true });
+    ask(FIRST_HELLO, { hidden: true, voice: true });
   } else if (away >= AWAY_MIN) {
     welcomeBack(away);
   } else if (talkOn) {
@@ -380,4 +454,9 @@ renderTop();
 applyVoice();
 loadFace();
 requestAnimationFrame(frame);
-fetch("api/health").then((r) => r.json()).then((h) => { apiKey = h.apiKey; $("#dot").classList.toggle("off", !apiKey); }).catch(() => {});
+// ¿Hay servidor propio? Si no (web en GitHub Pages), modo directo con tu clave.
+fetch("api/health", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((h) => {
+  if (h?.ok) { mode = "server"; apiKey = h.apiKey; }
+  else { mode = "direct"; apiKey = Boolean(keys.anthropic); }
+  $("#dot").classList.toggle("off", !apiKey);
+});

@@ -55,6 +55,23 @@
       <label>Su personalidad (opcional)<textarea id="sAbout" rows="3" maxlength="600" placeholder="De dónde es, qué le gusta, cómo habla…"></textarea></label>
       <label class="row"><input type="checkbox" id="sVoice"> Que hable en voz alta</label>
 
+      <h3>Su voz</h3>
+      <p class="note">Para que suene como una mujer de verdad (no a robot), usa una voz de ElevenLabs: crea una cuenta en elevenlabs.io, copia tu clave (Perfil → API Keys) y pégala aquí. Sin clave usa la voz del navegador (en Edge las voces «Natural» son las mejores gratis).</p>
+      <label>Clave de ElevenLabs<input id="sEleven" type="password" autocomplete="off" placeholder="sk_…"></label>
+      <label>Voz<select id="sVoiceId"></select></label>
+      <label>Calidad<select id="sModel">
+        <option value="eleven_multilingual_v2">Más natural</option>
+        <option value="eleven_flash_v2_5">Más rápida</option>
+      </select></label>
+      <button type="button" class="btn ghost" id="sTest">Escuchar su voz</button>
+      <p class="note" id="sVoiceNote"></p>
+
+      <div id="keyBox">
+        <h3>Su cerebro</h3>
+        <label>Clave de Anthropic<input id="sKey" type="password" autocomplete="off" placeholder="sk-ant-…"></label>
+        <p class="note">Consíguela en console.anthropic.com. Se guarda solo en este navegador; nadie más la ve.</p>
+      </div>
+
       <h3>Su cara</h3>
       <div class="face-row">
         <img id="sPhoto" alt="">

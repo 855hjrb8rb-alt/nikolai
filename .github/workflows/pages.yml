@@ -1,4 +1,4 @@
-# Publica la carpeta public/ como web estática en GitHub Pages.
+# Publica NIKOLAI (public/) y la app de la novia (novia/web → /novia/) en GitHub Pages.
 # Requisito único: Settings → Pages → Source: "GitHub Actions".
 name: Publicar web
 
@@ -25,8 +25,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # NIKOLAI en la raíz y la app de la novia (independiente) en /novia/.
+      - name: Armar el sitio
+        run: |
+          mkdir _site
+          cp -r public/. _site/
+          mkdir _site/novia
+          cp -r novia/web/. _site/novia/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

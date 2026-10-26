@@ -12,7 +12,18 @@ parpadea, mueve los ojos y la cabeza, el cabello se mece y la boca forma cada so
   muestra en pantalla y no se guarda nada.
 - **Privada:** tu clave vive solo en tu servidor, y con `NOVIA_PASSWORD` nadie más entra.
 
-## Cómo usarla
+## Como web (desde cualquier lado, también el celular)
+
+Se publica sola con GitHub Pages en **https://855hjrb8rb-alt.github.io/nikolai/novia/**
+(aparte de NIKOLAI). La primera vez, en **Ajustes ⚙** pega:
+
+- tu clave de **Anthropic** (console.anthropic.com) → su cerebro;
+- tu clave de **ElevenLabs** (elevenlabs.io → Perfil → API Keys) → su voz realista.
+
+Las claves, su memoria y la conversación se guardan **solo en tu navegador**: quien abra el enlace
+no puede hablar con ella ni ver nada tuyo.
+
+## Con servidor propio
 
 Requisitos: **Node.js 18+** y **Chrome** (o Edge).
 
@@ -37,4 +48,4 @@ En **Ajustes → Su cara** puedes subir otra foto. Tiene que ser una imagen gene
 mujer claramente adulta, no la foto de una persona real. Funciona mejor un retrato de frente,
 bien iluminado y de 1024 px o más.
 
-Variables opcionales: `PORT` (3500) y `NOVIA_MODEL` (modelo de Claude).
+Variables opcionales: `PORT` (3500) y `NOVIA_MODEL` (modelo de Claude). La voz realista se configura igual, en Ajustes.

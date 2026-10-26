@@ -7,7 +7,7 @@ import { timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
-import { DEFAULT_MODEL, parseRequest, runChat } from "./brain.js";
+import { DEFAULT_MODEL, parseRequest, runChat } from "./web/js/brain.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIR = path.join(ROOT, "web");

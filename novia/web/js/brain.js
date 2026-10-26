@@ -1,4 +1,5 @@
 // Cerebro de la novia: su personalidad, sus emociones, su memoria y la conversación con Claude.
+// Lo usan el servidor (server.js) y la web sin servidor (el navegador habla directo con la API).
 
 export const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_ROUNDS = 4;
@@ -108,7 +109,7 @@ export function parseRequest(body) {
 }
 
 /** Conversa en streaming. Emite {type: "text" | "action" | "error" | "done"} con `send`. */
-export async function runChat({ client, Anthropic, request, send, isAborted, model = DEFAULT_MODEL }) {
+export async function runChat({ client, Anthropic, request, send, isAborted = () => false, model = DEFAULT_MODEL }) {
   const messages = request.messages.map((m) => ({ ...m }));
   if (request.photo) {
     const last = messages[messages.length - 1];
@@ -149,7 +150,7 @@ export async function runChat({ client, Anthropic, request, send, isAborted, mod
   } catch (err) {
     if (isAborted()) return;
     console.error("[chat]", err);
-    const msg = err instanceof Anthropic.AuthenticationError ? "auth"
+    const msg = err instanceof Anthropic.AuthenticationError || /api[ -]?key|authentication/i.test(err?.message || "") ? "auth"
       : /credit balance|billing/i.test(err?.message || "") ? "credits"
       : err instanceof Anthropic.RateLimitError ? "rate_limit"
       : err instanceof Anthropic.APIConnectionError ? "connection"

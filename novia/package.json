@@ -7,7 +7,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check brain.js && for f in web/js/*.js; do node --check \"$f\" || exit 1; done"
+    "check": "node --check server.js && for f in web/js/*.js; do node --check \"$f\" || exit 1; done"
   },
   "engines": {
     "node": ">=18"
