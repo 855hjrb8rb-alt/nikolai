@@ -160,7 +160,7 @@ function setPersona() {
 }
 
 
-const APP_VERSION = "2026.10.27-a";
+const APP_VERSION = "2026.10.27-b";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -1376,9 +1376,30 @@ function listenNow() {
   if (!ok) setState("off");
 }
 
+// Normaliza para comparar (sin acentos, signos ni mayúsculas).
+function normVoice(s) {
+  return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9ñ\s]/gi, " ").replace(/\s+/g, " ").trim();
+}
+// ¿Lo que oí es en realidad el eco de lo que George acaba de decir?
+function isSelfEcho(heard) {
+  const h = normVoice(heard), s = normVoice(lastReply);
+  if (!h || !s) return false;
+  if (s.includes(h) && h.length >= 4) return true;           // oí un trozo literal de su frase
+  const hw = h.split(" ").filter((w) => w.length > 2);
+  if (hw.length < 2) return false;
+  const sw = new Set(s.split(" "));
+  const overlap = hw.filter((w) => sw.has(w)).length / hw.length;
+  return overlap >= 0.6;                                       // casi todas mis palabras eran suyas
+}
 function handleFinal(text) {
   micRetries = 0;
   lastMicError = "";
+  // Ignora el eco de su propia voz (si la bocina se metió al micrófono): no era el usuario.
+  if (!voiceTask && (speaker.speaking || !speaker.closed || isSelfEcho(text))) {
+    vlog("echoIgnored", text);
+    if (voiceOn) restartTimer = setTimeout(listenNow, 200);
+    return;
+  }
   vlog("heard", text);
   lastHeard = text;
   ui.heard.innerHTML = `<b>${esc(t("you").toUpperCase())} ›</b> ${esc(text)}`;
