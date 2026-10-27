@@ -160,7 +160,7 @@ function setPersona() {
 }
 
 
-const APP_VERSION = "2026.10.26-d";
+const APP_VERSION = "2026.10.27-a";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
@@ -1332,6 +1332,14 @@ function startTask(task) {
 function listenNow() {
   clearTimeout(restartTimer);
   if (!voiceOn && !voiceTask) { setState("off"); return; }
+  // George termina de hablar COMPLETO antes de abrir el micrófono: si todavía
+  // está hablando o su respuesta sigue llegando, espera y no escuches aún
+  // (así no se corta solo ni se oye a sí mismo, y hablas tú después).
+  if (!voiceTask && (speaker.speaking || !speaker.closed)) {
+    setState("speaking");
+    restartTimer = setTimeout(listenNow, 250);
+    return;
+  }
   const since = performance.now() - lastListenAt;
   if (since < 400) { restartTimer = setTimeout(listenNow, 900); return; } // evita reinicios en bucle
   // Si los aplausos tenían el micrófono, se suelta y se espera un momento antes de escuchar
@@ -1438,7 +1446,8 @@ function speakOnce(text, lang) {
 
 function afterSpeech() {
   if (pendingSleep) { pendingSleep = false; enterSleep(); return; }
-  if (voiceOn || voiceTask) restartTimer = setTimeout(listenNow, 350);
+  // Pausa clara tras hablar: George termina, respira un momento, y luego escucha.
+  if (voiceOn || voiceTask) restartTimer = setTimeout(listenNow, 650);
   else setState("off");
 }
 speaker.onStart = () => { if (state === "thinking") setState("speaking"); };
