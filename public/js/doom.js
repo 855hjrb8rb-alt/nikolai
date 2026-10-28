@@ -5,7 +5,7 @@
 
 const KEY = "nikolai.doom";
 const TOMB = "nikolai.dead";
-export const DOOM_HOURS = 24;
+export const DOOM_HOURS = 2;
 const HOUR = 3600_000;
 
 // Orden en que se van "cayendo" las opciones, una por hora (de lo menos a lo
@@ -39,10 +39,13 @@ export function doomInfo(now = Date.now()) {
   const total = hours * HOUR;
   const elapsed = Math.max(0, now - s.start);
   const remaining = Math.max(0, total - elapsed);
-  const progress = Math.min(1, elapsed / total);                       // 0..1 oxidación
+  const progress = Math.min(1, elapsed / total);                       // 0..1 cuenta hacia la destrucción (barra)
   const hoursPassed = Math.min(hours, Math.floor(elapsed / HOUR));
-  const fallen = KILL_ORDER.slice(0, Math.min(KILL_ORDER.length, hoursPassed));
-  return { armed: true, hours, total, elapsed, remaining, progress, hoursPassed, fallen, dead: remaining <= 0 };
+  // La oxidación y la caída de opciones avanzan CADA MINUTO, no cada hora.
+  const minutesPassed = Math.floor(elapsed / 60000);
+  const fallen = KILL_ORDER.slice(0, Math.min(KILL_ORDER.length, minutesPassed));
+  const rust = Math.min(1, minutesPassed / KILL_ORDER.length);         // 0..1 oxidación visible, un escalón por minuto
+  return { armed: true, hours, total, elapsed, remaining, progress, hoursPassed, minutesPassed, rust, fallen, dead: remaining <= 0 };
 }
 
 export function doomFallen(id, now = Date.now()) {
@@ -63,7 +66,7 @@ export function applyDoomVisual(now = Date.now()) {
   const root = document.documentElement;
   if (!info.armed) { root.removeAttribute("data-doom"); root.style.removeProperty("--rust"); return info; }
   root.dataset.doom = info.dead ? "dead" : "on";
-  root.style.setProperty("--rust", info.progress.toFixed(3));
+  root.style.setProperty("--rust", info.rust.toFixed(3));
   return info;
 }
 

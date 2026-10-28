@@ -25,7 +25,7 @@ import { watchOpeningBell, ringBell, exchangeStatus, EXCHANGES } from "./wallstr
 import { memory, renderMemory, addMemory, forgetMatching, memoriesForBrain } from "./memory.js";
 import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
 import { renderTerminal, termSummary, stopTerminal } from "./terminal.js";
-import { armDoom, disarmDoom, doomArmed, doomInfo, doomFallen, fmtCountdown, applyDoomVisual, selfDestruct, isDead, renderAshes, DOOM_HOURS } from "./doom.js";
+import { armDoom, doomArmed, doomInfo, doomFallen, fmtCountdown, applyDoomVisual, selfDestruct, isDead, renderAshes, DOOM_HOURS } from "./doom.js";
 import {
   profile, daysToBirthday, renderProfile, renderSos, dial, shareLocation, renderWeather, weather, loadWeather, wmo,
   weatherSentence, renderTools, timer, startTimer, fmtTime, renderNews, calc,
@@ -165,7 +165,7 @@ function setPersona() {
 }
 
 
-const APP_VERSION = "2026.10.28-a";
+const APP_VERSION = "2026.10.28-b";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
   "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "doom",
@@ -243,9 +243,8 @@ function ensureDoomBar() {
     bar.className = "doom-bar";
     bar.innerHTML = `<div class="doom-bar-fill" id="doomBarFill"></div>
       <div class="doom-bar-row"><span class="doom-bar-label" id="doomBarLabel">—</span>
-      <button class="doom-bar-abort" data-target id="doomBarAbort">${esc(t("doomDisarm"))}</button></div>`;
+      <span class="doom-bar-tag">${esc(t("doomNoAbort"))}</span></div>`;
     document.body.appendChild(bar);
-    bar.querySelector("#doomBarAbort").addEventListener("click", () => openPanel("doom"));
   }
   return bar;
 }
@@ -580,23 +579,14 @@ const PANEL = {
         <div class="doom-clock" id="doomClock">${esc(fmtCountdown(info.remaining))}</div>
         <div class="doom-track"><div class="doom-fill" id="doomFill" style="width:${(info.progress * 100).toFixed(1)}%"></div></div>
         <div class="doom-meta">
-          <span>${esc(t("doomPhase"))}: <b id="doomHours">${info.hoursPassed}</b>/${info.hours} h</span>
-          <span>${esc(t("doomRust"))}: <b id="doomPct">${Math.round(info.progress * 100)}%</b></span>
+          <span>${esc(t("doomPhase"))}: <b id="doomHours">${info.minutesPassed}</b> min</span>
+          <span>${esc(t("doomRust"))}: <b id="doomPct">${Math.round(info.rust * 100)}%</b></span>
         </div>
         <div class="k doom-fallk">${esc(t("doomFallen").toUpperCase())} · <b id="doomFallN">${info.fallen.length}</b></div>
         <div class="doom-fallen" id="doomFallen">${info.fallen.length ? info.fallen.map((id) => `<span class="doom-chip">${esc(titleOf(id))}</span>`).join("") : `<span class="muted">${esc(t("doomFallenNone"))}</span>`}</div>
         <p class="doom-final">${esc(t("doomFinalWarn"))}</p>
-        <button class="tile doom-abort" data-target id="doomAbort"><span class="t-main">${esc(t("doomDisarm"))}</span></button>
+        <p class="doom-noabort">${esc(t("doomNoAbortLong"))}</p>
       </div>`;
-    body.querySelector("#doomAbort").addEventListener("click", () => {
-      disarmDoom();
-      stopDoomWatch();
-      applyDoomVisual();
-      buildCarousel();
-      renderDock();
-      refreshPanel();
-      ui.reply.textContent = t("doomAborted");
-    });
   },
 
   voice(body) {
