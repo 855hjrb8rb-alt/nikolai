@@ -1167,3 +1167,88 @@ body.tm-fs-lock { overflow: hidden; }
 .mem-actions2 .tile .t-main { display: inline-flex; align-items: center; gap: 7px; justify-content: center; }
 .mem-ok { color: var(--green, #7dffb2); font-weight: 600; font-size: 13px; margin: 0; opacity: 0; max-height: 0; overflow: hidden; transition: opacity .25s, max-height .25s; }
 .mem-ok.show { opacity: 1; max-height: 24px; }
+
+/* ===================================================================
+   Autodestrucción: oxidación progresiva, barra, caída y pantalla final
+   =================================================================== */
+:root { --rust: 0; }
+
+/* Oxidación global: la pantalla se va poniendo sepia, oscura y temblorosa. */
+html[data-doom="on"] body {
+  filter:
+    sepia(calc(var(--rust) * 0.85))
+    hue-rotate(calc(var(--rust) * -18deg))
+    saturate(calc(1 + var(--rust) * 0.6))
+    contrast(calc(1 + var(--rust) * 0.12))
+    brightness(calc(1 - var(--rust) * 0.28));
+  transition: filter 1.2s linear;
+}
+/* Mugre y grietas que van apareciendo encima de todo. */
+html[data-doom="on"] body::after {
+  content: ""; position: fixed; inset: 0; z-index: 40; pointer-events: none;
+  opacity: calc(var(--rust) * 0.7);
+  background:
+    radial-gradient(90% 60% at 30% 10%, rgba(120, 60, 10, .25), transparent 60%),
+    radial-gradient(70% 50% at 85% 90%, rgba(90, 40, 5, .3), transparent 60%),
+    repeating-linear-gradient(115deg, rgba(0,0,0,.05) 0 2px, transparent 2px 7px);
+  mix-blend-mode: multiply;
+  animation: doomFlicker calc(6s - var(--rust) * 4s) steps(2) infinite;
+}
+@keyframes doomFlicker { 0%,97% { opacity: calc(var(--rust) * .7); } 98% { opacity: calc(var(--rust) * .35); } 100% { opacity: calc(var(--rust) * .8); } }
+
+/* Una opción "caída": tarjeta oxidada, inclinada y muerta. */
+.card.rusted {
+  filter: grayscale(.9) sepia(.6) brightness(.5) contrast(.9);
+  transform: rotate(-1.5deg) translateY(4px); pointer-events: none; opacity: .72;
+}
+.card.rusted .glyph, .card.rusted h3 { color: #6b5030; text-shadow: none; }
+.card.rusted::after {
+  content: "✖ OFFLINE"; position: absolute; top: 8px; right: 10px; z-index: 3;
+  font: 700 10px/1 ui-monospace, monospace; letter-spacing: .14em; color: #c0683a;
+  border: 1px solid #7a3d1c; padding: 3px 6px; background: rgba(20, 8, 2, .7);
+}
+.dock-btn.rusted { filter: grayscale(.9) sepia(.6) brightness(.5); opacity: .5; pointer-events: none; }
+
+/* Barra superior con la cuenta regresiva. */
+.doom-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60; height: 34px;
+  background: linear-gradient(180deg, rgba(40, 6, 4, .96), rgba(16, 3, 2, .92));
+  border-bottom: 1px solid #b5401f; overflow: hidden;
+  box-shadow: 0 2px 18px rgba(200, 40, 10, .35);
+}
+.doom-bar-fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #7a1c0a, #e24718); opacity: .55; transition: width 1s linear; }
+.doom-bar-row { position: relative; z-index: 2; height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; gap: 10px; }
+.doom-bar-label { font: 700 12px/1 ui-monospace, monospace; letter-spacing: .14em; color: #ffd9c8; text-shadow: 0 0 8px rgba(255, 80, 30, .6); }
+.doom-bar-abort { font: 600 11px/1 ui-monospace, monospace; letter-spacing: .1em; color: #ffdccb; background: rgba(0,0,0,.35); border: 1px solid #c5572f; border-radius: 7px; padding: 6px 10px; cursor: pointer; }
+.doom-bar-abort:hover { background: rgba(255, 90, 40, .25); }
+html[data-doom="on"] .app, html[data-doom="on"] .stage { padding-top: 38px; }
+
+/* Panel de autodestrucción. */
+.doom-box { border-color: #8a3418; background: rgba(28, 8, 4, .5); }
+.doom-box.live { border-color: #e24718; box-shadow: inset 0 0 30px rgba(226, 71, 24, .12); }
+.doom-box .k { color: #ff9b74; }
+.doom-list { margin: 8px 0; padding-left: 18px; color: var(--ice-dim, #9fb0e0); font-size: 13px; line-height: 1.6; }
+.doom-final { color: #ff8a5c; font-weight: 700; font-size: 13px; letter-spacing: .02em; border: 1px dashed #a8431f; border-radius: 8px; padding: 10px 12px; margin: 12px 0; background: rgba(60, 14, 4, .4); }
+.doom-arm { width: 100%; border-color: #c5572f !important; }
+.doom-arm.armdanger { background: rgba(226, 71, 24, .3); border-color: #ff5a28 !important; animation: doomPulse 1s infinite; }
+@keyframes doomPulse { 50% { box-shadow: 0 0 22px rgba(255, 80, 30, .7); } }
+.doom-armhint { color: #ff8a5c; }
+.doom-clock { font: 800 clamp(34px, 9vw, 58px)/1 ui-monospace, monospace; letter-spacing: .06em; color: #ff7a4a; text-shadow: 0 0 20px rgba(255, 70, 20, .5); text-align: center; margin: 10px 0 14px; }
+.doom-track { height: 10px; background: rgba(255, 120, 60, .12); border: 1px solid #8a3418; border-radius: 6px; overflow: hidden; }
+.doom-fill { height: 100%; background: linear-gradient(90deg, #7a1c0a, #ff6a2e); transition: width 1s linear; }
+.doom-meta { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; color: var(--ice-dim, #9fb0e0); font-family: ui-monospace, monospace; }
+.doom-meta b { color: #ffb08a; }
+.doom-fallk { margin-top: 16px; color: #ff9b74; font-size: 11px; letter-spacing: .12em; }
+.doom-fallen { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.doom-chip { font: 600 11px/1 ui-monospace, monospace; letter-spacing: .06em; color: #c0683a; border: 1px solid #7a3d1c; border-radius: 6px; padding: 5px 8px; background: rgba(20, 8, 2, .5); text-decoration: line-through; }
+.doom-abort { width: 100%; margin-top: 14px; border-color: #c5572f !important; }
+
+/* Pantalla final: cenizas. */
+.doom-dead, html[data-doom="dead"] body { background: #050302 !important; }
+.doom-dead { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: radial-gradient(80% 60% at 50% 40%, #1a0c05, #050302 75%); overflow: hidden; }
+.doom-ash { position: absolute; inset: 0; opacity: .4; background: repeating-radial-gradient(circle at 30% 20%, rgba(120,70,30,.12) 0 2px, transparent 2px 40px), repeating-radial-gradient(circle at 70% 80%, rgba(90,50,20,.1) 0 2px, transparent 2px 60px); animation: doomDrift 20s linear infinite; }
+@keyframes doomDrift { to { transform: translateY(-30px); } }
+.doom-dead-inner { position: relative; z-index: 2; text-align: center; padding: 24px; max-width: 520px; }
+.doom-skull { font-size: 64px; filter: grayscale(1) brightness(.7); margin-bottom: 14px; }
+.doom-dead-inner h1 { font-size: clamp(24px, 6vw, 40px); color: #c98a5e; margin: 0 0 12px; letter-spacing: .02em; }
+.doom-dead-inner p { color: #7a5a3e; font-size: 15px; line-height: 1.6; margin: 0; }

@@ -25,6 +25,7 @@ import { watchOpeningBell, ringBell, exchangeStatus, EXCHANGES } from "./wallstr
 import { memory, renderMemory, addMemory, forgetMatching, memoriesForBrain } from "./memory.js";
 import { renderMarkets, market, connectLive, loadCoins, fmtMoney, fmtPct, priceOf, onMarket } from "./markets.js";
 import { renderTerminal, termSummary, stopTerminal } from "./terminal.js";
+import { armDoom, disarmDoom, doomArmed, doomInfo, doomFallen, fmtCountdown, applyDoomVisual, selfDestruct, isDead, renderAshes, DOOM_HOURS } from "./doom.js";
 import {
   profile, daysToBirthday, renderProfile, renderSos, dial, shareLocation, renderWeather, weather, loadWeather, wmo,
   weatherSentence, renderTools, timer, startTimer, fmtTime, renderNews, calc,
@@ -32,6 +33,9 @@ import {
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// Si este dispositivo ya se autodestruyó, no arranca nada más: solo cenizas.
+if (isDead()) { renderAshes(t); throw new Error("nikolai: destroyed"); }
 
 // ---------- Preferencias (este navegador) ----------
 const store = {
@@ -89,6 +93,7 @@ const ICON = {
   studio: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 15.5l-5-5-9 8.5"/><path d="M17.5 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>',
   persona: '<circle cx="8" cy="9" r="3.2"/><path d="M2.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="7.5" r="2.7"/><path d="M14.5 12.6c.6-.2 1.3-.3 2-.3 2.4 0 4.3 1.6 4.9 4.4"/>',
   money: '<circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.6-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3.2 6 1.8 6 5 0 1.4-1.3 2.4-3 2.4-1.3 0-2.6-.6-3.2-1.6M12 5.5v13"/>',
+  doom: '<path d="M6 2h12M6 22h12M7 2c0 5 10 5 10 10S7 15 7 20M17 2c0 5-10 5-10 10"/><path d="M9.5 6.5h5M10.5 17.5h3"/>',
 };
 const icon = (name) => `<svg viewBox="0 0 24 24">${ICON[name]}</svg>`;
 
@@ -160,12 +165,12 @@ function setPersona() {
 }
 
 
-const APP_VERSION = "2026.10.27-b";
+const APP_VERSION = "2026.10.28-a";
 const MODULES = [
   "core", "chat", "persona", "bots", "watch", "studio", "work", "projects", "money", "homework", "music", "markets", "terminal", "news", "weather", "tools", "sos",
-  "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help",
+  "voice", "translator", "notes", "memory", "language", "profile", "offline", "system", "settings", "help", "doom",
 ];
-const WIDE = new Set(["bots", "terminal", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice"]);
+const WIDE = new Set(["bots", "terminal", "watch", "studio", "persona", "chat", "work", "projects", "money", "homework", "music", "markets", "news", "tools", "memory", "voice", "doom"]);
 const titleOf = (id) => t(id === "settings" ? "gestures" : id);
 const tagOf = (id) => `M-${String(MODULES.indexOf(id) + 1).padStart(2, "0")}`;
 
@@ -225,6 +230,55 @@ function cardBody(id) {
   }
   return "";
 }
+
+// =====================================================================
+// Autodestrucción: barra global, oxidación y caída de opciones por hora
+// =====================================================================
+let doomTimer = null;
+function ensureDoomBar() {
+  let bar = document.getElementById("doomBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "doomBar";
+    bar.className = "doom-bar";
+    bar.innerHTML = `<div class="doom-bar-fill" id="doomBarFill"></div>
+      <div class="doom-bar-row"><span class="doom-bar-label" id="doomBarLabel">—</span>
+      <button class="doom-bar-abort" data-target id="doomBarAbort">${esc(t("doomDisarm"))}</button></div>`;
+    document.body.appendChild(bar);
+    bar.querySelector("#doomBarAbort").addEventListener("click", () => openPanel("doom"));
+  }
+  return bar;
+}
+function refreshDoomUi() {
+  const info = applyDoomVisual();
+  if (!info.armed) {
+    document.getElementById("doomBar")?.remove();
+    document.querySelectorAll(".card.rusted, .dock-btn.rusted").forEach((el) => el.classList.remove("rusted"));
+    return;
+  }
+  if (info.dead) { stopDoomWatch(); selfDestruct(t); return; }
+  const bar = ensureDoomBar();
+  bar.querySelector("#doomBarFill").style.width = `${(info.progress * 100).toFixed(1)}%`;
+  bar.querySelector("#doomBarLabel").textContent = `☢ ${t("doomCountLabel")} ${fmtCountdown(info.remaining)}`;
+  // Cada opción marcada "cae": su tarjeta y su botón quedan oxidados e inertes.
+  document.querySelectorAll(".card[data-id]").forEach((c) => c.classList.toggle("rusted", info.fallen.includes(c.dataset.id)));
+  document.querySelectorAll(".dock-btn[data-open]").forEach((b) => b.classList.toggle("rusted", info.fallen.includes(b.dataset.open)));
+  // Si está abierta una opción que acaba de caer, se cierra sola.
+  if (openId && openId !== "doom" && info.fallen.includes(openId)) closePanel();
+  // Panel de autodestrucción abierto: números en vivo sin recargarlo.
+  if (openId === "doom") {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set("doomClock", fmtCountdown(info.remaining));
+    set("doomHours", String(info.hoursPassed));
+    set("doomPct", `${Math.round(info.progress * 100)}%`);
+    set("doomFallN", String(info.fallen.length));
+    const fill = document.getElementById("doomFill"); if (fill) fill.style.width = `${(info.progress * 100).toFixed(1)}%`;
+    const fallen = document.getElementById("doomFallen");
+    if (fallen) fallen.innerHTML = info.fallen.length ? info.fallen.map((id) => `<span class="doom-chip">${esc(titleOf(id))}</span>`).join("") : `<span class="muted">${esc(t("doomFallenNone"))}</span>`;
+  }
+}
+function startDoomWatch() { if (!doomTimer) doomTimer = setInterval(refreshDoomUi, 1000); refreshDoomUi(); }
+function stopDoomWatch() { clearInterval(doomTimer); doomTimer = null; }
 
 function buildCarousel() {
   ui.carousel.innerHTML = "";
@@ -420,6 +474,7 @@ function drawSpark(cv) {
 // =====================================================================
 function openPanel(id) {
   if (!MODULES.includes(id)) return;
+  if (doomFallen(id)) { ui.reply.textContent = t("doomGone").replace("{name}", titleOf(id)); return; }
   if (openId === "bots" && id !== "bots") stopBots();
   if (openId === "terminal" && id !== "terminal") stopTerminal();
   clearInterval(panelTimer);
@@ -483,6 +538,65 @@ const PANEL = {
     toggle.onclick = () => { toggleVoice(); refreshPanel(); };
     conv.onclick = () => { settings.mode = "conversation"; saveSettings(); updateHint(); refreshPanel(); };
     wake.onclick = () => { settings.mode = "wake"; saveSettings(); updateHint(); refreshPanel(); };
+  },
+
+  doom(body) {
+    const info = doomInfo();
+    if (!info.armed) {
+      body.innerHTML = `
+        <div class="readout doom-box">
+          <div class="k">${esc(t("doomTitle").toUpperCase())}</div>
+          <p class="muted">${esc(t("doomIntro"))}</p>
+          <ul class="doom-list">
+            <li>${esc(t("doomPoint1"))}</li>
+            <li>${esc(t("doomPoint2"))}</li>
+            <li>${esc(t("doomPoint3"))}</li>
+          </ul>
+          <p class="doom-final">${esc(t("doomFinalWarn"))}</p>
+          <button class="tile action doom-arm" data-target id="doomArm"><span class="t-main">${icon("doom")} ${esc(t("doomArm"))}</span></button>
+          <p class="muted doom-armhint" id="doomArmHint" hidden>${esc(t("doomConfirm"))}</p>
+        </div>`;
+      let confirmStep = false;
+      const btn = body.querySelector("#doomArm");
+      const hint = body.querySelector("#doomArmHint");
+      btn.addEventListener("click", () => {
+        if (!confirmStep) {
+          confirmStep = true;
+          btn.classList.add("armdanger");
+          btn.querySelector(".t-main").innerHTML = `${icon("doom")} ${esc(t("doomArmConfirm"))}`;
+          hint.hidden = false;
+          return;
+        }
+        armDoom(DOOM_HOURS);
+        startDoomWatch();
+        refreshPanel();
+      });
+      return;
+    }
+
+    body.innerHTML = `
+      <div class="readout doom-box live">
+        <div class="k">${esc(t("doomArmed").toUpperCase())}</div>
+        <div class="doom-clock" id="doomClock">${esc(fmtCountdown(info.remaining))}</div>
+        <div class="doom-track"><div class="doom-fill" id="doomFill" style="width:${(info.progress * 100).toFixed(1)}%"></div></div>
+        <div class="doom-meta">
+          <span>${esc(t("doomPhase"))}: <b id="doomHours">${info.hoursPassed}</b>/${info.hours} h</span>
+          <span>${esc(t("doomRust"))}: <b id="doomPct">${Math.round(info.progress * 100)}%</b></span>
+        </div>
+        <div class="k doom-fallk">${esc(t("doomFallen").toUpperCase())} · <b id="doomFallN">${info.fallen.length}</b></div>
+        <div class="doom-fallen" id="doomFallen">${info.fallen.length ? info.fallen.map((id) => `<span class="doom-chip">${esc(titleOf(id))}</span>`).join("") : `<span class="muted">${esc(t("doomFallenNone"))}</span>`}</div>
+        <p class="doom-final">${esc(t("doomFinalWarn"))}</p>
+        <button class="tile doom-abort" data-target id="doomAbort"><span class="t-main">${esc(t("doomDisarm"))}</span></button>
+      </div>`;
+    body.querySelector("#doomAbort").addEventListener("click", () => {
+      disarmDoom();
+      stopDoomWatch();
+      applyDoomVisual();
+      buildCarousel();
+      renderDock();
+      refreshPanel();
+      ui.reply.textContent = t("doomAborted");
+    });
   },
 
   voice(body) {
@@ -2263,3 +2377,6 @@ setInterval(() => { if (spotifyConnected()) refreshNow().then(() => updateCards(
 
 ui.sensor.classList.add("off");
 startCamera();
+
+// Reanuda la cuenta regresiva de autodestrucción si estaba armada.
+if (doomArmed()) startDoomWatch();
