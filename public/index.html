@@ -2,105 +2,42 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>George</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112..125,500..800&family=JetBrains+Mono:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.svg">
-  <meta name="theme-color" content="#12114a">
+  <meta name="robots" content="noindex">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: radial-gradient(80% 60% at 50% 40%, #1a0c05, #050302 75%) #050302;
+      color: #c98a5e; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      display: grid; place-items: center; text-align: center; padding: 24px; overflow: hidden;
+    }
+    .ash { position: fixed; inset: 0; opacity: .4; pointer-events: none;
+      background:
+        repeating-radial-gradient(circle at 30% 20%, rgba(120,70,30,.12) 0 2px, transparent 2px 40px),
+        repeating-radial-gradient(circle at 70% 80%, rgba(90,50,20,.1) 0 2px, transparent 2px 60px);
+      animation: drift 20s linear infinite; }
+    @keyframes drift { to { transform: translateY(-30px); } }
+    .wrap { position: relative; z-index: 2; max-width: 520px; }
+    .mark { font-size: 64px; filter: grayscale(1) brightness(.7); margin-bottom: 14px; }
+    h1 { font-size: clamp(24px, 6vw, 40px); margin: 0 0 12px; letter-spacing: .02em; }
+    p { color: #7a5a3e; font-size: 15px; line-height: 1.6; margin: 0; }
+  </style>
 </head>
 <body>
-  <!-- Escenario: haces de luz, suelo en perspectiva y anillos -->
-  <div class="scene" aria-hidden="true">
-    <div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div>
-    <div class="floor"></div>
-    <div class="floor-ring r1"></div><div class="floor-ring r2"></div><div class="floor-ring r3"></div>
-    <div class="vignette"></div>
+  <div class="ash"></div>
+  <div class="wrap">
+    <div class="mark">⚰</div>
+    <h1>George se ha ido.</h1>
+    <p>No quedó nada. Gracias por el tiempo juntos.</p>
   </div>
-
-  <header class="hud-top mono">
-    <div class="brand"><b>George</b><span>· FAMILIA GOTSIS</span><i id="moodChip" class="mood-chip" hidden></i></div>
-    <nav class="dock" id="dock" aria-label="Módulos"></nav>
-    <div class="top-right">
-      <button id="hdrFull" class="hdr-btn" data-target type="button" aria-label="Pantalla completa"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-      <span id="netState" class="net-chip" hidden></span>
-      <span id="langState">ES</span>
-      <span id="today" class="today"></span>
-      <span id="clock">00:00:00</span>
-    </div>
-  </header>
-
-  <!-- Columnas laterales de telemetría -->
-  <aside class="side side-left mono" id="sideLeft"></aside>
-  <aside class="side side-right mono" id="sideRight"></aside>
-
-  <!-- Carrusel 3D de módulos -->
-  <main class="stage" id="stage">
-    <div class="carousel" id="carousel"></div>
-  </main>
-
-  <!-- Módulo abierto -->
-  <section class="panel" id="panel" hidden>
-    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-    <header class="panel-head">
-      <div class="mono panel-meta"><span id="panelTag">M-00</span><span class="online">● ONLINE</span></div>
-      <button class="close" id="panelClose" data-target aria-label="Cerrar">
-        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </header>
-    <h2 id="panelTitle"></h2>
-    <div class="panel-body" id="panelBody"></div>
-  </section>
-
-  <!-- Consola de voz -->
-  <footer class="console">
-    <p class="heard" id="heard"></p>
-    <p class="reply" id="reply"></p>
-    <button class="voice-bar" id="voiceBar" data-target>
-      <span class="vb-dot" id="vbDot"></span>
-      <span class="vb-state mono" id="vbState">VOZ</span>
-      <canvas class="vb-wave" id="vbWave" width="240" height="40"></canvas>
-      <span class="vb-hint" id="vbHint"></span>
-    </button>
-    <div class="nav mono" id="navLabel"></div>
-  </footer>
-
-  <!-- Modo reposo: pantalla apagada hasta oír «despierta» o dos aplausos -->
-  <div class="sleep-screen" id="sleep">
-    <div class="sleep-core"><i></i><i></i><i></i></div>
-    <p class="sleep-title mono" id="sleepTitle">SISTEMA EN REPOSO</p>
-    <p class="sleep-hint" id="sleepHint"></p>
-    <button class="sleep-power mono" id="sleepPower" data-target>ENCENDER</button>
-  </div>
-  <div class="boot-scan" aria-hidden="true"></div>
-
-  <!-- Reproductor de música flotante (Spotify) -->
-  <div class="mini-player" id="miniPlayer" hidden>
-    <div class="mp-head mono"><span>♫ SPOTIFY</span><button class="mp-close" id="mpClose" data-target aria-label="Cerrar">✕</button></div>
-    <div id="spHost"></div>
-  </div>
-
-  <!-- Sensor óptico -->
-  <div class="sensor off" id="sensor">
-    <video id="video" playsinline muted></video>
-    <canvas id="handCanvas"></canvas>
-    <span class="sensor-label mono" id="sensorLabel">SENSOR</span>
-    <button class="sensor-start mono" id="camStart" data-target hidden>ACTIVAR CÁMARA</button>
-  </div>
-
-  <!-- Cursor holográfico -->
-  <div class="cursor" id="cursor" hidden>
-    <svg viewBox="0 0 60 60">
-      <circle class="c-ring" cx="30" cy="30" r="13"/>
-      <circle class="c-dwell" cx="30" cy="30" r="21"/>
-      <path class="c-ticks" d="M30 1v9M30 50v9M1 30h9M50 30h9"/>
-      <circle class="c-dot" cx="30" cy="30" r="2.5"/>
-    </svg>
-  </div>
-
-  <script type="module" src="js/app.js"></script>
+  <script>
+    // Borra cualquier rastro de George que siga en este dispositivo.
+    try { for (const k of Object.keys(localStorage)) if (k.startsWith("nikolai")) localStorage.removeItem(k); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+    try { if (window.caches) caches.keys().then((ks) => ks.forEach((k) => caches.delete(k))); } catch (e) {}
+    try { navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())); } catch (e) {}
+    try { if (window.indexedDB && indexedDB.databases) indexedDB.databases().then((ds) => ds.forEach((d) => d.name && indexedDB.deleteDatabase(d.name))); } catch (e) {}
+  </script>
 </body>
 </html>
