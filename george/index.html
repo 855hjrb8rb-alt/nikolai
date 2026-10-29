@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>George Sartoria</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="George · Sartoria de lujo. Trajes, abrigos, zapatos, ropa interior y accesorios para hombre y mujer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap">
+<style>
+/* Layout: black wordmark band, then a quiet stone catalogue grid; garments drawn as flat cut-outs with GEORGE in white. */
+:root {
+  --paper: #f3f2ef;
+  --ink: #151515;
+  --muted: #6b6862;
+  --line: #d9d6d0;
+  --card: #e4e1db;
+  --accent: #6b1e28;
+  --band: #0b0b0b;
+  --band-fg: #ffffff;
+  --band-muted: #9b9890;
+  --overlay: rgba(10, 10, 10, .55);
+  --f-display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --f-body: "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121211; --ink: #ecebe7; --muted: #9a968f; --line: #2d2c29;
+    --card: #383632; --accent: #c0646e; --overlay: rgba(0, 0, 0, .7); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121211; --ink: #ecebe7; --muted: #9a968f; --line: #2d2c29;
+  --card: #383632; --accent: #c0646e; --overlay: rgba(0, 0, 0, .7); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--f-body); font-weight: 300; font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--band);
+}
+.wrap {
+  max-width: 1280px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (min-width: 720px) { .wrap { padding-left: max(40px, env(safe-area-inset-left, 0px)); padding-right: max(40px, env(safe-area-inset-right, 0px)); } }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+.label { font-size: 11px; letter-spacing: .24em; text-transform: uppercase; font-weight: 400; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; }
+
+/* Header */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: var(--band); color: var(--band-fg); border-bottom: 1px solid #222;
+}
+.top .wrap { display: flex; align-items: center; gap: 24px; height: 64px; }
+.mark { font-family: var(--f-display); font-size: 22px; letter-spacing: .42em; margin-right: auto; padding-left: .42em; color: var(--band-fg); text-decoration: none; }
+.nav { display: none; gap: 28px; }
+.nav button { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--band-muted); padding-block: 6px; }
+.nav button:hover { color: var(--band-fg); }
+@media (min-width: 860px) { .nav { display: flex; } }
+.bag-btn { display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--band-fg); }
+.bag-btn svg { width: 18px; height: 18px; }
+.count { min-width: 20px; height: 20px; border-radius: 10px; background: var(--band-fg); color: var(--band); font-size: 11px; letter-spacing: 0; display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; padding-inline: 5px; }
+
+/* Hero */
+.hero { background: var(--band); color: var(--band-fg); overflow: hidden; }
+.hero .wrap { padding-block: 72px 64px; display: grid; gap: 28px; }
+.hero .label { color: var(--band-muted); }
+.word {
+  font-family: var(--f-display); font-weight: 400; line-height: .9; color: #fff;
+  font-size: clamp(64px, 17vw, 236px); letter-spacing: .08em; margin-left: -.04em;
+  animation: rise 1.4s cubic-bezier(.2,.7,.1,1) both;
+}
+@keyframes rise { from { letter-spacing: .3em; opacity: .2; } to { letter-spacing: .08em; opacity: 1; } }
+.hero-row { display: flex; flex-wrap: wrap; gap: 28px 56px; align-items: end; justify-content: space-between; }
+.hero p { margin: 0; max-width: 46ch; font-size: 17px; color: #d6d3cc; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding-inline: 28px; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; font-weight: 400; transition: background .25s, color .25s; }
+.btn-light { background: #fff; color: #0b0b0b; }
+.btn-light:hover { background: #d9d6d0; }
+.btn-ghost { border: 1px solid #555; color: #fff; }
+.btn-ghost:hover { border-color: #fff; }
+.btn-ink { background: var(--ink); color: var(--paper); width: 100%; }
+.btn-ink:hover { opacity: .85; }
+.btn-ink:disabled { opacity: .35; cursor: not-allowed; }
+
+.strip { border-top: 1px solid #222; color: var(--band-muted); }
+.strip .wrap { display: flex; flex-wrap: wrap; gap: 8px 40px; padding-block: 16px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+
+/* Catalogue */
+.cat .wrap { padding-block: 72px 24px; }
+.cat-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+.cat-head h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.05; }
+.cat-head .label { color: var(--muted); display: block; margin-bottom: 12px; }
+.gender { display: flex; gap: 0; border: 1px solid var(--ink); }
+.gender button { padding: 10px 22px; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; }
+.gender button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.chips { display: flex; gap: 6px 26px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 36px; }
+.chips button { font-size: 13px; letter-spacing: .06em; color: var(--muted); padding-block: 4px; border-bottom: 1px solid transparent; }
+.chips button:hover { color: var(--ink); }
+.chips button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.chips sup { font-size: 10px; margin-left: 3px; font-variant-numeric: tabular-nums; }
+
+.grid { display: grid; gap: 40px 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 760px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.item { padding: 0; text-align: left; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.shot { background: var(--card); aspect-ratio: 4 / 5; max-width: 100%; display: grid; place-items: center; position: relative; overflow: hidden; }
+.shot svg { width: 82%; height: 82%; transition: transform .6s cubic-bezier(.2,.7,.1,1); }
+.item:hover .shot svg { transform: scale(1.04) translateY(-4px); }
+.tag { position: absolute; top: 12px; left: 12px; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+.meta { display: grid; gap: 2px; min-width: 0; }
+.meta h3 { font-size: 19px; line-height: 1.25; }
+.meta .sub { font-size: 13px; color: var(--muted); }
+.meta .price { font-size: 14px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); padding-block: 40px; }
+
+/* Bespoke */
+.bespoke { border-top: 1px solid var(--line); margin-top: 72px; }
+.bespoke .wrap { padding-block: 80px; display: grid; gap: 48px; }
+@media (min-width: 960px) { .bespoke .wrap { grid-template-columns: 5fr 7fr; } }
+.bespoke h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.05; margin-bottom: 20px; }
+.bespoke p { margin: 0 0 16px; max-width: 52ch; color: var(--muted); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 56px 1fr auto; gap: 16px; align-items: baseline; padding-block: 22px; border-top: 1px solid var(--line); counter-increment: s; }
+.steps li:last-child { border-bottom: 1px solid var(--line); }
+.steps li::before { content: counter(s, upper-roman); font-family: var(--f-display); font-style: italic; font-size: 22px; color: var(--accent); }
+.steps h3 { font-size: 22px; }
+.steps span { font-size: 14px; color: var(--muted); }
+.steps em { font-style: normal; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) { .steps li { grid-template-columns: 40px 1fr; } .steps em { grid-column: 2; } }
+
+/* Newsletter + footer */
+.club { background: var(--band); color: var(--band-fg); }
+.club .wrap { padding-block: 64px; display: flex; flex-wrap: wrap; gap: 28px 64px; align-items: end; justify-content: space-between; }
+.club h2 { font-size: clamp(28px, 4vw, 42px); }
+.club p { margin: 8px 0 0; color: var(--band-muted); max-width: 46ch; }
+.club form { display: flex; flex-wrap: wrap; gap: 0; flex: 1 1 320px; max-width: 520px; }
+.club input { flex: 1 1 200px; min-width: 0; height: 48px; background: transparent; border: 1px solid #555; border-right: 0; color: #fff; padding-inline: 16px; font: inherit; }
+.club input::placeholder { color: #8a877f; }
+.club .ok { flex-basis: 100%; margin-top: 12px; font-size: 13px; color: var(--band-muted); }
+@media (max-width: 480px) { .club input { border-right: 1px solid #555; } .club form .btn { width: 100%; margin-top: 8px; } }
+footer .wrap { padding-block: 48px; display: grid; gap: 32px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); font-size: 14px; }
+footer h4 { margin: 0 0 12px; font-weight: 400; }
+footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; color: var(--muted); }
+footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 24px; color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+footer .fmark { font-family: var(--f-display); font-size: 28px; letter-spacing: .4em; }
+
+/* Product dialog */
+dialog { border: 0; padding: 0; max-width: min(980px, calc(100vw - 32px)); width: 100%; background: var(--paper); color: var(--ink); max-height: calc(100dvh - 32px); }
+dialog::backdrop { background: var(--overlay); }
+.pd { display: grid; }
+@media (min-width: 780px) { .pd { grid-template-columns: 1fr 1fr; } }
+.pd .shot { aspect-ratio: 4 / 5; }
+.pd-info { padding: 32px 28px; display: grid; gap: 18px; align-content: start; position: relative; min-width: 0; }
+.pd-info h3 { font-size: 34px; line-height: 1.1; }
+.pd-info .price { font-size: 18px; font-variant-numeric: tabular-nums; }
+.pd-info p { margin: 0; color: var(--muted); font-size: 15px; }
+.spec { display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; font-size: 13px; margin: 0; }
+.spec dt { color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-size: 11px; padding-top: 2px; }
+.spec dd { margin: 0; }
+.sizes { display: flex; flex-wrap: wrap; gap: 6px; }
+.sizes button { min-width: 48px; height: 40px; padding-inline: 10px; border: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; }
+.sizes button:hover { border-color: var(--ink); }
+.sizes button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.close { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; display: grid; place-items: center; font-size: 22px; line-height: 1; }
+.hint { font-size: 12px; color: var(--muted); min-height: 1.2em; }
+
+/* Bag drawer */
+.scrim { position: fixed; inset: 0; background: var(--overlay); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 41; width: min(420px, 100%);
+  background: var(--paper); color: var(--ink); transform: translateX(100%); transition: transform .4s cubic-bezier(.2,.7,.1,1);
+  display: grid; grid-template-rows: auto 1fr auto;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px);
+}
+.drawer.on { transform: none; }
+.dr-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--line); }
+.dr-head h3 { font-size: 24px; }
+.dr-list { overflow-y: auto; padding: 8px 24px; }
+.line { display: grid; grid-template-columns: 72px 1fr auto; gap: 14px; padding-block: 16px; border-bottom: 1px solid var(--line); align-items: start; }
+.line .thumb { background: var(--card); aspect-ratio: 4 / 5; display: grid; place-items: center; }
+.line .thumb svg { width: 86%; height: 86%; }
+.line h4 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 16px; }
+.line small { display: block; color: var(--muted); font-size: 12px; }
+.qty { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+.qty button { width: 28px; height: 28px; border: 1px solid var(--line); }
+.qty span { min-width: 24px; text-align: center; font-variant-numeric: tabular-nums; font-size: 13px; }
+.line .lp { font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; }
+.line .rm { font-size: 11px; color: var(--muted); text-decoration: underline; margin-top: 8px; }
+.dr-foot { padding: 20px 24px 24px; border-top: 1px solid var(--line); display: grid; gap: 14px; }
+.tot { display: flex; justify-content: space-between; font-size: 15px; font-variant-numeric: tabular-nums; }
+.tot.big { font-family: var(--f-display); font-size: 22px; }
+.dr-empty { color: var(--muted); padding-block: 32px; }
+.done { padding-block: 32px; display: grid; gap: 10px; }
+.done h4 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 24px; }
+.done p { margin: 0; color: var(--muted); font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="#top" aria-label="George, inicio">GEORGE</a>
+    <nav class="nav" aria-label="Colecciones">
+      <button type="button" data-go="hombre">Hombre</button>
+      <button type="button" data-go="mujer">Mujer</button>
+      <button type="button" data-go="zapatos">Zapatos</button>
+      <button type="button" data-go="ropa-interior">Ropa interior</button>
+      <button type="button" data-go="bespoke">Su medida</button>
+    </nav>
+    <button class="bag-btn" type="button" id="openBag" aria-label="Abrir bolsa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M5 8h14l-1 13H6L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <span>Bolsa</span><span class="count" id="count">0</span>
+    </button>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <div class="wrap">
+    <span class="label">Sartoria di lusso · Milano</span>
+    <h1 class="word">GEORGE</h1>
+    <div class="hero-row">
+      <p>Trajes cortados a mano, cachemira de dos cabos, seda de Como y calzado cosido Goodyear. Para él y para ella.</p>
+      <div class="ctas">
+        <button class="btn btn-light" type="button" data-go="hombre">Colección hombre</button>
+        <button class="btn btn-ghost" type="button" data-go="mujer">Colección mujer</button>
+      </div>
+    </div>
+  </div>
+  <div class="strip">
+    <div class="wrap">
+      <span>Envío asegurado gratuito</span>
+      <span>Arreglos de sastrería incluidos</span>
+      <span>Cita privada en atelier</span>
+    </div>
+  </div>
+</section>
+
+<main>
+  <section class="cat" id="catalogo">
+    <div class="wrap">
+      <div class="cat-head">
+        <div>
+          <span class="label">Autunno · Inverno 2026</span>
+          <h2 id="catTitle">La colección</h2>
+        </div>
+        <div class="gender" role="group" aria-label="Filtrar por persona">
+          <button type="button" id="g-todo" data-g="todo" aria-pressed="true">Todo</button>
+          <button type="button" id="g-hombre" data-g="hombre" aria-pressed="false">Hombre</button>
+          <button type="button" id="g-mujer" data-g="mujer" aria-pressed="false">Mujer</button>
+        </div>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Filtrar por categoría"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="bespoke" id="bespoke">
+    <div class="wrap">
+      <div>
+        <span class="label" style="color:var(--muted)">Su medida</span>
+        <h2>Un traje que solo existe una vez</h2>
+        <p>Nuestro sastre toma treinta y dos medidas y traza un patrón en papel que se guarda con su nombre. Cada chaqueta lleva más de veinte horas de trabajo a mano.</p>
+        <p>Elija entre más de cinco mil tejidos: lana Super 180's, vicuña, cachemira y seda.</p>
+      </div>
+      <ol class="steps">
+        <li><div><h3>Toma de medidas</h3><span>32 medidas y estudio de postura en el atelier o a domicilio.</span></div><em>Día 1</em></li>
+        <li><div><h3>Patrón único</h3><span>Corte a tijera del tejido elegido sobre su patrón de papel.</span></div><em>Semana 2</em></li>
+        <li><div><h3>Prueba en hilván</h3><span>Ajustes de hombro, talle y caída con la prenda montada a mano.</span></div><em>Semana 5</em></li>
+        <li><div><h3>Entrega</h3><span>Última prueba, planchado a mano y funda con sus iniciales.</span></div><em>Semana 8</em></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="club">
+    <div class="wrap">
+      <div>
+        <h2>Il Club George</h2>
+        <p>Acceso anticipado a las colecciones y a las jornadas de sastrería en boutique.</p>
+      </div>
+      <form id="club" novalidate>
+        <label for="mail" class="label" style="position:absolute;left:-9999px">Correo electrónico</label>
+        <input id="mail" type="email" placeholder="Su correo electrónico" autocomplete="email" required>
+        <button class="btn btn-light" type="submit">Suscribirse</button>
+        <span class="ok" id="clubMsg" aria-live="polite"></span>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><div class="fmark">GEORGE</div></div>
+    <div><h4>Colecciones</h4><ul><li>Hombre</li><li>Mujer</li><li>Zapatos</li><li>Ropa interior</li><li>Accesorios</li></ul></div>
+    <div><h4>Servicios</h4><ul><li>Sastrería a medida</li><li>Arreglos</li><li>Cita en atelier</li><li>Envoltorio de regalo</li></ul></div>
+    <div><h4>Atelier</h4><ul><li>Via della Spiga</li><li>Milano</li><li>Lun–Sáb · 10:00–19:00</li></ul></div>
+    <div class="fine"><span>© 2026 George Sartoria</span><span>Tienda de demostración: los pedidos no se cobran ni se envían.</span></div>
+  </div>
+</footer>
+
+<dialog id="pd" aria-labelledby="pdName"></dialog>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Bolsa de compra" aria-hidden="true">
+  <div class="dr-head"><h3>Su bolsa</h3><button class="close" type="button" id="closeBag" aria-label="Cerrar bolsa" style="position:static">×</button></div>
+  <div class="dr-list" id="lines"></div>
+  <div class="dr-foot" id="foot"></div>
+</aside>
+
+<script>
+(() => {
+  // ---------- Garment drawings: flat cut-outs, GEORGE always in white ----------
+  const W = "#ffffff";
+  const word = (x, y, size, ls, extra = "") =>
+    `<text x="${x}" y="${y}" text-anchor="middle" font-family="Bodoni Moda, Didot, Georgia, serif" font-size="${size}" letter-spacing="${ls}" fill="${W}" ${extra}>GEORGE</text>`;
+  const shade = "rgba(0,0,0,.28)", seam = "rgba(255,255,255,.14)";
+
+  const draw = {
+    jacket: (c, a) => `
+      <path d="M98 62 L128 50 L150 104 L172 50 L202 62 L246 88 L262 292 L234 298 L224 168 L220 336 L80 336 L76 168 L66 298 L38 292 L54 88 Z" fill="${c}"/>
+      <path d="M128 50 L150 104 L172 50 Z" fill="#f2f0eb"/>
+      <path d="M146 64 L154 64 L157 98 L150 108 L143 98 Z" fill="${a}"/>
+      <path d="M128 50 L150 104 L146 178 L114 112 L124 98 Z" fill="${shade}"/>
+      <path d="M172 50 L150 104 L154 178 L186 112 L176 98 Z" fill="${shade}"/>
+      <path d="M150 178 Q148 300 136 336" stroke="${shade}" stroke-width="2" fill="none"/>
+      <circle cx="151" cy="214" r="3.5" fill="${shade}"/><circle cx="150" cy="250" r="3.5" fill="${shade}"/>
+      <path d="M180 144 L208 141" stroke="${seam}" stroke-width="2"/>
+      <path d="M90 262 L128 260 M172 260 L210 262" stroke="${seam}" stroke-width="2"/>
+      ${word(150, 308, 20, 6)}`,
+    coat: (c, a) => `
+      <path d="M96 60 L128 48 L150 96 L172 48 L204 60 L250 88 L266 300 L238 306 L226 170 L234 350 L66 350 L74 170 L62 306 L34 300 L50 88 Z" fill="${c}"/>
+      <path d="M128 48 L150 96 L172 48 Z" fill="${a}"/>
+      <path d="M128 48 L150 96 L142 188 L106 112 L120 94 Z" fill="${shade}"/>
+      <path d="M172 48 L150 96 L158 188 L194 112 L180 94 Z" fill="${shade}"/>
+      <path d="M158 188 L162 350" stroke="${shade}" stroke-width="2"/>
+      <circle cx="134" cy="214" r="4" fill="${shade}"/><circle cx="172" cy="214" r="4" fill="${shade}"/>
+      <circle cx="134" cy="252" r="4" fill="${shade}"/><circle cx="172" cy="252" r="4" fill="${shade}"/>
+      ${word(150, 312, 20, 6)}`,
+    shirt: (c) => `
+      <path d="M100 58 L130 48 L170 48 L200 58 L248 86 L262 228 L236 234 L222 140 L220 336 L80 336 L78 140 L64 234 L38 228 L52 86 Z" fill="${c}"/>
+      <path d="M130 48 L150 80 L170 48 L164 38 L150 52 L136 38 Z" fill="${seam}"/>
+      <path d="M150 80 L150 336" stroke="${shade}" stroke-width="2"/>
+      ${[110, 236, 276, 316].map(y => `<circle cx="150" cy="${y}" r="2.6" fill="rgba(255,255,255,.75)"/>`).join("")}
+      <rect x="92" y="156" width="116" height="40" fill="${c}"/>
+      ${word(150, 184, 20, 6)}`,
+    trousers: (c) => `
+      <path d="M96 40 L204 40 L214 344 L164 346 L150 128 L136 346 L86 344 Z" fill="${c}"/>
+      <rect x="96" y="40" width="108" height="20" fill="${shade}"/>
+      <path d="M122 62 L112 344 M178 62 L188 344" stroke="${seam}" stroke-width="1.5"/>
+      <path d="M100 64 Q114 82 108 100 M200 64 Q186 82 192 100" stroke="${shade}" stroke-width="2" fill="none"/>
+      ${word(150, 55, 10, 4)}
+      ${word(150, 120, 15, 5)}`,
+    skirt: (c) => `
+      <path d="M100 70 L200 70 L238 330 L62 330 Z" fill="${c}"/>
+      <rect x="100" y="70" width="100" height="20" fill="${shade}"/>
+      <path d="M128 92 L112 330 M172 92 L188 330" stroke="${seam}" stroke-width="1.5"/>
+      ${word(150, 85, 10, 4)}
+      ${word(150, 230, 22, 6)}`,
+    knit: (c) => `
+      <path d="M110 60 Q150 86 190 60 L246 88 L264 300 L236 306 L222 160 L222 330 L78 330 L78 160 L64 306 L36 300 L54 88 Z" fill="${c}"/>
+      <path d="M108 58 Q150 92 192 58" stroke="${shade}" stroke-width="7" fill="none"/>
+      <rect x="78" y="312" width="144" height="18" fill="${shade}"/>
+      <path d="M236 292 L264 296 M36 296 L64 292" stroke="${shade}" stroke-width="8"/>
+      ${word(150, 206, 24, 7)}`,
+    polo: (c) => `
+      <path d="M108 58 Q150 80 192 58 L238 80 L262 132 L228 148 L220 128 L220 330 L80 330 L80 128 L72 148 L38 132 L62 80 Z" fill="${c}"/>
+      <path d="M118 56 L150 92 L182 56 L174 46 L150 64 L126 46 Z" fill="${shade}"/>
+      <rect x="145" y="64" width="10" height="48" fill="${seam}"/>
+      <circle cx="150" cy="80" r="2.4" fill="#fff"/><circle cx="150" cy="100" r="2.4" fill="#fff"/>
+      ${word(150, 206, 22, 7)}`,
+    dress: (c, a) => `
+      <path d="M118 50 L134 44 Q150 66 166 44 L182 50 L188 124 Q196 150 184 170 L246 344 L54 344 L116 170 Q104 150 112 124 Z" fill="${c}"/>
+      <rect x="113" y="160" width="74" height="12" fill="${a}"/>
+      <path d="M140 178 L118 344 M160 178 L182 344" stroke="${seam}" stroke-width="1.5"/>
+      ${word(150, 276, 22, 6)}`,
+    oxford: (c) => `
+      <ellipse cx="152" cy="290" rx="122" ry="8" fill="rgba(0,0,0,.12)"/>
+      <path d="M36 262 Q34 224 74 218 L132 208 Q162 176 206 180 L248 190 Q270 198 270 232 L270 262 Z" fill="${c}"/>
+      <rect x="30" y="260" width="244" height="14" rx="5" fill="#16110e"/>
+      <rect x="226" y="272" width="46" height="10" fill="#16110e"/>
+      <path d="M78 219 Q62 240 66 262" stroke="${shade}" stroke-width="2" fill="none"/>
+      <path d="M132 208 Q160 232 208 222" stroke="${shade}" stroke-width="2" fill="none"/>
+      <path d="M142 204 L170 192 M148 214 L178 200 M156 222 L186 208" stroke="#e9e5dd" stroke-width="2"/>
+      ${word(222, 248, 14, 4)}`,
+    loafer: (c) => `
+      <ellipse cx="152" cy="290" rx="122" ry="8" fill="rgba(0,0,0,.12)"/>
+      <path d="M36 262 Q34 228 74 222 L150 212 Q182 202 216 204 L254 208 Q270 214 270 236 L270 262 Z" fill="${c}"/>
+      <path d="M150 212 Q196 226 256 208 Q210 204 176 204 Z" fill="rgba(0,0,0,.45)"/>
+      <path d="M104 220 Q122 238 150 234 L150 226" stroke="${shade}" stroke-width="5" fill="none"/>
+      <rect x="30" y="260" width="244" height="12" rx="5" fill="#16110e"/>
+      <rect x="226" y="270" width="46" height="10" fill="#16110e"/>
+      ${word(210, 248, 14, 4)}`,
+    sneaker: (c) => `
+      <ellipse cx="152" cy="292" rx="122" ry="8" fill="rgba(0,0,0,.12)"/>
+      <path d="M40 252 Q36 222 76 216 L132 206 Q162 176 206 178 L246 186 Q268 194 268 228 L268 252 Z" fill="${c}"/>
+      <rect x="32" y="250" width="242" height="30" rx="12" fill="#f2f0eb"/>
+      <path d="M32 266 L274 266" stroke="rgba(0,0,0,.12)" stroke-width="2"/>
+      <path d="M142 204 L170 192 M148 214 L178 200 M156 222 L186 208" stroke="#f2f0eb" stroke-width="3"/>
+      ${word(216, 242, 14, 4)}`,
+    boot: (c) => `
+      <ellipse cx="166" cy="296" rx="108" ry="8" fill="rgba(0,0,0,.12)"/>
+      <rect x="164" y="54" width="16" height="22" rx="3" fill="${c}"/>
+      <path d="M84 70 L178 70 L180 200 Q250 206 266 242 L268 276 L70 276 L74 200 Z" fill="${c}"/>
+      <path d="M150 76 L176 76 L178 192 Q164 204 150 192 Z" fill="rgba(0,0,0,.35)"/>
+      <rect x="64" y="274" width="210" height="14" rx="4" fill="#16110e"/>
+      ${word(114, 170, 18, 6, 'transform="rotate(-90 114 170)"')}`,
+    heel: (c, a) => `
+      <ellipse cx="150" cy="324" rx="114" ry="7" fill="rgba(0,0,0,.12)"/>
+      <path d="M40 268 Q44 250 96 240 Q150 228 188 204 Q206 192 232 192 L254 194 Q262 200 258 214 L246 222 L246 318 L234 318 L228 232 Q190 246 150 262 Q96 284 56 286 Q36 284 40 268 Z" fill="${c}"/>
+      <path d="M58 286 Q110 280 228 232" stroke="${a}" stroke-width="4" fill="none"/>
+      <path d="M118 248 Q170 232 214 200 Q190 214 150 228 Q130 238 118 248 Z" fill="rgba(0,0,0,.4)"/>
+      ${word(112, 272, 13, 4, 'transform="rotate(-16 112 272)"')}`,
+    boxer: (c) => `
+      <path d="M78 92 L222 92 L232 262 L166 274 L150 210 L134 274 L68 262 Z" fill="${c}"/>
+      <rect x="76" y="78" width="148" height="32" fill="#0d0d0d"/>
+      <path d="M150 112 Q130 160 150 204 Q170 160 150 112" stroke="${seam}" stroke-width="2" fill="none"/>
+      ${word(150, 101, 16, 8)}`,
+    brief: (c) => `
+      <path d="M66 136 L234 136 L232 152 Q208 222 170 266 L130 266 Q92 222 68 152 Z" fill="${c}"/>
+      <rect x="64" y="116" width="172" height="24" fill="#0d0d0d"/>
+      ${word(150, 133, 13, 7)}`,
+    bra: (c) => `
+      <path d="M86 150 L106 62 M214 150 L194 62" stroke="${c}" stroke-width="5"/>
+      <path d="M62 198 Q68 128 146 150 L148 198 Z" fill="${c}"/>
+      <path d="M238 198 Q232 128 154 150 L152 198 Z" fill="${c}"/>
+      <path d="M70 186 Q100 150 146 160 M230 186 Q200 150 154 160" stroke="${seam}" stroke-width="1.5" fill="none"/>
+      <rect x="54" y="196" width="192" height="24" fill="#0d0d0d"/>
+      ${word(150, 213, 13, 7)}
+      <path d="M90 262 L210 262 L206 276 Q186 312 160 334 L140 334 Q114 312 94 276 Z" fill="${c}"/>
+      <rect x="86" y="250" width="128" height="16" fill="#0d0d0d"/>`,
+    socks: (c) => `
+      <path d="M110 50 L170 50 L172 230 Q174 270 210 278 L246 286 Q270 296 262 320 Q254 340 228 334 L150 316 Q108 304 110 260 Z" fill="${c}"/>
+      <rect x="110" y="50" width="60" height="30" fill="${shade}"/>
+      <path d="M118 84 L118 240 M162 84 L162 230" stroke="${seam}" stroke-width="1.5"/>
+      ${word(146, 160, 16, 6, 'transform="rotate(-90 146 160)"')}`,
+    tie: (c) => `
+      <path d="M134 44 L166 44 L160 76 L140 76 Z" fill="${c}"/>
+      <path d="M140 76 L160 76 L180 302 L150 340 L120 302 Z" fill="${c}"/>
+      <path d="M140 76 L160 76 L162 100 L138 100 Z" fill="${shade}"/>
+      ${word(150, 224, 14, 6, 'transform="rotate(-90 150 224)"')}`,
+    belt: (c) => `
+      <rect x="30" y="152" width="240" height="44" rx="3" fill="${c}"/>
+      <rect x="36" y="158" width="228" height="32" fill="none" stroke="rgba(255,255,255,.18)" stroke-dasharray="4 4"/>
+      <rect x="44" y="140" width="48" height="68" rx="6" fill="none" stroke="#d6d3cc" stroke-width="7"/>
+      <path d="M68 174 L104 174" stroke="#d6d3cc" stroke-width="5"/>
+      ${[200, 220, 240].map(x => `<circle cx="${x}" cy="174" r="3.5" fill="rgba(0,0,0,.5)"/>`).join("")}
+      ${word(152, 181, 17, 6)}`,
+    bag: (c) => `
+      <path d="M112 142 Q112 72 150 72 Q188 72 188 142" stroke="${c}" stroke-width="11" fill="none"/>
+      <path d="M58 140 L242 140 L256 320 L44 320 Z" fill="${c}"/>
+      <path d="M58 140 L242 140 L244 204 Q150 230 56 204 Z" fill="${shade}"/>
+      <rect x="140" y="208" width="20" height="16" rx="2" fill="#d6d3cc"/>
+      ${word(150, 280, 22, 7)}`
+  };
+  const svg = (p) => `<svg viewBox="0 0 300 380" role="img" aria-label="${p.name}">${draw[p.shape](p.color, p.accent || "#6b1e28")}</svg>`;
+
+  // ---------- Catalogue ----------
+  const CATS = {
+    "trajes": "Trajes y esmóquines", "camisas": "Camisas y blusas", "abrigos": "Abrigos",
+    "punto": "Punto y polos", "pantalones": "Pantalones y faldas", "vestidos": "Vestidos",
+    "zapatos": "Zapatos", "ropa-interior": "Ropa interior", "accesorios": "Accesorios"
+  };
+  const SZ = {
+    trajeH: ["46", "48", "50", "52", "54", "56"], trajeM: ["36", "38", "40", "42", "44", "46"],
+    cuello: ["38", "39", "40", "41", "42", "43", "44"], letras: ["XS", "S", "M", "L", "XL", "XXL"],
+    pieH: ["39", "40", "41", "42", "43", "44", "45", "46"], pieM: ["35", "36", "37", "38", "39", "40", "41"],
+    int: ["S", "M", "L", "XL"], sujetador: ["70B", "75B", "80B", "75C", "80C", "85C"],
+    cinto: ["85", "90", "95", "100", "105"], unica: ["Única"]
+  };
+  const P = [
+    { id: "vesuvio", name: "Traje Vesuvio", g: "hombre", cat: "trajes", shape: "jacket", color: "#1c2536", accent: "#6b1e28", price: 5900, sub: "Dos botones · Lana Super 180's", fabric: "Lana Super 180's, Biella", made: "Cosido a mano, 22 horas", sizes: SZ.trajeH, desc: "Hombro napolitano natural, solapa de muesca a mano y forro de cupro. Pantalón de pinza a juego.", tag: "Nuevo" },
+    { id: "cortina", name: "Traje Cortina", g: "hombre", cat: "trajes", shape: "jacket", color: "#2d2e31", accent: "#2d2e31", price: 6400, sub: "Cruzado · Franela de cachemira", fabric: "Lana y cachemira 80/20", made: "Cosido a mano, 24 horas", sizes: SZ.trajeH, desc: "Seis botones de cuerno, solapa de pico y caída amplia para el invierno." },
+    { id: "notte", name: "Esmoquin Notte", g: "hombre", cat: "trajes", shape: "jacket", color: "#0f0f10", accent: "#0f0f10", price: 7800, sub: "Solapa de raso · Mohair", fabric: "Lana y mohair, solapa de seda", made: "Cosido a mano, 26 horas", sizes: SZ.trajeH, desc: "Esmoquin de un botón con solapa de raso de seda y galón lateral en el pantalón.", tag: "Noche" },
+    { id: "portofino", name: "Camisa Portofino", g: "hombre", cat: "camisas", shape: "shirt", color: "#1f2a3d", price: 690, sub: "Popelín de algodón 200/2", fabric: "Algodón egipcio 200/2", made: "Ojales a mano", sizes: SZ.cuello, desc: "Cuello italiano semiabierto y botones de nácar australiano." },
+    { id: "amalfi", name: "Camisa Amalfi", g: "hombre", cat: "camisas", shape: "shirt", color: "#3b4148", price: 620, sub: "Lino y seda", fabric: "Lino 70 · seda 30", made: "Mangas montadas a mano", sizes: SZ.cuello, desc: "Ligera y fresca, con canesú partido y puño de dos botones." },
+    { id: "polare", name: "Abrigo Polare", g: "hombre", cat: "abrigos", shape: "coat", color: "#8b6a4a", accent: "#2d2e31", price: 8900, sub: "Cruzado · Cachemira pura", fabric: "Cachemira de Mongolia 100%", made: "Entretela de crin, a mano", sizes: SZ.trajeH, desc: "Abrigo polo cruzado con cinturón trasero y bolsillos de parche.", tag: "Icono" },
+    { id: "brera", name: "Abrigo Brera", g: "hombre", cat: "abrigos", shape: "coat", color: "#2b2c2f", accent: "#6b1e28", price: 6200, sub: "Chesterfield · Lana doble cara", fabric: "Lana doble cara", made: "Acabado a mano", sizes: SZ.trajeH, desc: "Chesterfield de un botonadura con cuello de terciopelo." },
+    { id: "sartorio", name: "Pantalón Sartorio", g: "hombre", cat: "pantalones", shape: "trousers", color: "#2a2b2e", price: 980, sub: "Dos pinzas · Franela", fabric: "Franela de lana", made: "Cintura con ajustadores laterales", sizes: SZ.trajeH, desc: "Tiro alto, dos pinzas hacia dentro y bajo con vuelta de 4 cm." },
+    { id: "cervino", name: "Jersey Cervino", g: "hombre", cat: "punto", shape: "knit", color: "#4a1d24", price: 1450, sub: "Cuello redondo · Cachemira", fabric: "Cachemira de dos cabos", made: "Tejido en galga 12", sizes: SZ.letras, desc: "Punto denso y suave, con remates menguados a mano." },
+    { id: "riviera", name: "Polo Riviera", g: "hombre", cat: "punto", shape: "polo", color: "#22332b", price: 790, sub: "Punto de seda y algodón", fabric: "Seda 60 · algodón 40", made: "Botones de nácar", sizes: SZ.letras, desc: "Polo de manga corta con tapeta de tres botones." },
+    { id: "lucca", name: "Oxford Lucca", g: "hombre", cat: "zapatos", shape: "oxford", color: "#2b1a12", price: 1350, sub: "Piel de becerro · Goodyear", fabric: "Becerro pintado a mano", made: "Cosido Goodyear, 240 pasos", sizes: SZ.pieH, desc: "Oxford con puntera recta y suela de cuero curtido en roble.", tag: "Nuevo" },
+    { id: "capri", name: "Mocasín Capri", g: "hombre", cat: "zapatos", shape: "loafer", color: "#5a3a24", price: 1190, sub: "Ante · Construcción Blake", fabric: "Ante italiano", made: "Cosido Blake", sizes: SZ.pieH, desc: "Mocasín de antifaz sin forro, flexible desde el primer día." },
+    { id: "dolomiti", name: "Botín Dolomiti", g: "hombre", cat: "zapatos", shape: "boot", color: "#1e1a17", price: 1650, sub: "Chelsea · Becerro encerado", fabric: "Becerro encerado", made: "Cosido Goodyear", sizes: SZ.pieH, desc: "Botín chelsea con elástico lateral y suela de goma Dainite." },
+    { id: "corso", name: "Zapatilla Corso", g: "hombre", cat: "zapatos", shape: "sneaker", color: "#18191b", price: 890, sub: "Napa · Suela de goma", fabric: "Napa de becerro", made: "Suela cosida", sizes: SZ.pieH, desc: "Zapatilla baja de piel con cordones encerados." },
+    { id: "seta-boxer", name: "Bóxer Seta", g: "hombre", cat: "ropa-interior", shape: "boxer", color: "#26282c", price: 120, sub: "Algodón de seda · Pack de 2", fabric: "Algodón Sea Island y seda", made: "Cintura tejida GEORGE", sizes: SZ.int, desc: "Bóxer ajustado con cintura elástica jacquard en blanco." },
+    { id: "filo", name: "Calcetines Filo", g: "hombre", cat: "ropa-interior", shape: "socks", color: "#1c2536", price: 95, sub: "Hilo de Escocia · Media caña", fabric: "Algodón hilo de Escocia", made: "Puntera remallada a mano", sizes: ["39–41", "42–44", "45–47"], desc: "Calcetín fino de vestir que se mantiene en su sitio." },
+    { id: "settebello", name: "Corbata Settebello", g: "hombre", cat: "accesorios", shape: "tie", color: "#4a1d24", price: 320, sub: "Siete pliegues · Seda", fabric: "Twill de seda de Como", made: "Plegada a mano sin entretela", sizes: SZ.unica, desc: "Una pieza de seda doblada siete veces sobre sí misma." },
+    { id: "palladio", name: "Cinturón Palladio", g: "hombre", cat: "accesorios", shape: "belt", color: "#1a1512", price: 590, sub: "Becerro · Hebilla de paladio", fabric: "Becerro de doble cara", made: "Cantos pintados a mano", sizes: SZ.cinto, desc: "35 mm de ancho, hebilla de latón con baño de paladio." },
+
+    { id: "aurora", name: "Vestido Aurora", g: "mujer", cat: "vestidos", shape: "dress", color: "#0f0f10", accent: "#6b1e28", price: 4200, sub: "Crepé de seda · Largo midi", fabric: "Crepé de seda", made: "Bajo cosido a mano", sizes: SZ.trajeM, desc: "Corte al bies con cinturón fino de raso en contraste.", tag: "Nuevo" },
+    { id: "lago", name: "Vestido Lago", g: "mujer", cat: "vestidos", shape: "dress", color: "#22332b", accent: "#0f0f10", price: 3600, sub: "Punto de cachemira", fabric: "Cachemira y seda", made: "Tejido sin costuras", sizes: SZ.letras, desc: "Vestido de punto ajustado al cuerpo, cálido y ligero." },
+    { id: "seta-blusa", name: "Blusa Seta", g: "mujer", cat: "camisas", shape: "shirt", color: "#4a1d24", price: 980, sub: "Charmeuse de seda", fabric: "Seda de Como 22 mm", made: "Costuras francesas", sizes: SZ.trajeM, desc: "Blusa fluida con cuello camisero y puños de dos botones." },
+    { id: "lucia", name: "Abrigo Lucia", g: "mujer", cat: "abrigos", shape: "coat", color: "#8b6a4a", accent: "#0f0f10", price: 7400, sub: "Cruzado · Vicuña y cachemira", fabric: "Vicuña 30 · cachemira 70", made: "Entretela a mano", sizes: SZ.trajeM, desc: "Abrigo cruzado con hombro suave y largo bajo la rodilla.", tag: "Icono" },
+    { id: "milano-m", name: "Traje Milano", g: "mujer", cat: "trajes", shape: "jacket", color: "#1c2536", accent: "#1c2536", price: 5200, sub: "Chaqueta y pantalón · Lana fría", fabric: "Lana fría Super 150's", made: "Cosido a mano, 20 horas", sizes: SZ.trajeM, desc: "Chaqueta entallada de un botón con pantalón recto de tiro alto." },
+    { id: "navona", name: "Falda Navona", g: "mujer", cat: "pantalones", shape: "skirt", color: "#1c2536", price: 1250, sub: "Lápiz · Lana y seda", fabric: "Lana 85 · seda 15", made: "Forro de seda", sizes: SZ.trajeM, desc: "Falda lápiz con abertura trasera y cremallera invisible." },
+    { id: "palazzo", name: "Pantalón Palazzo", g: "mujer", cat: "pantalones", shape: "trousers", color: "#0f0f10", price: 1150, sub: "Pierna ancha · Crepé", fabric: "Crepé de lana", made: "Pinzas cosidas a mano", sizes: SZ.trajeM, desc: "Tiro alto y pierna amplia que cae hasta el suelo." },
+    { id: "bianca", name: "Jersey Bianca", g: "mujer", cat: "punto", shape: "knit", color: "#3b3e44", price: 1350, sub: "Cuello redondo · Cachemira", fabric: "Cachemira de dos cabos", made: "Tejido en galga 12", sizes: SZ.letras, desc: "Corte relajado con hombro caído y canalé ancho." },
+    { id: "vela", name: "Salón Vela", g: "mujer", cat: "zapatos", shape: "heel", color: "#0f0f10", accent: "#8a1c24", price: 990, sub: "Charol · Tacón de 100 mm", fabric: "Charol de becerro", made: "Montado a mano", sizes: SZ.pieM, desc: "Salón de punta fina con suela pintada en rojo burdeos.", tag: "Nuevo" },
+    { id: "diva", name: "Salón Diva", g: "mujer", cat: "zapatos", shape: "heel", color: "#4a1d24", accent: "#0f0f10", price: 1090, sub: "Terciopelo · Tacón de 85 mm", fabric: "Terciopelo de seda", made: "Montado a mano", sizes: SZ.pieM, desc: "Terciopelo burdeos para la noche, con plantilla acolchada." },
+    { id: "isola", name: "Mocasín Isola", g: "mujer", cat: "zapatos", shape: "loafer", color: "#0f0f10", price: 950, sub: "Piel de becerro", fabric: "Becerro cepillado", made: "Cosido Blake", sizes: SZ.pieM, desc: "Mocasín de antifaz con suela fina de cuero." },
+    { id: "alba", name: "Botín Alba", g: "mujer", cat: "zapatos", shape: "boot", color: "#2b1a12", price: 1390, sub: "Chelsea · Ante", fabric: "Ante italiano", made: "Cosido Goodyear", sizes: SZ.pieM, desc: "Botín chelsea estilizado con tacón bajo de cuero apilado." },
+    { id: "velluto", name: "Conjunto Velluto", g: "mujer", cat: "ropa-interior", shape: "bra", color: "#26282c", price: 340, sub: "Sujetador y braga · Microfibra", fabric: "Microfibra y seda", made: "Banda jacquard GEORGE", sizes: SZ.sujetador, desc: "Sujetador sin aros y braga a juego con banda blanca tejida." },
+    { id: "velluto-b", name: "Braga Velluto", g: "mujer", cat: "ropa-interior", shape: "brief", color: "#4a1d24", price: 120, sub: "Talle alto · Microfibra", fabric: "Microfibra y seda", made: "Sin costuras laterales", sizes: SZ.int, desc: "Braga de talle alto con cintura elástica GEORGE." },
+    { id: "gioia", name: "Bolso Gioia", g: "mujer", cat: "accesorios", shape: "bag", color: "#2b1a12", price: 4800, sub: "Piel de becerro granulada", fabric: "Becerro granulado", made: "Cosido a mano con hilo encerado", sizes: SZ.unica, desc: "Bolso de mano con solapa y cierre de paladio.", tag: "Icono" },
+    { id: "nastro", name: "Cinturón Nastro", g: "mujer", cat: "accesorios", shape: "belt", color: "#0f0f10", price: 490, sub: "Becerro · 25 mm", fabric: "Becerro liso", made: "Cantos pintados a mano", sizes: ["70", "75", "80", "85", "90"], desc: "Cinturón fino con hebilla de paladio pulido." }
+  ];
+
+  const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+  const $ = (s) => document.querySelector(s);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  let gender = "todo", cat = "todas";
+
+  function renderChips() {
+    const pool = P.filter(p => gender === "todo" || p.g === gender);
+    const counts = {};
+    pool.forEach(p => counts[p.cat] = (counts[p.cat] || 0) + 1);
+    const opts = [["todas", "Todo", pool.length], ...Object.keys(CATS).filter(k => counts[k]).map(k => [k, CATS[k], counts[k]])];
+    if (!opts.some(o => o[0] === cat)) cat = "todas";
+    $("#chips").innerHTML = opts.map(([k, l, n]) =>
+      `<button type="button" id="c-${k}" data-c="${k}" aria-pressed="${k === cat}">${l}<sup>${n}</sup></button>`).join("");
+  }
+  function renderGrid() {
+    const list = P.filter(p => (gender === "todo" || p.g === gender) && (cat === "todas" || p.cat === cat));
+    const gl = { todo: "La colección", hombre: "Uomo", mujer: "Donna" }[gender];
+    $("#catTitle").textContent = cat === "todas" ? gl : CATS[cat];
+    $("#grid").innerHTML = list.length ? list.map(p => `
+      <button class="item" type="button" data-id="${p.id}">
+        <div class="shot">${p.tag ? `<span class="tag">${p.tag}</span>` : ""}${svg(p)}</div>
+        <div class="meta"><h3>${p.name}</h3><span class="sub">${p.sub}</span><span class="price">${eur.format(p.price)}</span></div>
+      </button>`).join("") : `<p class="empty">No hay piezas en esta selección.</p>`;
+  }
+  function setGender(g) {
+    gender = g;
+    document.querySelectorAll(".gender button").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === g));
+    renderChips(); renderGrid();
+  }
+  function render() { renderChips(); renderGrid(); }
+
+  $(".gender").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setGender(b.dataset.g); });
+  $("#chips").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; cat = b.dataset.c; render(); });
+  document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => {
+    const go = b.dataset.go;
+    if (go === "bespoke") { $("#bespoke").scrollIntoView(); return; }
+    if (go === "hombre" || go === "mujer") { cat = "todas"; setGender(go); }
+    else { gender = "todo"; cat = go; document.querySelectorAll(".gender button").forEach(x => x.setAttribute("aria-pressed", x.dataset.g === "todo")); render(); }
+    $("#catalogo").scrollIntoView();
+  }));
+
+  // ---------- Product dialog ----------
+  const dlg = $("#pd");
+  let current = null, chosen = null;
+  function openProduct(id) {
+    current = P.find(p => p.id === id); chosen = current.sizes.length === 1 ? current.sizes[0] : null;
+    const sizeLabel = current.cat === "zapatos" ? "Talla EU" : (current.cat === "trajes" || current.cat === "abrigos") ? "Talla IT" : current.id === "portofino" || current.id === "amalfi" ? "Cuello (cm)" : "Talla";
+    dlg.innerHTML = `
+      <div class="pd">
+        <div class="shot">${svg(current)}</div>
+        <div class="pd-info">
+          <button class="close" type="button" data-close aria-label="Cerrar">×</button>
+          <span class="label" style="color:var(--muted)">${current.g === "hombre" ? "Uomo" : "Donna"} · ${CATS[current.cat]}</span>
+          <h3 id="pdName">${current.name}</h3>
+          <span class="price">${eur.format(current.price)}</span>
+          <p>${current.desc}</p>
+          <dl class="spec"><dt>Tejido</dt><dd>${current.fabric}</dd><dt>Hechura</dt><dd>${current.made}</dd><dt>Origen</dt><dd>Hecho en Italia</dd></dl>
+          <div><span class="label" style="color:var(--muted);display:block;margin-bottom:8px">${sizeLabel}</span>
+            <div class="sizes">${current.sizes.map(s => `<button type="button" data-s="${s}" aria-pressed="${s === chosen}">${s}</button>`).join("")}</div></div>
+          <button class="btn btn-ink" type="button" id="add">Añadir a la bolsa</button>
+          <span class="hint" id="hint" aria-live="polite"></span>
+        </div>
+      </div>`;
+    dlg.showModal();
+  }
+  $("#grid").addEventListener("click", e => { const b = e.target.closest(".item"); if (b) openProduct(b.dataset.id); });
+  dlg.addEventListener("click", e => {
+    if (e.target === dlg || e.target.closest("[data-close]")) { dlg.close(); return; }
+    const s = e.target.closest("[data-s]");
+    if (s) { chosen = s.dataset.s; dlg.querySelectorAll("[data-s]").forEach(b => b.setAttribute("aria-pressed", b === s)); $("#hint").textContent = ""; return; }
+    if (e.target.id === "add") {
+      if (!chosen) { $("#hint").textContent = "Elija una talla para continuar."; return; }
+      addToBag(current.id, chosen); dlg.close(); openBag();
+    }
+  });
+
+  // ---------- Bag ----------
+  let bag = store.get("george-bag", []).filter(l => P.some(p => p.id === l.id));
+  let ordered = false;
+  function addToBag(id, size) {
+    ordered = false;
+    const l = bag.find(x => x.id === id && x.size === size);
+    if (l) l.q++; else bag.push({ id, size, q: 1 });
+    saveBag();
+  }
+  function saveBag() { store.set("george-bag", bag); renderBag(); }
+  function renderBag() {
+    const n = bag.reduce((a, l) => a + l.q, 0);
+    $("#count").textContent = n;
+    const sum = bag.reduce((a, l) => a + l.q * P.find(p => p.id === l.id).price, 0);
+    if (ordered) {
+      $("#lines").innerHTML = `<div class="done"><h4>Grazie.</h4><p>Su pedido de muestra se ha registrado. Esta es una tienda de demostración: no se ha cobrado nada ni se enviará ninguna prenda.</p></div>`;
+      $("#foot").innerHTML = `<button class="btn btn-ink" type="button" id="keep">Seguir comprando</button>`;
+      return;
+    }
+    $("#lines").innerHTML = bag.length ? bag.map((l, i) => {
+      const p = P.find(x => x.id === l.id);
+      return `<div class="line">
+        <div class="thumb">${svg(p)}</div>
+        <div><h4>${p.name}</h4><small>Talla ${l.size}</small>
+          <div class="qty"><button type="button" data-dec="${i}" aria-label="Quitar una">−</button><span>${l.q}</span><button type="button" data-inc="${i}" aria-label="Añadir una">+</button></div></div>
+        <div><div class="lp">${eur.format(p.price * l.q)}</div><button class="rm" type="button" data-rm="${i}">Eliminar</button></div>
+      </div>`;
+    }).join("") : `<p class="dr-empty">Su bolsa está vacía. Elija una pieza de la colección para empezar.</p>`;
+    $("#foot").innerHTML = `
+      <div class="tot"><span>Subtotal</span><span>${eur.format(sum)}</span></div>
+      <div class="tot"><span>Envío asegurado</span><span>Gratuito</span></div>
+      <div class="tot big"><span>Total</span><span>${eur.format(sum)}</span></div>
+      <button class="btn btn-ink" type="button" id="checkout" ${bag.length ? "" : "disabled"}>Finalizar compra</button>`;
+  }
+  $("#lines").addEventListener("click", e => {
+    const t = e.target;
+    if (t.dataset.inc) bag[+t.dataset.inc].q++;
+    else if (t.dataset.dec) { const l = bag[+t.dataset.dec]; l.q--; if (l.q < 1) bag.splice(+t.dataset.dec, 1); }
+    else if (t.dataset.rm) bag.splice(+t.dataset.rm, 1);
+    else return;
+    saveBag();
+  });
+  $("#foot").addEventListener("click", e => {
+    if (e.target.id === "checkout") { bag = []; ordered = true; saveBag(); }
+    if (e.target.id === "keep") { ordered = false; renderBag(); closeBag(); }
+  });
+  function openBag() { $("#drawer").classList.add("on"); $("#scrim").classList.add("on"); $("#drawer").setAttribute("aria-hidden", "false"); }
+  function closeBag() { $("#drawer").classList.remove("on"); $("#scrim").classList.remove("on"); $("#drawer").setAttribute("aria-hidden", "true"); }
+  $("#openBag").addEventListener("click", openBag);
+  $("#closeBag").addEventListener("click", closeBag);
+  $("#scrim").addEventListener("click", closeBag);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeBag(); });
+
+  // ---------- Club ----------
+  $("#club").addEventListener("submit", e => {
+    e.preventDefault();
+    const v = $("#mail").value.trim();
+    $("#clubMsg").textContent = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)
+      ? "Gracias. Le escribiremos antes de la próxima colección."
+      : "Escriba un correo válido, por ejemplo nombre@dominio.com.";
+  });
+
+  render(); renderBag();
+})();
+</script>
+</body>
+</html>

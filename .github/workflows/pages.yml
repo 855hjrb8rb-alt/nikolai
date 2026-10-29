@@ -1,4 +1,4 @@
-# Publica NIKOLAI (public/) y la app de la novia (novia/web → /novia/) en GitHub Pages.
+# Publica NIKOLAI (public/), la app de la novia (novia/web → /novia/) y la tienda George (george/ → /george/) en GitHub Pages.
 # Requisito único: Settings → Pages → Source: "GitHub Actions".
 name: Publicar web
 
@@ -32,6 +32,8 @@ jobs:
           cp -r public/. _site/
           mkdir _site/novia
           cp -r novia/web/. _site/novia/
+          mkdir _site/george
+          cp -r george/. _site/george/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
