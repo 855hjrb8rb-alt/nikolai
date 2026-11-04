@@ -32,6 +32,8 @@ jobs:
           cp -r public/. _site/
           mkdir _site/novia
           cp -r novia/web/. _site/novia/
+          mkdir _site/tools
+          cp -r tools/. _site/tools/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

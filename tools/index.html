@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nikolai Lab · Herramientas</title>
+<meta name="description" content="Más de 30 herramientas online gratis: texto, desarrollo, seguridad, color, imagen y cálculo. Todo funciona en tu navegador, sin subir nada.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="qrcode.js"></script>
+<style>
+:root{
+  --bg:#f6f7fb; --bg2:#ffffff; --card:#ffffff; --line:#e4e7ef; --text:#141826; --muted:#5d6478;
+  --accent:#6d4aff; --accent2:#00b8d9; --accent-soft:rgba(109,74,255,.1); --ok:#12a150; --bad:#e5484d; --warn:#e8a317;
+  --shadow:0 1px 2px rgba(20,24,38,.04),0 8px 24px rgba(20,24,38,.06);
+  --r:16px; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b0d14; --bg2:#11141d; --card:#151925; --line:#252b3b; --text:#eef0f7; --muted:#9097ad;
+  --accent:#8b6dff; --accent2:#22d3ee; --accent-soft:rgba(139,109,255,.16); --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#0b0d14; --bg2:#11141d; --card:#151925; --line:#252b3b; --text:#eef0f7; --muted:#9097ad;
+  --accent:#8b6dff; --accent2:#22d3ee; --accent-soft:rgba(139,109,255,.16); --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+
+/* header */
+header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;height:62px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;text-decoration:none;font-size:17px;white-space:nowrap}
+.logo i{width:30px;height:30px;border-radius:9px;background:conic-gradient(from 200deg,var(--accent),var(--accent2),var(--accent));display:grid;place-items:center;color:#fff;font-style:normal;font-size:15px;box-shadow:0 4px 14px var(--accent-soft)}
+.searchbtn{flex:1;max-width:420px;margin-left:auto;display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid var(--line);border-radius:11px;background:var(--bg2);color:var(--muted);cursor:pointer;text-align:left}
+.searchbtn span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+kbd{font:600 11px var(--mono);padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--muted)}
+.iconbtn{width:40px;height:40px;flex:none;border-radius:11px;border:1px solid var(--line);background:var(--bg2);cursor:pointer;display:grid;place-items:center;font-size:17px}
+.iconbtn:hover,.searchbtn:hover{border-color:var(--accent)}
+
+/* hero */
+.hero{padding:56px 0 26px;text-align:center}
+.pill{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:13px}
+.hero h1{font-size:clamp(32px,6vw,58px);line-height:1.05;letter-spacing:-.04em;margin:18px auto 14px;max-width:820px}
+.grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);font-size:clamp(15px,2.2vw,18px);max-width:640px;margin:0 auto}
+.stats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:26px;color:var(--muted);font-size:14px}
+.stats b{display:block;color:var(--text);font-size:22px;letter-spacing:-.02em}
+.filter{position:relative;max-width:620px;margin:30px auto 0}
+.filter input{width:100%;height:54px;border-radius:15px;border:1px solid var(--line);background:var(--card);padding:0 18px 0 48px;font-size:16px;box-shadow:var(--shadow);outline:none}
+.filter input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.filter::before{content:"⌕";position:absolute;left:18px;top:50%;transform:translateY(-52%);font-size:22px;color:var(--muted)}
+
+/* chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:22px 0 6px;scrollbar-width:none;justify-content:safe center}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500;font-size:14px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip small{opacity:.6;margin-left:4px}
+
+/* grid */
+.section-title{display:flex;align-items:baseline;gap:10px;margin:30px 0 14px;font-size:20px;letter-spacing:-.02em}
+.section-title small{color:var(--muted);font-weight:500;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{position:relative;display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);text-decoration:none;transition:transform .15s,border-color .15s,box-shadow .15s}
+.card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line));box-shadow:var(--shadow)}
+.card .ic{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:21px;background:var(--accent-soft)}
+.card h3{margin:0 0 3px;font-size:15.5px;letter-spacing:-.01em}
+.card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.45}
+.fav{position:absolute;top:10px;right:10px;border:0;background:none;cursor:pointer;font-size:16px;opacity:.35;padding:4px}
+.fav.on,.card:hover .fav{opacity:1}
+.empty{text-align:center;color:var(--muted);padding:50px 0}
+
+/* tool view */
+.tool{padding:26px 0 60px}
+.crumbs{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px;flex-wrap:wrap}
+.crumbs a{text-decoration:none}.crumbs a:hover{color:var(--accent)}
+.tool-head{display:flex;gap:16px;align-items:center;margin:16px 0 22px}
+.tool-head .ic{width:56px;height:56px;border-radius:15px;display:grid;place-items:center;font-size:27px;background:var(--accent-soft);flex:none}
+.tool-head h1{margin:0;font-size:clamp(24px,4vw,34px);letter-spacing:-.03em;line-height:1.1}
+.tool-head p{margin:4px 0 0;color:var(--muted)}
+.tool-head .fav{position:static;font-size:22px;margin-left:auto;opacity:1}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+.panel+.panel{margin-top:14px}
+.cols>.panel{margin-top:0!important}
+.cols+.panel,.panel+.cols{margin-top:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row>*{min-width:0}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.cols{grid-template-columns:1fr}}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted);flex:1;min-width:140px}
+textarea,input[type=text],input[type=number],input[type=date],input[type=datetime-local],input[type=password],select{width:100%;border:1px solid var(--line);background:var(--bg2);border-radius:11px;padding:10px 12px;outline:none;font-size:15px}
+textarea{min-height:180px;resize:vertical;font-family:var(--mono);font-size:13.5px;line-height:1.55}
+textarea:focus,input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.btn{height:40px;padding:0 16px;border-radius:11px;border:1px solid var(--line);background:var(--bg2);cursor:pointer;font-weight:600;font-size:14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn.p{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.p:hover{filter:brightness(1.08)}
+.out{font-family:var(--mono);font-size:14px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;word-break:break-all;white-space:pre-wrap;min-height:46px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi b{display:block;font-size:24px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--muted);font-size:12.5px}
+.msg{font-size:13.5px;font-weight:600;margin-top:8px}
+.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:13px;margin-top:10px}
+input[type=range]{accent-color:var(--accent);width:100%}
+input[type=checkbox]{accent-color:var(--accent);width:17px;height:17px}
+.check{display:inline-flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.meter{height:8px;border-radius:9px;background:var(--line);overflow:hidden;margin-top:10px}
+.meter i{display:block;height:100%;width:0;transition:width .25s,background .25s}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:34px;text-align:center;cursor:pointer;color:var(--muted)}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.sw{height:78px;border-radius:12px;display:flex;align-items:flex-end;padding:7px;font:600 12px var(--mono);cursor:pointer;border:1px solid var(--line)}
+.diff{font-family:var(--mono);font-size:13.5px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px;overflow:auto;max-height:480px}
+.diff div{white-space:pre-wrap;padding:1px 8px;border-radius:5px}
+.diff .a{background:rgba(18,161,80,.14)}.diff .d{background:rgba(229,72,77,.14);text-decoration:line-through;text-decoration-color:rgba(229,72,77,.5)}
+mark{background:rgba(232,163,23,.35);color:inherit;border-radius:3px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t td,table.t th{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t td:last-child{font-family:var(--mono);word-break:break-all}
+table.t td{overflow-wrap:anywhere}
+.big{font:700 clamp(40px,10vw,84px)/1 var(--mono);text-align:center;letter-spacing:-.03em;font-variant-numeric:tabular-nums;padding:18px 0}
+.related{margin-top:34px}
+
+/* palette modal */
+.cmdk{position:fixed;inset:0;z-index:50;background:rgba(5,7,12,.5);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding:10vh 16px 16px}
+.cmdk.open{display:flex}
+.cmdk .box{width:100%;max-width:580px;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden}
+.cmdk input{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;height:58px;padding:0 20px;font-size:17px;outline:none}
+.cmdk ul{list-style:none;margin:0;padding:8px;max-height:56vh;overflow:auto}
+.cmdk li{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:11px;cursor:pointer}
+.cmdk li.sel{background:var(--accent-soft)}
+.cmdk li em{font-style:normal;font-size:20px;width:28px;text-align:center}
+.cmdk li small{display:block;color:var(--muted);font-size:12.5px}
+.cmdk .foot{display:flex;gap:14px;padding:10px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:60}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--muted);font-size:13.5px;text-align:center;margin-top:40px}
+@media (max-width:560px){.stats{gap:16px}.stats>div{flex:1 1 40%}.searchbtn kbd{display:none}.hero{padding-top:36px}.logo b{display:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="#/"><i>⚛</i><b>Nikolai Lab</b></a>
+  <button class="searchbtn" id="openCmd" aria-label="Buscar herramienta"><span>⌕ Buscar herramienta…</span><kbd>Ctrl K</kbd></button>
+  <button class="iconbtn" id="themeBtn" aria-label="Cambiar tema">◐</button>
+</div></header>
+
+<main id="app" class="wrap"></main>
+
+<footer><div class="wrap">Nikolai Lab · Todas las herramientas funcionan 100 % en tu navegador. Tus datos nunca salen de tu dispositivo.</div></footer>
+
+<div class="cmdk" id="cmdk"><div class="box">
+  <input id="cmdInput" placeholder="Escribe para buscar… (json, contraseña, qr, color)" autocomplete="off">
+  <ul id="cmdList"></ul>
+  <div class="foot"><span><kbd>↑</kbd> <kbd>↓</kbd> navegar</span><span><kbd>Enter</kbd> abrir</span><span><kbd>Esc</kbd> cerrar</span></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("nl:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("nl:" + k, JSON.stringify(v)); } catch {} }
+};
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 1600); }
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); } catch {
+    const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
+  }
+  toast("Copiado ✓");
+}
+function download(name, data, type = "text/plain") {
+  const url = data instanceof Blob ? URL.createObjectURL(data) : URL.createObjectURL(new Blob([data], { type }));
+  const a = document.createElement("a"); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+const fmt = (n, d = 2) => Number.isFinite(n) ? n.toLocaleString("es-ES", { maximumFractionDigits: d }) : "—";
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const rnd = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
+const bytesHuman = b => b < 1024 ? b + " B" : b < 1048576 ? fmt(b / 1024, 1) + " KB" : fmt(b / 1048576, 2) + " MB";
+const b64enc = s => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/").replace(/\s/g, "")), c => c.charCodeAt(0)));
+const copyBtn = (id, label = "Copiar") => `<button class="btn" data-copy="${id}">⧉ ${label}</button>`;
+function bindCopy(root) {
+  $$("[data-copy]", root).forEach(b => b.onclick = () => { const t = $("#" + b.dataset.copy, root); copy(t.value ?? t.textContent); });
+}
+
+/* ---------- categorías ---------- */
+const CATS = {
+  texto: { name: "Texto", ic: "✍️" },
+  dev: { name: "Desarrollo", ic: "💻" },
+  seg: { name: "Seguridad", ic: "🔐" },
+  color: { name: "Color y diseño", ic: "🎨" },
+  img: { name: "Imagen", ic: "🖼️" },
+  calc: { name: "Cálculo", ic: "🧮" },
+  util: { name: "Utilidades", ic: "⏱️" }
+};
+
+/* ---------- herramientas ---------- */
+const TOOLS = [];
+const tool = (id, cat, ic, name, desc, kw, render) => TOOLS.push({ id, cat, ic, name, desc, kw, render });
+
+/* ===== TEXTO ===== */
+tool("contador", "texto", "🔢", "Contador de palabras", "Palabras, caracteres, frases, párrafos y tiempo de lectura en vivo.", "caracteres letras count", el => {
+  el.innerHTML = `<div class="panel"><textarea id="t" placeholder="Pega o escribe tu texto aquí…" style="min-height:240px;font-family:inherit;font-size:15px"></textarea></div>
+  <div class="panel"><div class="kpis" id="k"></div><div class="hint" id="top"></div></div>`;
+  const t = $("#t", el), k = $("#k", el);
+  const upd = () => {
+    const s = t.value, words = s.match(/[\p{L}\p{N}'’-]+/gu) || [];
+    const sent = (s.match(/[^.!?¡¿…]+[.!?…]+/g) || []).length || (s.trim() ? 1 : 0);
+    const para = s.split(/\n\s*\n/).filter(p => p.trim()).length;
+    const data = [["Palabras", words.length], ["Caracteres", [...s].length], ["Sin espacios", [...s.replace(/\s/g, "")].length], ["Frases", sent], ["Párrafos", para], ["Lectura", Math.max(words.length ? 1 : 0, Math.round(words.length / 230)) + " min"], ["Voz alta", Math.round(words.length / 150) + " min"]];
+    k.innerHTML = data.map(([a, b]) => `<div class="kpi"><b>${typeof b == "number" ? fmt(b, 0) : b}</b><span>${a}</span></div>`).join("");
+    const freq = {}; words.filter(w => w.length > 3).forEach(w => { w = w.toLowerCase(); freq[w] = (freq[w] || 0) + 1; });
+    const top = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    $("#top", el).innerHTML = top.length ? "Palabras más repetidas: " + top.map(([w, n]) => `<b>${esc(w)}</b> (${n})`).join(" · ") : "";
+    store.set("contador", s);
+  };
+  t.value = store.get("contador", ""); t.oninput = upd; upd();
+});
+
+tool("mayusculas", "texto", "🔠", "Convertidor de mayúsculas", "MAYÚSCULAS, minúsculas, Título, camelCase, snake_case, kebab-case y más.", "case camel snake kebab title", el => {
+  el.innerHTML = `<div class="panel"><textarea id="t" placeholder="Escribe el texto…"></textarea>
+  <div class="row" style="margin-top:12px" id="b"></div></div>`;
+  const words = s => s.replace(/([a-z])([A-Z])/g, "$1 $2").split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const cap = w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  const ops = {
+    "MAYÚSCULAS": s => s.toUpperCase(), "minúsculas": s => s.toLowerCase(),
+    "Tipo Título": s => s.toLowerCase().replace(/(^|\s)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()),
+    "Tipo oración": s => s.toLowerCase().replace(/(^\s*|[.!?]\s+)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()),
+    "camelCase": s => words(s).map((w, i) => i ? cap(w) : w.toLowerCase()).join(""),
+    "PascalCase": s => words(s).map(cap).join(""),
+    "snake_case": s => words(s).map(w => w.toLowerCase()).join("_"),
+    "kebab-case": s => words(s).map(w => w.toLowerCase()).join("-"),
+    "CONSTANT": s => words(s).map(w => w.toUpperCase()).join("_"),
+    "aLtErNaDo": s => [...s].map((c, i) => i % 2 ? c.toUpperCase() : c.toLowerCase()).join(""),
+    "Invertir": s => [...s].reverse().join("")
+  };
+  const b = $("#b", el), t = $("#t", el);
+  Object.keys(ops).forEach(k => { const x = document.createElement("button"); x.className = "btn"; x.textContent = k; x.onclick = () => { t.value = ops[k](t.value); }; b.appendChild(x); });
+  b.insertAdjacentHTML("beforeend", `<span style="flex:1"></span>` + copyBtn("t")); bindCopy(el);
+});
+
+tool("lineas", "texto", "📋", "Ordenar y limpiar líneas", "Ordena, elimina duplicados, líneas vacías, espacios y numera listas.", "duplicados sort unique lista", el => {
+  el.innerHTML = `<div class="panel"><textarea id="t" placeholder="Una entrada por línea…"></textarea>
+  <div class="row" style="margin-top:12px" id="b"></div><div class="hint" id="i"></div></div>`;
+  const t = $("#t", el), b = $("#b", el);
+  const L = () => t.value.split("\n"), coll = new Intl.Collator("es", { numeric: true, sensitivity: "base" });
+  const ops = {
+    "A → Z": l => l.sort(coll.compare), "Z → A": l => l.sort(coll.compare).reverse(),
+    "Por longitud": l => l.sort((a, b) => a.length - b.length),
+    "Quitar duplicados": l => [...new Set(l)], "Quitar vacías": l => l.filter(x => x.trim()),
+    "Recortar espacios": l => l.map(x => x.trim().replace(/\s+/g, " ")),
+    "Aleatorio": l => { for (let i = l.length - 1; i > 0; i--) { const j = rnd(i + 1); [l[i], l[j]] = [l[j], l[i]]; } return l; },
+    "Numerar": l => l.map((x, i) => `${i + 1}. ${x}`), "Invertir orden": l => l.reverse()
+  };
+  Object.keys(ops).forEach(k => { const x = document.createElement("button"); x.className = "btn"; x.textContent = k; x.onclick = () => { const before = L().length; t.value = ops[k](L()).join("\n"); info(before); }; b.appendChild(x); });
+  b.insertAdjacentHTML("beforeend", `<span style="flex:1"></span>` + copyBtn("t")); bindCopy(el);
+  const info = before => { const n = L().length; $("#i", el).textContent = `${n} líneas` + (before != null && before !== n ? ` (${before - n} eliminadas)` : ""); };
+  t.oninput = () => info();
+});
+
+tool("lorem", "texto", "📜", "Generador Lorem Ipsum", "Texto de relleno en párrafos, frases o palabras, en latín o español.", "placeholder relleno dummy", el => {
+  el.innerHTML = `<div class="panel"><div class="row">
+   <label class="f">Cantidad<input type="number" id="n" value="3" min="1" max="200"></label>
+   <label class="f">Tipo<select id="ty"><option value="p">Párrafos</option><option value="s">Frases</option><option value="w">Palabras</option></select></label>
+   <label class="f">Idioma<select id="lg"><option value="la">Latín clásico</option><option value="es">Español</option></select></label>
+   <label class="check" style="margin-top:20px"><input type="checkbox" id="st" checked> Empezar con “Lorem ipsum”</label>
+  </div></div><div class="panel"><textarea id="o" style="font-family:inherit;font-size:15px;min-height:260px" readonly></textarea><div class="row" style="margin-top:10px">${copyBtn("o")}<button class="btn" id="re">↻ Regenerar</button></div></div>`;
+  const W = { la: "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum".split(" "),
+    es: "el la de que en un una por con para como más pero sus le ya todo esta cuando muy sin sobre también me hasta hay donde quien desde nos durante uno ni contra ese tiempo mundo casa vida día ciudad agua luz camino historia trabajo forma momento parte lugar idea palabra noche mar cielo tierra viento sol fuego voz".split(" ") };
+  const gen = () => {
+    const n = Math.min(200, Math.max(1, +$("#n", el).value || 1)), ty = $("#ty", el).value, w = W[$("#lg", el).value];
+    const word = () => w[rnd(w.length)];
+    const sent = () => { const k = 6 + rnd(10); let s = Array.from({ length: k }, word).join(" "); return s[0].toUpperCase() + s.slice(1) + "."; };
+    const par = () => Array.from({ length: 4 + rnd(4) }, sent).join(" ");
+    let out = ty === "p" ? Array.from({ length: n }, par).join("\n\n") : ty === "s" ? Array.from({ length: n }, sent).join(" ") : Array.from({ length: n }, word).join(" ");
+    if ($("#st", el).checked) out = (ty === "w" ? "lorem ipsum " : "Lorem ipsum dolor sit amet, ") + out.charAt(0).toLowerCase() + out.slice(1);
+    $("#o", el).value = out;
+  };
+  $$("input,select", el).forEach(i => i.oninput = gen); $("#re", el).onclick = gen; bindCopy(el); gen();
+});
+
+tool("diff", "texto", "🆚", "Comparar textos", "Encuentra las diferencias línea a línea entre dos textos.", "diferencias comparador compare", el => {
+  el.innerHTML = `<div class="cols"><div class="panel"><b class="muted">Original</b><textarea id="a" style="margin-top:8px"></textarea></div><div class="panel"><b class="muted">Modificado</b><textarea id="b" style="margin-top:8px"></textarea></div></div>
+  <div class="panel"><div class="row" style="margin-bottom:10px"><b id="s"></b></div><div class="diff" id="o"></div></div>`;
+  const run = () => {
+    const A = $("#a", el).value.split("\n"), B = $("#b", el).value.split("\n");
+    const n = A.length, m = B.length;
+    if (n * m > 4e6) { $("#o", el).textContent = "Textos demasiado grandes."; return; }
+    const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    let i = 0, j = 0, html = "", add = 0, del = 0;
+    while (i < n || j < m) {
+      if (i < n && j < m && A[i] === B[j]) { html += `<div>  ${esc(A[i])}</div>`; i++; j++; }
+      else if (j < m && (i >= n || dp[i][j + 1] >= dp[i + 1][j])) { html += `<div class="a">+ ${esc(B[j])}</div>`; j++; add++; }
+      else { html += `<div class="d">− ${esc(A[i])}</div>`; i++; del++; }
+    }
+    $("#o", el).innerHTML = html; $("#s", el).innerHTML = add + del ? `<span style="color:var(--ok)">+${add} añadidas</span> · <span style="color:var(--bad)">−${del} eliminadas</span>` : "✓ Los textos son idénticos";
+  };
+  $("#a", el).oninput = $("#b", el).oninput = run; run();
+});
+
+tool("slug", "texto", "🔗", "Generador de slugs", "Convierte títulos en URLs limpias: “¡Hola Mundo!” → hola-mundo.", "url seo permalink", el => {
+  el.innerHTML = `<div class="panel"><label class="f">Texto<input type="text" id="t" placeholder="Mi artículo: ¡10 trucos increíbles!"></label>
+  <div class="row" style="margin-top:12px"><label class="f">Separador<select id="sep"><option>-</option><option>_</option><option>.</option></select></label><label class="check" style="margin-top:20px"><input type="checkbox" id="lc" checked> Minúsculas</label></div>
+  <div class="out" id="o" style="margin-top:14px"></div><div class="row" style="margin-top:10px">${copyBtn("o")}</div></div>`;
+  const run = () => { const s = $("#sep", el).value; let v = $("#t", el).value.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ñ/gi, "n").replace(/[^a-zA-Z0-9]+/g, s).replace(new RegExp(`^\\${s}+|\\${s}+$`, "g"), ""); if ($("#lc", el).checked) v = v.toLowerCase(); $("#o", el).textContent = v; };
+  $$("input,select", el).forEach(i => i.oninput = run); bindCopy(el); run();
+});
+
+/* ===== DESARROLLO ===== */
+tool("json", "dev", "{ }", "Formateador JSON", "Valida, embellece, minifica y ordena JSON con errores señalados.", "json beautify validar minify pretty", el => {
+  el.innerHTML = `<div class="panel"><textarea id="t" placeholder='{"pega":"tu JSON aquí"}' style="min-height:280px"></textarea>
+  <div class="row" style="margin-top:12px"><button class="btn p" id="f">Embellecer</button><button class="btn" id="m">Minificar</button><button class="btn" id="s">Ordenar claves</button>
+  <select id="ind" style="width:auto"><option value="2">2 espacios</option><option value="4">4 espacios</option><option value="\t">Tabulación</option></select><span style="flex:1"></span>${copyBtn("t")}<button class="btn" id="dl">↓ .json</button></div>
+  <div class="msg" id="msg"></div></div>`;
+  const t = $("#t", el), msg = $("#msg", el);
+  const sortK = v => Array.isArray(v) ? v.map(sortK) : v && typeof v == "object" ? Object.fromEntries(Object.keys(v).sort().map(k => [k, sortK(v[k])])) : v;
+  const parse = () => { try { const v = JSON.parse(t.value); msg.className = "msg ok"; msg.textContent = "✓ JSON válido · " + bytesHuman(new Blob([t.value]).size); return v; } catch (e) {
+    const p = +(/position (\d+)/.exec(e.message) || [])[1]; let w = e.message;
+    if (Number.isFinite(p)) { const before = t.value.slice(0, p).split("\n"); w += ` (línea ${before.length}, columna ${before.at(-1).length + 1})`; t.focus(); t.setSelectionRange(p, p + 1); }
+    msg.className = "msg bad"; msg.textContent = "✗ " + w; return undefined; } };
+  const ind = () => { const v = $("#ind", el).value; return v === "\t" ? "\t" : +v; };
+  $("#f", el).onclick = () => { const v = parse(); if (v !== undefined) t.value = JSON.stringify(v, null, ind()); };
+  $("#m", el).onclick = () => { const v = parse(); if (v !== undefined) t.value = JSON.stringify(v); };
+  $("#s", el).onclick = () => { const v = parse(); if (v !== undefined) t.value = JSON.stringify(sortK(v), null, ind()); };
+  $("#dl", el).onclick = () => download("datos.json", t.value, "application/json");
+  t.oninput = () => t.value.trim() ? parse() : (msg.textContent = ""); bindCopy(el);
+});
+
+tool("base64", "dev", "🧬", "Base64 codificar / decodificar", "Texto ↔ Base64 con soporte UTF-8, y archivos a Data URL.", "encode decode b64 dataurl", el => {
+  el.innerHTML = `<div class="cols"><div class="panel"><b class="muted">Texto</b><textarea id="a" style="margin-top:8px"></textarea><div class="row" style="margin-top:10px">${copyBtn("a")}</div></div>
+  <div class="panel"><b class="muted">Base64</b><textarea id="b" style="margin-top:8px"></textarea><div class="row" style="margin-top:10px">${copyBtn("b")}<label class="check"><input type="checkbox" id="url"> URL-safe</label></div><div class="msg bad" id="e"></div></div></div>
+  <div class="panel"><b>Archivo → Base64</b><div class="drop" id="d" style="margin-top:10px">Suelta un archivo o haz clic para elegirlo</div><input type="file" id="fi" hidden><textarea id="fo" readonly style="margin-top:10px;min-height:100px" placeholder="data:…"></textarea><div class="row" style="margin-top:10px">${copyBtn("fo")}</div></div>`;
+  const a = $("#a", el), b = $("#b", el), e = $("#e", el), u = $("#url", el);
+  const enc = () => { try { let v = b64enc(a.value); if (u.checked) v = v.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); b.value = v; e.textContent = ""; } catch (x) { e.textContent = x.message; } };
+  a.oninput = enc; u.onchange = enc;
+  b.oninput = () => { try { a.value = b64dec(b.value); e.textContent = ""; } catch { e.textContent = "✗ Base64 no válido"; } };
+  fileDrop($("#d", el), $("#fi", el), f => { const r = new FileReader(); r.onload = () => $("#fo", el).value = r.result; r.readAsDataURL(f); });
+  bindCopy(el);
+});
+
+tool("url", "dev", "🌐", "Codificar / decodificar URL", "Escapa y desescapa URLs, y desglosa sus parámetros.", "urlencode query params percent", el => {
+  el.innerHTML = `<div class="panel"><textarea id="t" style="min-height:120px" placeholder="https://ejemplo.com/buscar?q=hola mundo&lang=es"></textarea>
+  <div class="row" style="margin-top:12px"><button class="btn p" id="e">Codificar</button><button class="btn" id="ec">Codificar todo</button><button class="btn" id="d">Decodificar</button><span style="flex:1"></span>${copyBtn("t")}</div><div class="msg bad" id="m"></div></div>
+  <div class="panel"><b>Partes de la URL</b><div id="p" class="hint"></div></div>`;
+  const t = $("#t", el), m = $("#m", el);
+  const parts = () => { try { const u = new URL(t.value.trim()); const rows = [["Protocolo", u.protocol], ["Host", u.host], ["Ruta", u.pathname], ["Hash", u.hash]].filter(r => r[1]);
+    u.searchParams.forEach((v, k) => rows.push(["?" + k, v]));
+    $("#p", el).innerHTML = `<table class="t">${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>`; } catch { $("#p", el).textContent = "Introduce una URL completa para ver sus partes."; } };
+  $("#e", el).onclick = () => { t.value = encodeURI(t.value); parts(); };
+  $("#ec", el).onclick = () => { t.value = encodeURIComponent(t.value); parts(); };
+  $("#d", el).onclick = () => { try { t.value = decodeURIComponent(t.value.replace(/\+/g, " ")); m.textContent = ""; } catch { m.textContent = "✗ Secuencia no válida"; } parts(); };
+  t.oninput = parts; bindCopy(el); parts();
+});
+
+tool("hash", "dev", "#️⃣", "Generador de hash", "SHA-1, SHA-256, SHA-384 y SHA-512 de texto o archivos.", "sha256 checksum sha1 sha512 md", el => {
+  el.innerHTML = `<div class="panel"><textarea id="t" placeholder="Texto a resumir…" style="min-height:120px"></textarea><div class="drop" id="d" style="margin-top:10px;padding:18px">…o suelta un archivo para calcular su checksum</div><input type="file" id="fi" hidden>
+  <label class="check" style="margin-top:12px"><input type="checkbox" id="up"> Mayúsculas</label></div>
+  <div class="panel"><table class="t" id="o" style="table-layout:fixed"></table></div>`;
+  const algos = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"];
+  const run = async buf => { const up = $("#up", el).checked; const rows = await Promise.all(algos.map(async a => { let h = [...new Uint8Array(await crypto.subtle.digest(a, buf))].map(b => b.toString(16).padStart(2, "0")).join(""); return [a, up ? h.toUpperCase() : h]; }));
+    $("#o", el).innerHTML = rows.map(([a, h]) => `<tr><th style="width:80px">${a}</th><td style="font-family:var(--mono);word-break:break-all;font-size:13px">${h}</td><td style="width:44px"><button class="btn" data-h="${h}">⧉</button></td></tr>`).join("");
+    $$("[data-h]", el).forEach(b => b.onclick = () => copy(b.dataset.h)); };
+  const txt = () => run(new TextEncoder().encode($("#t", el).value));
+  $("#t", el).oninput = txt; $("#up", el).onchange = txt;
+  fileDrop($("#d", el), $("#fi", el), async f => { $("#d", el).textContent = "📄 " + f.name + " · " + bytesHuman(f.size); run(await f.arrayBuffer()); });
+  txt();
+});
+
+tool("uuid", "dev", "🆔", "Generador de UUID", "UUID v4 y v7 aleatorios y seguros, en lote.", "guid identificador id random", el => {
+  el.innerHTML = `<div class="panel"><div class="row"><label class="f">Cantidad<input type="number" id="n" value="5" min="1" max="1000"></label><label class="f">Versión<select id="v"><option value="4">v4 (aleatorio)</option><option value="7">v7 (ordenable por tiempo)</option></select></label>
+  <label class="check" style="margin-top:20px"><input type="checkbox" id="up"> Mayúsculas</label><label class="check" style="margin-top:20px"><input type="checkbox" id="nh"> Sin guiones</label></div>
+  <textarea id="o" readonly style="margin-top:14px"></textarea><div class="row" style="margin-top:10px"><button class="btn p" id="g">↻ Generar</button>${copyBtn("o")}</div></div>`;
+  const v7 = () => { const b = crypto.getRandomValues(new Uint8Array(16)); let t = Date.now(); for (let i = 5; i >= 0; i--) { b[i] = t & 255; t = Math.floor(t / 256); } b[6] = (b[6] & 15) | 0x70; b[8] = (b[8] & 63) | 128; const h = [...b].map(x => x.toString(16).padStart(2, "0")).join(""); return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`; };
+  const gen = () => { const n = Math.min(1000, Math.max(1, +$("#n", el).value || 1)); let out = Array.from({ length: n }, () => $("#v", el).value === "7" ? v7() : crypto.randomUUID());
+    if ($("#up", el).checked) out = out.map(x => x.toUpperCase()); if ($("#nh", el).checked) out = out.map(x => x.replace(/-/g, "")); $("#o", el).value = out.join("\n"); };
+  $$("input,select", el).forEach(i => i.oninput = gen); $("#g", el).onclick = gen; bindCopy(el); gen();
+});
+
+tool("jwt", "dev", "🎫", "Decodificador JWT", "Lee la cabecera y el payload de un token JWT y su caducidad.", "token jsonwebtoken bearer", el => {
+  el.innerHTML = `<div class="panel"><textarea id="t" style="min-height:110px" placeholder="eyJhbGciOi…"></textarea><div class="msg" id="m"></div></div>
+  <div class="cols"><div class="panel"><b class="muted">Cabecera</b><pre class="out" id="h" style="margin-top:8px"></pre></div><div class="panel"><b class="muted">Payload</b><pre class="out" id="p" style="margin-top:8px"></pre></div></div>`;
+  const run = () => { const parts = $("#t", el).value.trim().split("."), m = $("#m", el);
+    if (parts.length < 2 || !parts[0]) { m.textContent = ""; $("#h", el).textContent = $("#p", el).textContent = ""; return; }
+    try { const h = JSON.parse(b64dec(parts[0])), p = JSON.parse(b64dec(parts[1])); $("#h", el).textContent = JSON.stringify(h, null, 2); $("#p", el).textContent = JSON.stringify(p, null, 2);
+      const info = []; if (p.iat) info.push("Emitido: " + new Date(p.iat * 1000).toLocaleString("es-ES"));
+      if (p.exp) { const d = new Date(p.exp * 1000); info.push((d < new Date() ? "⚠ Caducó: " : "✓ Caduca: ") + d.toLocaleString("es-ES")); m.className = "msg " + (d < new Date() ? "bad" : "ok"); } else m.className = "msg ok";
+      m.textContent = (info.join(" · ") || "✓ Token decodificado") + " · La firma no se verifica."; } catch { m.className = "msg bad"; m.textContent = "✗ Token no válido"; } };
+  $("#t", el).oninput = run;
+});
+
+tool("regex", "dev", "🧩", "Probador de expresiones regulares", "Prueba patrones con resaltado en vivo, grupos y reemplazo.", "regexp regular expression pattern", el => {
+  el.innerHTML = `<div class="panel"><div class="row"><label class="f" style="flex:4">Patrón<input type="text" id="p" value="(\\w+)@(\\w+)\\.com" style="font-family:var(--mono)"></label><label class="f" style="flex:1;min-width:90px">Flags<input type="text" id="fl" value="gi" style="font-family:var(--mono)"></label></div>
+  <label class="f" style="margin-top:12px">Texto de prueba<textarea id="t">Escribe a ana@correo.com o a luis@empresa.com para más info.</textarea></label>
+  <label class="f" style="margin-top:12px">Reemplazar por (opcional, usa $1, $2…)<input type="text" id="r" placeholder="$1 [at] $2" style="font-family:var(--mono)"></label><div class="msg" id="m"></div></div>
+  <div class="panel"><b class="muted">Coincidencias</b><div class="out" id="o" style="margin-top:8px;word-break:normal"></div><div id="g" class="hint"></div><div id="rw"></div></div>`;
+  const run = () => { const m = $("#m", el), t = $("#t", el).value; let re;
+    try { re = new RegExp($("#p", el).value, $("#fl", el).value.includes("g") ? $("#fl", el).value : $("#fl", el).value + "g"); } catch (e) { m.className = "msg bad"; m.textContent = "✗ " + e.message; return; }
+    const ms = $("#p", el).value ? [...t.matchAll(re)].filter(x => x[0] !== "" || true).slice(0, 2000) : [];
+    m.className = "msg ok"; m.textContent = `✓ ${ms.length} coincidencia${ms.length == 1 ? "" : "s"}`;
+    let html = "", last = 0; ms.forEach(x => { if (!x[0]) return; html += esc(t.slice(last, x.index)) + "<mark>" + esc(x[0]) + "</mark>"; last = x.index + x[0].length; }); html += esc(t.slice(last));
+    $("#o", el).innerHTML = html || "&nbsp;";
+    $("#g", el).innerHTML = ms.some(x => x.length > 1) ? `<table class="t">${ms.slice(0, 50).map((x, i) => `<tr><td>#${i + 1}</td><td>${x.slice(1).map((g, j) => `$${j + 1}: ${esc(g ?? "∅")}`).join(" · ")}</td></tr>`).join("")}</table>` : "";
+    const r = $("#r", el).value; $("#rw", el).innerHTML = r ? `<b class="muted" style="display:block;margin-top:14px">Resultado</b><div class="out" style="margin-top:8px">${esc(t.replace(re, r))}</div>` : "";
+  };
+  $$("input,textarea", el).forEach(i => i.oninput = run); run();
+});
+
+tool("timestamp", "dev", "🕰️", "Conversor de timestamp Unix", "Convierte epoch (s/ms) ↔ fecha legible en tu zona y UTC.", "epoch unix fecha date time", el => {
+  el.innerHTML = `<div class="panel"><div class="kpis"><div class="kpi"><b id="now"></b><span>Timestamp actual (s)</span></div></div></div>
+  <div class="cols"><div class="panel"><label class="f">Timestamp (segundos o milisegundos)<input type="text" id="ts" style="font-family:var(--mono)"></label><table class="t" id="o1" style="margin-top:12px"></table></div>
+  <div class="panel"><label class="f">Fecha y hora local<input type="datetime-local" id="dt" step="1"></label><table class="t" id="o2" style="margin-top:12px"></table></div></div>`;
+  const tick = () => { if (!el.isConnected) return clearInterval(iv); $("#now", el).textContent = Math.floor(Date.now() / 1000); };
+  const iv = setInterval(tick, 1000); tick();
+  const rel = d => { const s = (d - Date.now()) / 1000, a = Math.abs(s); const rtf = new Intl.RelativeTimeFormat("es", { numeric: "auto" });
+    for (const [u, n] of [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60]]) if (a >= n) return rtf.format(Math.round(s / n), u); return rtf.format(Math.round(s), "second"); };
+  const table = d => isNaN(d) ? "<tr><td>—</td></tr>" : [["Local", d.toLocaleString("es-ES", { dateStyle: "full", timeStyle: "medium" })], ["UTC", d.toUTCString()], ["ISO 8601", d.toISOString()], ["Segundos", Math.floor(d / 1000)], ["Milisegundos", +d], ["Relativo", rel(d)]].map(r => `<tr><td>${r[0]}</td><td>${esc(r[1])}</td></tr>`).join("");
+  const ts = $("#ts", el), dt = $("#dt", el);
+  ts.oninput = () => { const v = +ts.value.trim(); const d = new Date(Math.abs(v) < 1e11 ? v * 1000 : v); $("#o1", el).innerHTML = ts.value.trim() ? table(d) : ""; };
+  dt.oninput = () => { $("#o2", el).innerHTML = table(new Date(dt.value)); };
+  ts.value = Math.floor(Date.now() / 1000); ts.oninput();
+  const n = new Date(); n.setMinutes(n.getMinutes() - n.getTimezoneOffset()); dt.value = n.toISOString().slice(0, 19); dt.oninput();
+});
+
+tool("csvjson", "dev", "🔁", "CSV ↔ JSON", "Convierte tablas CSV a JSON y viceversa, con vista previa.", "csv excel tabla convertir", el => {
+  el.innerHTML = `<div class="cols"><div class="panel"><b class="muted">CSV</b><textarea id="c" style="margin-top:8px">nombre,edad,ciudad\nAna,31,Madrid\nLuis,27,"Buenos Aires, AR"</textarea>
+  <div class="row" style="margin-top:10px"><label class="f" style="flex:none;min-width:110px">Separador<select id="sep"><option value=",">Coma</option><option value=";">Punto y coma</option><option value="\t">Tab</option></select></label>${copyBtn("c")}</div></div>
+  <div class="panel"><b class="muted">JSON</b><textarea id="j" style="margin-top:8px"></textarea><div class="row" style="margin-top:10px">${copyBtn("j")}<button class="btn" id="dl">↓ .csv</button></div><div class="msg bad" id="e"></div></div></div>
+  <div class="panel" style="overflow:auto"><table class="t" id="pv"></table></div>`;
+  const sep = () => $("#sep", el).value;
+  const parseCSV = (s, d) => { const rows = []; let row = [], f = "", q = false;
+    for (let i = 0; i < s.length; i++) { const c = s[i];
+      if (q) { if (c === '"') { if (s[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true; else if (c === d) { row.push(f); f = ""; } else if (c === "\n" || c === "\r") { if (c === "\r" && s[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; } else f += c; }
+    if (f || row.length) { row.push(f); rows.push(row); } return rows.filter(r => r.some(x => x !== "")); };
+  const cell = v => { v = v == null ? "" : typeof v == "object" ? JSON.stringify(v) : String(v); return /[",\n;\t]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+  const preview = (h, rows) => $("#pv", el).innerHTML = `<tr>${h.map(x => `<th>${esc(x)}</th>`).join("")}</tr>` + rows.slice(0, 50).map(r => `<tr>${h.map(k => `<td style="font-family:inherit">${esc(r[k] ?? "")}</td>`).join("")}</tr>`).join("");
+  const toJ = () => { const r = parseCSV($("#c", el).value, sep()); if (!r.length) return; const h = r[0]; const data = r.slice(1).map(x => Object.fromEntries(h.map((k, i) => { const v = x[i] ?? ""; return [k, v !== "" && !isNaN(v) && !/^0\d/.test(v) ? +v : v]; })));
+    $("#j", el).value = JSON.stringify(data, null, 2); $("#e", el).textContent = ""; preview(h, data); };
+  const toC = () => { try { let d = JSON.parse($("#j", el).value); if (!Array.isArray(d)) d = [d]; const h = [...new Set(d.flatMap(o => Object.keys(o)))];
+    $("#c", el).value = [h.map(cell).join(sep()), ...d.map(o => h.map(k => cell(o[k])).join(sep()))].join("\n"); $("#e", el).textContent = ""; preview(h, d); } catch { $("#e", el).textContent = "✗ JSON no válido (debe ser un array de objetos)"; } };
+  $("#c", el).oninput = toJ; $("#sep", el).onchange = toJ; $("#j", el).oninput = toC; $("#dl", el).onclick = () => download("datos.csv", $("#c", el).value, "text/csv");
+  bindCopy(el); toJ();
+});
+
+tool("bases", "dev", "🔣", "Conversor de bases numéricas", "Binario, octal, decimal y hexadecimal (y cualquier base 2–36).", "binario hex octal decimal binary", el => {
+  el.innerHTML = `<div class="panel"><div class="cols" id="g"></div><div class="msg bad" id="e"></div></div>`;
+  const B = [["Binario", 2], ["Octal", 8], ["Decimal", 10], ["Hexadecimal", 16], ["Base 32", 32], ["Base 36", 36]];
+  $("#g", el).innerHTML = B.map(([n, b]) => `<label class="f">${n} (base ${b})<input type="text" data-b="${b}" style="font-family:var(--mono)"></label>`).join("");
+  const ins = $$("[data-b]", el);
+  ins.forEach(i => i.oninput = () => { const b = +i.dataset.b, v = i.value.trim().toLowerCase().replace(/^0[xbo]/, "").replace(/[\s_]/g, "");
+    if (!v) { ins.forEach(o => o !== i && (o.value = "")); return; }
+    let n = 0n; const digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+    for (const c of v) { const d = digits.indexOf(c); if (d < 0 || d >= b) { $("#e", el).textContent = `✗ “${c}” no es válido en base ${b}`; return; } n = n * BigInt(b) + BigInt(d); }
+    $("#e", el).textContent = ""; ins.forEach(o => { if (o !== i) o.value = n.toString(+o.dataset.b).toUpperCase(); }); });
+  ins[2].value = "255"; ins[2].oninput();
+});
+
+/* ===== SEGURIDAD ===== */
+tool("password", "seg", "🔑", "Generador de contraseñas", "Contraseñas y frases de paso seguras con medidor de entropía.", "clave password seguro passphrase", el => {
+  el.innerHTML = `<div class="panel"><div class="row" style="flex-wrap:nowrap"><div class="out" id="o" style="flex:1;font-size:19px;display:flex;align-items:center"></div><button class="btn p" id="g" style="height:auto;align-self:stretch">↻</button><button class="btn" id="c" style="height:auto;align-self:stretch">⧉</button></div>
+  <div class="meter"><i id="mt"></i></div><div class="hint" id="st"></div></div>
+  <div class="panel"><div class="row"><label class="f">Modo<select id="mode"><option value="c">Caracteres</option><option value="w">Frase de paso</option></select></label><label class="f" style="flex:3">Longitud: <span id="lv"></span><input type="range" id="len" min="4" max="64" value="20"></label></div>
+  <div class="row" style="margin-top:14px;gap:18px" id="opts"><label class="check"><input type="checkbox" id="U" checked> A–Z</label><label class="check"><input type="checkbox" id="L" checked> a–z</label><label class="check"><input type="checkbox" id="N" checked> 0–9</label><label class="check"><input type="checkbox" id="S" checked> !@#$</label><label class="check"><input type="checkbox" id="X"> Evitar ambiguos (Il1O0)</label></div></div>
+  <div class="panel"><b class="muted">Historial de esta sesión</b><div id="h" class="hint" style="font-family:var(--mono);word-break:break-all"></div></div>`;
+  const WL = "casa perro gato luna sol mar rio monte nube fuego agua tierra viento roca arbol flor hoja rama piedra campo cielo nieve lluvia trueno playa isla barco tren coche puente torre llave puerta ventana mesa silla libro papel lapiz tinta reloj tiempo vela faro mapa ruta norte sur este oeste lobo oso zorro aguila tigre leon cebra delfin ballena pulpo cangrejo trigo maiz arroz pan queso miel cafe tango salsa jazz rock piano violin tambor guitarra verde azul rojo negro blanco oro plata cobre hierro".split(" ");
+  const hist = [];
+  const gen = () => { const mode = $("#mode", el).value, len = +$("#len", el).value; let pw, pool;
+    $("#opts", el).style.display = mode === "c" ? "" : "none";
+    if (mode === "w") { const n = Math.max(3, Math.round(len / 5)); $("#lv", el).textContent = n + " palabras"; pw = Array.from({ length: n }, () => WL[rnd(WL.length)]).join("-") + "-" + rnd(100); pool = Math.log2(WL.length) * n + Math.log2(100); }
+    else { $("#lv", el).textContent = len; let cs = ""; if ($("#U", el).checked) cs += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; if ($("#L", el).checked) cs += "abcdefghijklmnopqrstuvwxyz"; if ($("#N", el).checked) cs += "0123456789"; if ($("#S", el).checked) cs += "!@#$%^&*()-_=+[]{};:,.?/";
+      if ($("#X", el).checked) cs = cs.replace(/[Il1O0o]/g, ""); if (!cs) cs = "abcdefghijklmnopqrstuvwxyz"; pw = Array.from({ length: len }, () => cs[rnd(cs.length)]).join(""); pool = Math.log2(cs.length) * len; }
+    $("#o", el).textContent = pw; const bits = Math.round(pool);
+    const lvl = bits < 40 ? ["Débil", "var(--bad)", 25] : bits < 64 ? ["Aceptable", "var(--warn)", 50] : bits < 100 ? ["Fuerte", "var(--ok)", 78] : ["Muy fuerte", "var(--ok)", 100];
+    const mt = $("#mt", el); mt.style.width = lvl[2] + "%"; mt.style.background = lvl[1];
+    const secs = 2 ** bits / 1e11 / 2; const crack = secs < 1 ? "menos de 1 segundo" : secs < 3600 ? fmt(secs / 60, 0) + " minutos" : secs < 86400 * 365 ? fmt(secs / 86400, 0) + " días" : secs < 1e12 * 31536000 ? fmt(secs / 31536000, 0) + " años" : "más que la edad del universo";
+    $("#st", el).innerHTML = `<b style="color:${lvl[1]}">${lvl[0]}</b> · ${bits} bits de entropía · tiempo estimado de fuerza bruta (100 mil millones/s): ${crack}`;
+    hist.unshift(pw); hist.length = Math.min(hist.length, 6); $("#h", el).innerHTML = hist.map(esc).join("<br>"); };
+  $$("input,select", el).forEach(i => i.oninput = gen); $("#g", el).onclick = gen; $("#c", el).onclick = () => copy($("#o", el).textContent); gen();
+});
+
+tool("pwcheck", "seg", "🛡️", "Comprobar fortaleza de contraseña", "Analiza tu contraseña localmente: patrones, entropía y consejos.", "seguridad check strength", el => {
+  el.innerHTML = `<div class="panel"><label class="f">Contraseña (no sale de tu navegador)<div class="row" style="flex-wrap:nowrap"><input type="password" id="p" style="font-family:var(--mono)"><button class="btn" id="v">👁</button></div></label><div class="meter"><i id="mt"></i></div><div class="hint" id="o"></div></div>`;
+  const common = /^(123456|password|qwerty|admin|contraseña|iloveyou|111111|abc123|letmein|monkey|dragon|football|000000|1234|12345|123456789|qwertyuiop|princesa|teamo)/i;
+  const run = () => { const p = $("#p", el).value; let cs = 0; if (/[a-z]/.test(p)) cs += 26; if (/[A-Z]/.test(p)) cs += 26; if (/\d/.test(p)) cs += 10; if (/[^a-zA-Z0-9]/.test(p)) cs += 33;
+    let bits = p.length * Math.log2(cs || 1); const tips = [];
+    if (common.test(p)) { bits = Math.min(bits, 10); tips.push("Es una contraseña muy común."); }
+    if (/(.)\1{2,}/.test(p)) { bits *= .8; tips.push("Evita repetir el mismo carácter."); }
+    if (/(abc|bcd|123|234|345|456|567|678|789|qwe|asd|zxc)/i.test(p)) { bits *= .8; tips.push("Evita secuencias como 123 o abc."); }
+    if (/(19|20)\d\d/.test(p)) tips.push("Parece contener un año; es fácil de adivinar.");
+    if (p.length < 12) tips.push("Usa al menos 12 caracteres."); if (!/[^a-zA-Z0-9]/.test(p)) tips.push("Añade símbolos."); if (!/[A-Z]/.test(p) || !/[a-z]/.test(p)) tips.push("Mezcla mayúsculas y minúsculas.");
+    bits = Math.round(bits); const lvl = !p ? ["", "transparent", 0] : bits < 40 ? ["Débil", "var(--bad)", 25] : bits < 64 ? ["Aceptable", "var(--warn)", 50] : bits < 100 ? ["Fuerte", "var(--ok)", 78] : ["Muy fuerte", "var(--ok)", 100];
+    $("#mt", el).style.width = lvl[2] + "%"; $("#mt", el).style.background = lvl[1];
+    $("#o", el).innerHTML = p ? `<b style="color:${lvl[1]}">${lvl[0]}</b> · ~${bits} bits<ul>${tips.map(t => `<li>${t}</li>`).join("") || "<li>¡Bien hecho! No se detectan debilidades.</li>"}</ul>` : "Escribe una contraseña para analizarla."; };
+  $("#p", el).oninput = run; $("#v", el).onclick = () => { const p = $("#p", el); p.type = p.type === "password" ? "text" : "password"; }; run();
+});
+
+/* ===== COLOR ===== */
+const hexToRgb = h => { h = h.replace("#", ""); if (h.length === 3) h = [...h].map(c => c + c).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const rgbToHex = (r, g, b) => "#" + [r, g, b].map(x => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("");
+const rgbToHsl = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0, l = (mx + mn) / 2;
+  if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [Math.round(h), Math.round(s * 100), Math.round(l * 100)]; };
+const hslToRgb = (h, s, l) => { s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)); return [f(0) * 255, f(8) * 255, f(4) * 255]; };
+const lum = ([r, g, b]) => { const c = [r, g, b].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + .05) / (y + .05); };
+
+tool("color", "color", "🎨", "Selector y conversor de color", "HEX, RGB, HSL, CMYK y paletas armónicas automáticas.", "hex rgb hsl cmyk picker paleta", el => {
+  el.innerHTML = `<div class="cols"><div class="panel"><div id="pv" style="height:180px;border-radius:14px;border:1px solid var(--line);display:grid;place-items:center;font:700 26px var(--mono)"></div>
+  <div class="row" style="margin-top:12px"><input type="color" id="pk" style="width:56px;height:44px;border:0;background:none;padding:0;cursor:pointer"><input type="text" id="hx" style="flex:1;font-family:var(--mono)"><button class="btn" id="rd">🎲</button>${"EyeDropper" in window ? '<button class="btn" id="ed">💧 Cuentagotas</button>' : ""}</div></div>
+  <div class="panel"><table class="t" id="fm"></table></div></div>
+  <div class="panel"><b class="muted">Paletas armónicas · clic para copiar</b><div id="pal"></div></div>`;
+  let cur = store.get("color", "#6d4aff");
+  const set = hex => { if (!/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return; cur = rgbToHex(...hexToRgb(hex)); store.set("color", cur);
+    const rgb = hexToRgb(cur), [h, s, l] = rgbToHsl(...rgb), k = 1 - Math.max(...rgb) / 255, cmyk = k === 1 ? [0, 0, 0, 100] : [...rgb.map(v => Math.round((1 - v / 255 - k) / (1 - k) * 100)), Math.round(k * 100)];
+    const pv = $("#pv", el); pv.style.background = cur; pv.style.color = lum(rgb) > .4 ? "#000" : "#fff"; pv.textContent = cur.toUpperCase();
+    $("#pk", el).value = cur; if (document.activeElement !== $("#hx", el)) $("#hx", el).value = cur.toUpperCase();
+    const rows = [["HEX", cur.toUpperCase()], ["RGB", `rgb(${rgb.join(", ")})`], ["HSL", `hsl(${h}, ${s}%, ${l}%)`], ["CMYK", `cmyk(${cmyk.join("%, ")}%)`], ["Contraste / blanco", fmt(contrast(rgb, [255, 255, 255])) + ":1"], ["Contraste / negro", fmt(contrast(rgb, [0, 0, 0])) + ":1"]];
+    $("#fm", el).innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td style="width:44px"><button class="btn" data-v="${r[1]}">⧉</button></td></tr>`).join("");
+    const mk = arr => `<div class="swatches" style="margin:8px 0 16px">${arr.map(([hh, ss, ll]) => { const x = rgbToHex(...hslToRgb((hh + 360) % 360, Math.max(0, Math.min(100, ss)), Math.max(0, Math.min(100, ll)))); return `<div class="sw" data-v="${x}" style="background:${x};color:${lum(hexToRgb(x)) > .4 ? "#000" : "#fff"}">${x}</div>`; }).join("")}</div>`;
+    $("#pal", el).innerHTML = [["Tonos", [95, 85, 70, 55, 40, 25, 12].map(L => [h, s, L])], ["Complementario", [[h, s, l], [h + 180, s, l]]], ["Triádico", [[h, s, l], [h + 120, s, l], [h + 240, s, l]]], ["Análogo", [[h - 30, s, l], [h - 15, s, l], [h, s, l], [h + 15, s, l], [h + 30, s, l]]], ["Tetrádico", [[h, s, l], [h + 90, s, l], [h + 180, s, l], [h + 270, s, l]]]].map(([n, a]) => `<div class="hint" style="margin-top:14px">${n}</div>` + mk(a)).join("");
+    $$("[data-v]", el).forEach(b => b.onclick = () => copy(b.dataset.v)); };
+  $("#pk", el).oninput = e => set(e.target.value); $("#hx", el).oninput = e => set(e.target.value.trim());
+  $("#rd", el).onclick = () => set(rgbToHex(rnd(256), rnd(256), rnd(256)));
+  if ($("#ed", el)) $("#ed", el).onclick = async () => { try { const r = await new EyeDropper().open(); set(r.sRGBHex); } catch {} };
+  set(cur);
+});
+
+tool("contraste", "color", "👓", "Comprobador de contraste WCAG", "Verifica si tus colores cumplen AA / AAA de accesibilidad.", "accesibilidad wcag a11y legibilidad", el => {
+  el.innerHTML = `<div class="panel"><div class="row"><label class="f">Texto<div class="row" style="flex-wrap:nowrap"><input type="color" id="fc" value="#1f2335"><input type="text" id="ft" value="#1F2335" style="font-family:var(--mono)"></div></label>
+  <label class="f">Fondo<div class="row" style="flex-wrap:nowrap"><input type="color" id="bc" value="#f5f1ff"><input type="text" id="bt" value="#F5F1FF" style="font-family:var(--mono)"></div></label><button class="btn" id="sw" style="margin-top:20px">⇄</button></div></div>
+  <div class="panel" id="pv" style="padding:28px"><div style="font-size:34px;font-weight:800;letter-spacing:-.02em">Texto grande de ejemplo</div><p style="margin:8px 0 0">El veloz murciélago hindú comía feliz cardillo y kiwi. La cigüeña tocaba el saxofón detrás del palenque de paja.</p></div>
+  <div class="panel"><div class="kpis" id="o"></div></div>`;
+  const run = () => { const f = $("#ft", el).value, b = $("#bt", el).value; if (![f, b].every(x => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(x))) return;
+    $("#fc", el).value = rgbToHex(...hexToRgb(f)); $("#bc", el).value = rgbToHex(...hexToRgb(b)); const pv = $("#pv", el); pv.style.color = f; pv.style.background = b;
+    const c = contrast(hexToRgb(f), hexToRgb(b)), ok = x => x ? '<b style="color:var(--ok)">✓ Pasa</b>' : '<b style="color:var(--bad)">✗ No pasa</b>';
+    $("#o", el).innerHTML = `<div class="kpi"><b>${fmt(c)}:1</b><span>Ratio de contraste</span></div>` + [["AA texto normal", c >= 4.5], ["AA texto grande", c >= 3], ["AAA texto normal", c >= 7], ["AAA texto grande", c >= 4.5]].map(([n, v]) => `<div class="kpi">${ok(v)}<span>${n}</span></div>`).join(""); };
+  $("#fc", el).oninput = e => { $("#ft", el).value = e.target.value.toUpperCase(); run(); }; $("#bc", el).oninput = e => { $("#bt", el).value = e.target.value.toUpperCase(); run(); };
+  $("#ft", el).oninput = $("#bt", el).oninput = run;
+  $("#sw", el).onclick = () => { const a = $("#ft", el).value; $("#ft", el).value = $("#bt", el).value; $("#bt", el).value = a; run(); }; run();
+});
+
+tool("gradiente", "color", "🌈", "Generador de degradados CSS", "Crea degradados lineales, radiales y cónicos con código listo.", "gradient css fondo background", el => {
+  el.innerHTML = `<div class="panel"><div id="pv" style="height:220px;border-radius:14px"></div></div>
+  <div class="panel"><div class="row"><label class="f">Tipo<select id="ty"><option value="linear">Lineal</option><option value="radial">Radial</option><option value="conic">Cónico</option></select></label><label class="f" style="flex:2">Ángulo: <span id="av"></span>°<input type="range" id="an" min="0" max="360" value="135"></label></div>
+  <div id="stops" style="margin-top:14px;display:grid;gap:8px"></div><div class="row" style="margin-top:12px"><button class="btn" id="add">+ Color</button><button class="btn" id="rd">🎲 Aleatorio</button></div></div>
+  <div class="panel"><div class="out" id="o"></div><div class="row" style="margin-top:10px">${copyBtn("o", "Copiar CSS")}</div></div>`;
+  let stops = [["#6d4aff", 0], ["#00b8d9", 100]];
+  const drawStops = () => { $("#stops", el).innerHTML = stops.map(([c, p], i) => `<div class="row" style="flex-wrap:nowrap"><input type="color" value="${c}" data-i="${i}" data-k="c"><input type="range" min="0" max="100" value="${p}" data-i="${i}" data-k="p"><span style="width:44px;font-family:var(--mono)">${p}%</span>${stops.length > 2 ? `<button class="btn" data-del="${i}">✕</button>` : ""}</div>`).join("");
+    $$("[data-k]", el).forEach(x => x.oninput = () => { stops[x.dataset.i][x.dataset.k === "c" ? 0 : 1] = x.dataset.k === "c" ? x.value : +x.value; if (x.dataset.k === "p") x.nextElementSibling.textContent = x.value + "%"; run(); });
+    $$("[data-del]", el).forEach(x => x.onclick = () => { stops.splice(+x.dataset.del, 1); drawStops(); run(); }); };
+  const run = () => { const ty = $("#ty", el).value, a = $("#an", el).value; $("#av", el).textContent = a; const s = [...stops].sort((x, y) => x[1] - y[1]).map(([c, p]) => `${c} ${p}%`).join(", ");
+    const g = ty === "linear" ? `linear-gradient(${a}deg, ${s})` : ty === "radial" ? `radial-gradient(circle, ${s})` : `conic-gradient(from ${a}deg, ${s})`;
+    $("#pv", el).style.background = g; $("#o", el).textContent = `background: ${g};`; };
+  $("#ty", el).oninput = $("#an", el).oninput = run;
+  $("#add", el).onclick = () => { stops.push([rgbToHex(rnd(256), rnd(256), rnd(256)), 50]); drawStops(); run(); };
+  $("#rd", el).onclick = () => { stops = stops.map(([, p]) => [rgbToHex(...hslToRgb(rnd(360), 60 + rnd(30), 45 + rnd(20))), p]); $("#an", el).value = rnd(361); drawStops(); run(); };
+  bindCopy(el); drawStops(); run();
+});
+
+tool("sombra", "color", "🌫️", "Generador de sombras CSS", "Diseña box-shadow visualmente y copia el código.", "box-shadow css shadow", el => {
+  el.innerHTML = `<div class="cols"><div class="panel" style="display:grid;place-items:center;min-height:300px;background:var(--bg2)"><div id="pv" style="width:180px;height:180px;border-radius:24px;background:var(--card)"></div></div>
+  <div class="panel" id="c"></div></div><div class="panel"><div class="out" id="o"></div><div class="row" style="margin-top:10px">${copyBtn("o", "Copiar CSS")}</div></div>`;
+  const P = [["x", "Desplazamiento X", -60, 60, 0], ["y", "Desplazamiento Y", -60, 60, 18], ["b", "Desenfoque", 0, 120, 40], ["s", "Extensión", -40, 40, -8], ["o", "Opacidad %", 0, 100, 22], ["r", "Radio del borde", 0, 90, 24]];
+  $("#c", el).innerHTML = P.map(([k, n, a, b, v]) => `<label class="f">${n}: <span id="v${k}">${v}</span><input type="range" id="${k}" min="${a}" max="${b}" value="${v}"></label>`).join("") + `<div class="row" style="margin-top:8px"><label class="f">Color<input type="color" id="col" value="#141826"></label><label class="check" style="margin-top:20px"><input type="checkbox" id="ins"> Interior (inset)</label></div>`;
+  const run = () => { const g = k => +$("#" + k, el).value; P.forEach(([k]) => $("#v" + k, el).textContent = g(k)); const [r, gg, b] = hexToRgb($("#col", el).value);
+    const sh = `${$("#ins", el).checked ? "inset " : ""}${g("x")}px ${g("y")}px ${g("b")}px ${g("s")}px rgba(${r}, ${gg}, ${b}, ${g("o") / 100})`;
+    $("#pv", el).style.boxShadow = sh; $("#pv", el).style.borderRadius = g("r") + "px"; $("#o", el).textContent = `box-shadow: ${sh};\nborder-radius: ${g("r")}px;`; };
+  $$("input", el).forEach(i => i.oninput = run); bindCopy(el); run();
+});
+
+/* ===== IMAGEN ===== */
+function fileDrop(zone, input, cb, multiple) {
+  zone.onclick = () => input.click(); input.multiple = !!multiple;
+  input.onchange = () => { if (input.files.length) multiple ? cb([...input.files]) : cb(input.files[0]); input.value = ""; };
+  zone.ondragover = e => { e.preventDefault(); zone.classList.add("over"); }; zone.ondragleave = () => zone.classList.remove("over");
+  zone.ondrop = e => { e.preventDefault(); zone.classList.remove("over"); const f = [...e.dataTransfer.files]; if (f.length) multiple ? cb(f) : cb(f[0]); };
+}
+const loadImg = f => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(f); });
+
+tool("imagen", "img", "🗜️", "Comprimir, redimensionar y convertir imágenes", "Reduce el peso, cambia tamaño y convierte a JPG, PNG o WebP. En lote.", "compress resize webp jpg png convert optimizar", el => {
+  el.innerHTML = `<div class="panel"><div class="drop" id="d">📁 Suelta imágenes aquí o haz clic · varias a la vez</div><input type="file" id="fi" accept="image/*" hidden></div>
+  <div class="panel"><div class="row"><label class="f">Formato<select id="fmt"><option value="image/webp">WebP</option><option value="image/jpeg">JPG</option><option value="image/png">PNG</option></select></label>
+  <label class="f" style="flex:2">Calidad: <span id="qv">80</span>%<input type="range" id="q" min="10" max="100" value="80"></label><label class="f">Ancho máx. (px)<input type="number" id="mw" placeholder="Original"></label></div></div>
+  <div id="list"></div>`;
+  let files = [];
+  const proc = async () => { $("#qv", el).textContent = $("#q", el).value; const list = $("#list", el); list.innerHTML = "";
+    if (!files.length) return; let tb = 0, ta = 0;
+    for (const f of files) { const img = await loadImg(f).catch(() => null); if (!img) continue; const mw = +$("#mw", el).value; const sc = mw && mw < img.naturalWidth ? mw / img.naturalWidth : 1;
+      const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc); const cx = c.getContext("2d");
+      const ty = $("#fmt", el).value; if (ty === "image/jpeg") { cx.fillStyle = "#fff"; cx.fillRect(0, 0, c.width, c.height); } cx.drawImage(img, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, ty, +$("#q", el).value / 100)); tb += f.size; ta += blob.size;
+      const ext = ty.split("/")[1].replace("jpeg", "jpg"), name = f.name.replace(/\.[^.]+$/, "") + "." + ext, pct = Math.round((1 - blob.size / f.size) * 100);
+      const row = document.createElement("div"); row.className = "panel";
+      row.innerHTML = `<div class="row" style="flex-wrap:nowrap"><img src="${URL.createObjectURL(blob)}" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex:none"><div style="flex:1;min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</b><span class="muted" style="font-size:13px">${img.naturalWidth}×${img.naturalHeight} → ${c.width}×${c.height} · ${bytesHuman(f.size)} → <b style="color:${pct > 0 ? "var(--ok)" : "var(--bad)"}">${bytesHuman(blob.size)} (${pct > 0 ? "−" : "+"}${Math.abs(pct)}%)</b></span></div><button class="btn p">↓</button></div>`;
+      $("button", row).onclick = () => download(name, blob); list.appendChild(row); }
+    if (files.length > 1) list.insertAdjacentHTML("afterbegin", `<div class="panel"><b>Total:</b> ${bytesHuman(tb)} → ${bytesHuman(ta)} · ahorro ${Math.round((1 - ta / tb) * 100)}%</div>`); };
+  fileDrop($("#d", el), $("#fi", el), f => { files = f.filter(x => x.type.startsWith("image/")); proc(); }, true);
+  let tm; $$("input,select", el).forEach(i => i.oninput = () => { $("#qv", el).textContent = $("#q", el).value; clearTimeout(tm); tm = setTimeout(proc, 300); });
+});
+
+tool("qr", "img", "🔳", "Generador de códigos QR", "QR para enlaces, texto, Wi-Fi o email. Colores y descarga PNG/SVG.", "qr code codigo wifi", el => {
+  el.innerHTML = `<div class="cols"><div class="panel"><div class="row"><label class="f">Tipo<select id="ty"><option value="t">Texto / URL</option><option value="w">Wi-Fi</option><option value="e">Email</option><option value="p">Teléfono</option></select></label></div>
+  <div id="fields" style="margin-top:12px"></div>
+  <div class="row" style="margin-top:12px"><label class="f">Color<input type="color" id="fg" value="#141826"></label><label class="f">Fondo<input type="color" id="bg" value="#ffffff"></label><label class="f">Corrección<select id="ec"><option value="L">Baja</option><option value="M" selected>Media</option><option value="Q">Alta</option><option value="H">Máxima</option></select></label></div></div>
+  <div class="panel" style="text-align:center"><canvas id="cv" style="max-width:100%;width:280px;border-radius:12px"></canvas><div class="row" style="justify-content:center;margin-top:12px"><button class="btn p" id="png">↓ PNG</button><button class="btn" id="svg">↓ SVG</button></div><div class="msg bad" id="e"></div></div></div>`;
+  const F = { t: `<label class="f">Contenido<textarea id="tx" style="min-height:100px">https://ejemplo.com</textarea></label>`,
+    w: `<label class="f">Nombre de la red (SSID)<input type="text" id="ss"></label><label class="f" style="margin-top:10px">Contraseña<input type="text" id="pw"></label><label class="f" style="margin-top:10px">Seguridad<select id="sec"><option>WPA</option><option>WEP</option><option value="nopass">Ninguna</option></select></label>`,
+    e: `<label class="f">Email<input type="text" id="em"></label><label class="f" style="margin-top:10px">Asunto<input type="text" id="su"></label>`, p: `<label class="f">Teléfono<input type="text" id="ph" placeholder="+34 600 000 000"></label>` };
+  let qr;
+  const data = () => { const ty = $("#ty", el).value, v = id => ($("#" + id, el) || {}).value || "", e = s => s.replace(/([\\;,:"])/g, "\\$1");
+    return ty === "t" ? v("tx") : ty === "w" ? `WIFI:T:${v("sec")};S:${e(v("ss"))};P:${e(v("pw"))};;` : ty === "e" ? `mailto:${v("em")}${v("su") ? "?subject=" + encodeURIComponent(v("su")) : ""}` : `tel:${v("ph").replace(/\s/g, "")}`; };
+  const run = () => { if (typeof qrcode === "undefined") { $("#e", el).textContent = "No se pudo cargar la librería QR (revisa tu conexión)."; return; }
+    try { qr = qrcode(0, $("#ec", el).value); qr.addData(unescape(encodeURIComponent(data() || " "))); qr.make(); $("#e", el).textContent = ""; } catch { $("#e", el).textContent = "✗ Demasiado contenido para un QR"; return; }
+    const n = qr.getModuleCount(), m = 4, s = 12, cv = $("#cv", el); cv.width = cv.height = (n + m * 2) * s; const c = cv.getContext("2d");
+    c.fillStyle = $("#bg", el).value; c.fillRect(0, 0, cv.width, cv.height); c.fillStyle = $("#fg", el).value;
+    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (qr.isDark(r, k)) c.fillRect((k + m) * s, (r + m) * s, s, s); };
+  const ty = () => { $("#fields", el).innerHTML = F[$("#ty", el).value]; $$("#fields input,#fields textarea,#fields select", el).forEach(i => i.oninput = run); run(); };
+  $("#ty", el).onchange = ty; ["fg", "bg", "ec"].forEach(i => $("#" + i, el).oninput = run);
+  $("#png", el).onclick = () => $("#cv", el).toBlob(b => download("qr.png", b));
+  $("#svg", el).onclick = () => { if (!qr) return; const n = qr.getModuleCount(), m = 4; let p = ""; for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (qr.isDark(r, k)) p += `M${k + m},${r + m}h1v1h-1z`;
+    download("qr.svg", `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n + m * 2} ${n + m * 2}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="${$("#bg", el).value}"/><path d="${p}" fill="${$("#fg", el).value}"/></svg>`, "image/svg+xml"); };
+  ty();
+});
+
+tool("colores-img", "img", "🖌️", "Extraer paleta de una imagen", "Obtén los colores dominantes de cualquier foto.", "palette dominant colors foto", el => {
+  el.innerHTML = `<div class="panel"><div class="drop" id="d">🖼️ Suelta una imagen o haz clic</div><input type="file" id="fi" accept="image/*" hidden></div><div class="panel" id="res" hidden><div class="cols"><img id="im" style="width:100%;border-radius:12px;max-height:360px;object-fit:contain"><div><b class="muted">Colores dominantes · clic para copiar</b><div class="swatches" id="sw" style="margin-top:10px"></div></div></div></div>`;
+  fileDrop($("#d", el), $("#fi", el), async f => { const img = await loadImg(f); $("#im", el).src = img.src; $("#res", el).hidden = false;
+    const c = document.createElement("canvas"), sc = Math.min(1, 120 / Math.max(img.width, img.height)); c.width = Math.max(1, img.width * sc); c.height = Math.max(1, img.height * sc); const cx = c.getContext("2d"); cx.drawImage(img, 0, 0, c.width, c.height);
+    const d = cx.getImageData(0, 0, c.width, c.height).data, px = []; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128) px.push([d[i], d[i + 1], d[i + 2]]);
+    // k-means
+    const K = 8; let cen = Array.from({ length: K }, (_, i) => px[Math.floor(i * px.length / K)]);
+    for (let it = 0; it < 10; it++) { const sum = cen.map(() => [0, 0, 0, 0]); px.forEach(p => { let b = 0, bd = 1e9; cen.forEach((q, j) => { const dd = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2; if (dd < bd) { bd = dd; b = j; } }); const s = sum[b]; s[0] += p[0]; s[1] += p[1]; s[2] += p[2]; s[3]++; });
+      cen = sum.map((s, j) => s[3] ? [s[0] / s[3], s[1] / s[3], s[2] / s[3], s[3]] : cen[j]); }
+    const cols = cen.filter(x => x[3]).sort((a, b) => b[3] - a[3]);
+    $("#sw", el).innerHTML = cols.map(c => { const h = rgbToHex(c[0], c[1], c[2]); return `<div class="sw" data-v="${h}" style="background:${h};color:${lum(c) > .4 ? "#000" : "#fff"}">${h}<br>${Math.round(c[3] / px.length * 100)}%</div>`; }).join("");
+    $$("[data-v]", el).forEach(b => b.onclick = () => copy(b.dataset.v)); });
+});
+
+/* ===== CÁLCULO ===== */
+tool("porcentaje", "calc", "％", "Calculadora de porcentajes", "Todos los cálculos de % que necesitas: aumentos, descuentos y variaciones.", "porcentaje descuento iva aumento percent", el => {
+  const L = [["¿Cuánto es el", "% de", "?", (a, b) => a / 100 * b], ["", "es qué % de", "?", (a, b) => a / b * 100, "%"], ["Variación de", "a", "", (a, b) => (b - a) / Math.abs(a) * 100, "%"], ["", "+", "% =", (a, b) => a * (1 + b / 100)], ["", "−", "% =", (a, b) => a * (1 - b / 100)]];
+  el.innerHTML = L.map(([p, m, s], i) => `<div class="panel"><div class="row" style="font-size:16px">${p ? `<span>${p}</span>` : ""}<input type="number" data-i="${i}" data-k="a" style="width:120px;flex:1"><span>${m}</span><input type="number" data-i="${i}" data-k="b" style="width:120px;flex:1"><span>${s}</span><b class="out" id="r${i}" style="flex:1;min-width:120px;font-size:18px"></b></div></div>`).join("");
+  $$("input", el).forEach(x => x.oninput = () => { const i = x.dataset.i, a = parseFloat($(`[data-i="${i}"][data-k=a]`, el).value), b = parseFloat($(`[data-i="${i}"][data-k=b]`, el).value); const r = L[i][3](a, b); $("#r" + i, el).textContent = isNaN(a) || isNaN(b) ? "" : fmt(r, 4) + (L[i][4] || ""); });
+});
+
+tool("unidades", "calc", "📏", "Conversor de unidades", "Longitud, peso, temperatura, área, volumen, velocidad, datos y tiempo.", "metros kilos celsius millas libras convertir", el => {
+  const U = { "Longitud": { m: 1, km: 1e3, cm: .01, mm: .001, "milla": 1609.344, yarda: .9144, pie: .3048, pulgada: .0254, "milla náutica": 1852 },
+    "Peso": { kg: 1, g: .001, mg: 1e-6, tonelada: 1e3, libra: .45359237, onza: .028349523125, stone: 6.35029318 },
+    "Temperatura": { "°C": 0, "°F": 0, K: 0 }, "Área": { "m²": 1, "km²": 1e6, "cm²": 1e-4, hectárea: 1e4, acre: 4046.8564224, "pie²": .09290304 },
+    "Volumen": { litro: 1, ml: .001, "m³": 1e3, "galón (EE. UU.)": 3.785411784, "taza": .2365882365, "cuchara": .01478676 },
+    "Velocidad": { "km/h": 1, "m/s": 3.6, mph: 1.609344, nudo: 1.852 }, "Datos": { B: 1, KB: 1e3, MB: 1e6, GB: 1e9, TB: 1e12, KiB: 1024, MiB: 1048576, GiB: 1073741824, bit: .125 },
+    "Tiempo": { segundo: 1, minuto: 60, hora: 3600, día: 86400, semana: 604800, mes: 2629800, año: 31557600 } };
+  el.innerHTML = `<div class="panel"><div class="chips" id="cats" style="justify-content:flex-start;padding:0 0 14px"></div><div class="row" style="flex-wrap:nowrap;gap:10px"><div style="flex:1;display:grid;gap:8px"><input type="number" id="a" value="1"><select id="ua"></select></div><button class="btn" id="sw" style="align-self:center">⇄</button><div style="flex:1;display:grid;gap:8px"><input type="number" id="b"><select id="ub"></select></div></div></div><div class="panel"><table class="t" id="all"></table></div>`;
+  let cat = "Longitud";
+  const toBase = (v, u) => cat !== "Temperatura" ? v * U[cat][u] : u === "°C" ? v : u === "°F" ? (v - 32) * 5 / 9 : v - 273.15;
+  const fromBase = (v, u) => cat !== "Temperatura" ? v / U[cat][u] : u === "°C" ? v : u === "°F" ? v * 9 / 5 + 32 : v + 273.15;
+  const conv = dir => { const [s, d, us, ud] = dir ? ["a", "b", "ua", "ub"] : ["b", "a", "ub", "ua"]; const v = parseFloat($("#" + s, el).value); if (isNaN(v)) return; const base = toBase(v, $("#" + us, el).value);
+    $("#" + d, el).value = +fromBase(base, $("#" + ud, el).value).toPrecision(10);
+    $("#all", el).innerHTML = Object.keys(U[cat]).map(u => `<tr><td>${u}</td><td>${fmt(fromBase(base, u), 6)}</td></tr>`).join(""); };
+  const setCat = c => { cat = c; $$("#cats .chip", el).forEach(b => b.setAttribute("aria-pressed", b.textContent === c)); const opts = Object.keys(U[c]).map(u => `<option>${u}</option>`).join(""); $("#ua", el).innerHTML = $("#ub", el).innerHTML = opts; $("#ub", el).selectedIndex = 1; conv(true); };
+  $("#cats", el).innerHTML = Object.keys(U).map(c => `<button class="chip">${c}</button>`).join(""); $$("#cats .chip", el).forEach(b => b.onclick = () => setCat(b.textContent));
+  $("#a", el).oninput = $("#ua", el).onchange = $("#ub", el).onchange = () => conv(true); $("#b", el).oninput = () => conv(false);
+  $("#sw", el).onclick = () => { const a = $("#ua", el).value; $("#ua", el).value = $("#ub", el).value; $("#ub", el).value = a; conv(true); }; setCat(cat);
+});
+
+tool("fechas", "calc", "📅", "Calculadora de fechas y edad", "Días entre fechas, edad exacta y sumar o restar días.", "edad dias entre fechas cumpleaños age", el => {
+  const today = new Date().toISOString().slice(0, 10);
+  el.innerHTML = `<div class="panel"><b>Diferencia entre fechas / edad</b><div class="row" style="margin-top:10px"><label class="f">Desde (o fecha de nacimiento)<input type="date" id="a" value="2000-01-01"></label><label class="f">Hasta<input type="date" id="b" value="${today}"></label></div><div class="kpis" id="o" style="margin-top:14px"></div></div>
+  <div class="panel"><b>Sumar o restar</b><div class="row" style="margin-top:10px"><label class="f">Fecha<input type="date" id="c" value="${today}"></label><label class="f">Días (+/−)<input type="number" id="n" value="90"></label><label class="check" style="margin-top:20px"><input type="checkbox" id="lab"> Solo días laborables</label></div><div class="out" id="r" style="margin-top:12px"></div></div>`;
+  const run = () => { const a = new Date($("#a", el).value), b = new Date($("#b", el).value); if (!isNaN(a) && !isNaN(b)) {
+      const [x, y] = a <= b ? [a, b] : [b, a]; let Y = y.getFullYear() - x.getFullYear(), M = y.getMonth() - x.getMonth(), D = y.getDate() - x.getDate();
+      if (D < 0) { M--; D += new Date(y.getFullYear(), y.getMonth(), 0).getDate(); } if (M < 0) { Y--; M += 12; }
+      const days = Math.round((y - x) / 864e5); let work = 0; if (days < 40000) for (let d = new Date(x); d < y; d.setDate(d.getDate() + 1)) if (d.getDay() % 6) work++;
+      const nb = new Date(x); nb.setFullYear(y.getFullYear()); if (nb < y) nb.setFullYear(y.getFullYear() + 1); const toB = Math.round((nb - y) / 864e5);
+      $("#o", el).innerHTML = [[`${Y}a ${M}m ${D}d`, "Años, meses, días"], [fmt(days, 0), "Días totales"], [fmt(days / 7, 1), "Semanas"], [fmt(work, 0), "Días laborables"], [fmt(days * 24, 0), "Horas"], [toB === 0 || toB === 365 ? "¡Hoy! 🎉" : fmt(toB, 0), "Días al próximo aniversario"]].map(([v, l]) => `<div class="kpi"><b style="font-size:20px">${v}</b><span>${l}</span></div>`).join(""); }
+    const c = new Date($("#c", el).value + "T12:00"), n = parseInt($("#n", el).value) || 0; if (!isNaN(c)) { const d = new Date(c);
+      if ($("#lab", el).checked) { let k = Math.abs(n); const s = Math.sign(n); while (k > 0) { d.setDate(d.getDate() + s); if (d.getDay() % 6) k--; } } else d.setDate(d.getDate() + n);
+      $("#r", el).textContent = d.toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }); } };
+  $$("input", el).forEach(i => i.oninput = run); run();
+});
+
+tool("imc", "calc", "⚖️", "Calculadora de IMC", "Índice de masa corporal con clasificación OMS y peso saludable.", "bmi peso altura salud", el => {
+  el.innerHTML = `<div class="panel"><div class="row"><label class="f">Peso (kg)<input type="number" id="w" value="70"></label><label class="f">Altura (cm)<input type="number" id="h" value="175"></label></div>
+  <div class="big" id="o"></div><div style="text-align:center;font-weight:700;font-size:18px" id="c"></div><div class="meter" style="height:12px;background:linear-gradient(90deg,#4aa3ff 0 18%,#12a150 18% 50%,#e8a317 50% 70%,#e5484d 70%)"><i id="m" style="width:4px;background:var(--text);margin-left:0;transition:margin .3s"></i></div><div class="hint" id="r" style="text-align:center"></div></div>`;
+  const run = () => { const w = +$("#w", el).value, h = +$("#h", el).value / 100; if (!w || !h) return; const b = w / h / h;
+    const c = b < 18.5 ? ["Bajo peso", "#4aa3ff"] : b < 25 ? ["Peso normal", "var(--ok)"] : b < 30 ? ["Sobrepeso", "var(--warn)"] : ["Obesidad", "var(--bad)"];
+    $("#o", el).textContent = fmt(b, 1); $("#c", el).textContent = c[0]; $("#c", el).style.color = c[1]; $("#m", el).style.marginLeft = Math.min(99, Math.max(0, (b - 15) / 25 * 100)) + "%";
+    $("#r", el).textContent = `Rango de peso saludable para tu altura: ${fmt(18.5 * h * h, 1)} – ${fmt(24.9 * h * h, 1)} kg. Orientativo, no sustituye consejo médico.`; };
+  $$("input", el).forEach(i => i.oninput = run); run();
+});
+
+tool("propina", "calc", "🧾", "Dividir cuenta y propina", "Calcula la propina y cuánto paga cada persona.", "restaurante tip split cuenta", el => {
+  el.innerHTML = `<div class="panel"><div class="row"><label class="f">Importe total<input type="number" id="a" value="86.50"></label><label class="f">Personas<input type="number" id="p" value="4" min="1"></label></div><label class="f" style="margin-top:12px">Propina: <span id="tv">10</span>%<input type="range" id="t" min="0" max="30" value="10"></label></div><div class="panel"><div class="kpis" id="o"></div></div>`;
+  const run = () => { const a = +$("#a", el).value || 0, p = Math.max(1, +$("#p", el).value || 1), t = +$("#t", el).value; $("#tv", el).textContent = t; const tip = a * t / 100;
+    $("#o", el).innerHTML = [[fmt(tip), "Propina"], [fmt(a + tip), "Total"], [fmt((a + tip) / p), "Por persona"], [fmt(tip / p), "Propina por persona"]].map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join(""); };
+  $$("input", el).forEach(i => i.oninput = run); run();
+});
+
+tool("prestamo", "calc", "🏦", "Calculadora de préstamos e hipotecas", "Cuota mensual, intereses totales y tabla de amortización.", "hipoteca credito cuota interes amortizacion", el => {
+  el.innerHTML = `<div class="panel"><div class="row"><label class="f">Capital<input type="number" id="c" value="150000"></label><label class="f">Interés anual (%)<input type="number" id="i" value="3.5" step="0.1"></label><label class="f">Plazo (años)<input type="number" id="y" value="25"></label></div></div>
+  <div class="panel"><div class="kpis" id="o"></div><div class="meter" style="height:14px;margin-top:14px"><i id="m" style="background:var(--accent)"></i></div><div class="hint">■ Capital vs. intereses</div></div>
+  <div class="panel" style="max-height:420px;overflow:auto"><table class="t" id="tb"></table></div>`;
+  const run = () => { const C = +$("#c", el).value, r = +$("#i", el).value / 1200, n = Math.round(+$("#y", el).value * 12); if (!C || !n) return;
+    const q = r ? C * r / (1 - (1 + r) ** -n) : C / n, tot = q * n;
+    $("#o", el).innerHTML = [[fmt(q), "Cuota mensual"], [fmt(tot - C), "Intereses totales"], [fmt(tot), "Total a pagar"], [n, "Cuotas"]].map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
+    $("#m", el).style.width = C / tot * 100 + "%"; let s = C, rows = "<tr><th>Año</th><th>Intereses</th><th>Capital</th><th>Pendiente</th></tr>";
+    for (let yr = 1; yr <= n / 12; yr++) { let ii = 0, cc = 0; for (let k = 0; k < 12 && s > 0; k++) { const it = s * r; ii += it; cc += q - it; s -= q - it; } rows += `<tr><td>${yr}</td><td>${fmt(ii)}</td><td>${fmt(cc)}</td><td>${fmt(Math.max(0, s))}</td></tr>`; }
+    $("#tb", el).innerHTML = rows; };
+  $$("input", el).forEach(i => i.oninput = run); run();
+});
+
+/* ===== UTILIDADES ===== */
+tool("cronometro", "util", "⏱️", "Cronómetro y temporizador", "Cronómetro con vueltas y temporizador con alarma sonora.", "timer stopwatch alarma cuenta atras", el => {
+  el.innerHTML = `<div class="cols"><div class="panel"><b class="muted">Cronómetro</b><div class="big" id="sw">00:00.00</div><div class="row" style="justify-content:center"><button class="btn p" id="ss">▶ Iniciar</button><button class="btn" id="lp">⚑ Vuelta</button><button class="btn" id="rs">↺</button></div><div id="laps" class="hint" style="font-family:var(--mono)"></div></div>
+  <div class="panel"><b class="muted">Temporizador</b><div class="big" id="tm">05:00</div><div class="row" style="justify-content:center"><input type="number" id="mm" value="5" min="0" style="width:80px"> min <input type="number" id="sc" value="0" min="0" max="59" style="width:80px"> s</div><div class="row" style="justify-content:center;margin-top:12px"><button class="btn p" id="ts">▶ Iniciar</button><button class="btn" id="tr">↺</button></div></div></div>`;
+  const f = ms => { const m = Math.floor(ms / 6e4), s = Math.floor(ms / 1e3) % 60, c = Math.floor(ms / 10) % 100; return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(c).padStart(2, "0")}`; };
+  let st = 0, acc = 0, run = false, laps = [];
+  const loop = () => { if (!el.isConnected) return; if (run) $("#sw", el).textContent = f(acc + performance.now() - st); if (tRun) { const left = Math.max(0, tEnd - Date.now()); $("#tm", el).textContent = f(left).slice(0, 5); if (!left) { tRun = false; $("#ts", el).textContent = "▶ Iniciar"; beep(); } } requestAnimationFrame(loop); };
+  $("#ss", el).onclick = () => { if (run) { acc += performance.now() - st; run = false; $("#ss", el).textContent = "▶ Continuar"; } else { st = performance.now(); run = true; $("#ss", el).textContent = "⏸ Pausa"; } };
+  $("#lp", el).onclick = () => { if (!run) return; laps.unshift(acc + performance.now() - st); $("#laps", el).innerHTML = laps.map((l, i) => `Vuelta ${laps.length - i}: ${f(l)}`).join("<br>"); };
+  $("#rs", el).onclick = () => { run = false; acc = 0; laps = []; $("#sw", el).textContent = f(0); $("#laps", el).innerHTML = ""; $("#ss", el).textContent = "▶ Iniciar"; };
+  let tRun = false, tEnd = 0, tLeft = 3e5;
+  const beep = () => { try { const a = new AudioContext(); [0, .35, .7].forEach(t => { const o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(.3, a.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + t + .3); o.start(a.currentTime + t); o.stop(a.currentTime + t + .3); }); } catch {} toast("⏰ ¡Tiempo!"); };
+  const setT = () => { tLeft = ((+$("#mm", el).value || 0) * 60 + (+$("#sc", el).value || 0)) * 1000; $("#tm", el).textContent = f(tLeft).slice(0, 5); };
+  $("#mm", el).oninput = $("#sc", el).oninput = () => !tRun && setT();
+  $("#ts", el).onclick = () => { if (tRun) { tLeft = tEnd - Date.now(); tRun = false; $("#ts", el).textContent = "▶ Continuar"; } else if (tLeft > 0) { tEnd = Date.now() + tLeft; tRun = true; $("#ts", el).textContent = "⏸ Pausa"; } };
+  $("#tr", el).onclick = () => { tRun = false; $("#ts", el).textContent = "▶ Iniciar"; setT(); };
+  loop();
+});
+
+tool("aleatorio", "util", "🎲", "Números aleatorios y sorteos", "Números al azar, lanzar dados, cara o cruz y elegir ganador de una lista.", "random sorteo dado moneda ruleta", el => {
+  el.innerHTML = `<div class="cols"><div class="panel"><b class="muted">Número aleatorio</b><div class="row" style="margin-top:10px"><label class="f">Mín.<input type="number" id="a" value="1"></label><label class="f">Máx.<input type="number" id="b" value="100"></label><label class="f">Cantidad<input type="number" id="n" value="1" min="1"></label></div><label class="check" style="margin-top:10px"><input type="checkbox" id="u"> Sin repetir</label><div class="big" id="o">—</div><div class="row" style="justify-content:center"><button class="btn p" id="g">🎲 Generar</button><button class="btn" id="d">⚀ Dado</button><button class="btn" id="m">🪙 Moneda</button></div></div>
+  <div class="panel"><b class="muted">Sorteo entre una lista</b><textarea id="l" style="margin-top:10px;min-height:150px;font-family:inherit">Ana\nLuis\nMarta\nCarlos\nSofía</textarea><div class="row" style="margin-top:10px"><button class="btn p" id="s">🏆 Elegir ganador</button></div><div class="big" id="w" style="font-size:clamp(28px,6vw,46px)"></div></div></div>`;
+  const o = $("#o", el);
+  $("#g", el).onclick = () => { let a = Math.ceil(+$("#a", el).value), b = Math.floor(+$("#b", el).value); if (a > b) [a, b] = [b, a]; const n = Math.min(1000, Math.max(1, +$("#n", el).value || 1)), span = b - a + 1;
+    if ($("#u", el).checked && n > span) { o.textContent = "Rango insuficiente"; o.style.fontSize = "22px"; return; } const s = new Set(), out = [];
+    while (out.length < n) { const v = a + rnd(span); if ($("#u", el).checked) { if (s.has(v)) continue; s.add(v); } out.push(v); }
+    o.style.fontSize = out.length > 1 ? "26px" : ""; o.textContent = out.join(", "); };
+  $("#d", el).onclick = () => { o.style.fontSize = ""; const v = rnd(6); o.textContent = [..."⚀⚁⚂⚃⚄⚅"][v] + " " + (v + 1); };
+  $("#m", el).onclick = () => { o.style.fontSize = ""; o.textContent = rnd(2) ? "🪙 Cara" : "🪙 Cruz"; };
+  $("#s", el).onclick = () => { const l = $("#l", el).value.split("\n").map(x => x.trim()).filter(Boolean); if (!l.length) return; let k = 0; const w = $("#w", el);
+    const iv = setInterval(() => { w.textContent = l[rnd(l.length)]; if (++k > 18) { clearInterval(iv); w.textContent = "🏆 " + l[rnd(l.length)]; } }, 70); };
+});
+
+tool("bloc", "util", "🗒️", "Bloc de notas rápido", "Notas que se guardan solas en tu navegador. Descarga como .txt.", "notas notepad apuntes", el => {
+  el.innerHTML = `<div class="panel"><textarea id="t" style="min-height:420px;font-family:inherit;font-size:16px" placeholder="Empieza a escribir… se guarda automáticamente."></textarea><div class="row" style="margin-top:10px">${copyBtn("t")}<button class="btn" id="dl">↓ .txt</button><button class="btn" id="cl">🗑 Borrar</button><span class="muted" id="s" style="margin-left:auto;font-size:13px"></span></div></div>`;
+  const t = $("#t", el); t.value = store.get("bloc", "");
+  t.oninput = () => { store.set("bloc", t.value); $("#s", el).textContent = "Guardado · " + new Date().toLocaleTimeString("es-ES"); };
+  $("#dl", el).onclick = () => download("notas.txt", t.value); $("#cl", el).onclick = () => { if (confirm("¿Borrar todas las notas?")) { t.value = ""; t.oninput(); } }; bindCopy(el);
+});
+
+tool("teclado", "util", "⌨️", "Test de velocidad de escritura", "Mide tus palabras por minuto y precisión en 60 segundos.", "wpm mecanografia typing speed", el => {
+  const T = ["La práctica constante es la clave para escribir más rápido sin cometer errores.", "El sol se escondía detrás de las montañas mientras el viento movía suavemente los árboles del valle.", "Un buen programador escribe código que los humanos pueden entender, no solo las máquinas.", "Cada mañana camino hasta la panadería de la esquina para comprar pan recién hecho y un café caliente.", "La curiosidad es el motor que impulsa a la ciencia a descubrir los secretos del universo."];
+  el.innerHTML = `<div class="panel"><div id="txt" style="font-size:20px;line-height:1.7;font-family:var(--mono);user-select:none"></div><input type="text" id="in" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Empieza a escribir para iniciar…" style="margin-top:14px;font-size:18px"></div><div class="panel"><div class="kpis" id="k"></div><div class="row" style="margin-top:12px"><button class="btn p" id="r">↻ Nuevo texto</button></div></div>`;
+  let target = "", t0 = 0, done = false;
+  const reset = () => { target = T.slice().sort(() => Math.random() - .5).join(" "); t0 = 0; done = false; $("#in", el).value = ""; $("#in", el).disabled = false; draw(); stats(); };
+  const draw = () => { const v = $("#in", el).value; $("#txt", el).innerHTML = [...target.slice(0, Math.max(160, v.length + 80))].map((c, i) => i < v.length ? `<span style="color:${v[i] === c ? "var(--ok)" : "var(--bad)"};${v[i] !== c ? "background:rgba(229,72,77,.15)" : ""}">${esc(c)}</span>` : i === v.length ? `<span style="border-left:2px solid var(--accent)">${esc(c)}</span>` : `<span class="muted">${esc(c)}</span>`).join(""); };
+  const stats = () => { const v = $("#in", el).value, sec = t0 ? Math.min(60, (Date.now() - t0) / 1000) : 0; let ok = 0; [...v].forEach((c, i) => c === target[i] && ok++);
+    const wpm = sec > 1 ? Math.round(ok / 5 / (sec / 60)) : 0; $("#k", el).innerHTML = [[Math.max(0, Math.ceil(60 - sec)) + "s", "Tiempo restante"], [wpm, "Palabras/min"], [v.length ? Math.round(ok / v.length * 100) + "%" : "—", "Precisión"], [ok, "Caracteres correctos"]].map(([a, b]) => `<div class="kpi"><b>${a}</b><span>${b}</span></div>`).join("");
+    if (sec >= 60 && !done) { done = true; $("#in", el).disabled = true; toast(`¡Terminado! ${wpm} ppm`); } };
+  $("#in", el).oninput = () => { if (!t0) { t0 = Date.now(); const iv = setInterval(() => { if (!el.isConnected || done) return clearInterval(iv); stats(); }, 250); } draw(); stats(); };
+  $("#r", el).onclick = reset; reset();
+});
+
+/* ---------- favoritos / recientes ---------- */
+let favs = store.get("favs", []), recent = store.get("recent", []);
+const isFav = id => favs.includes(id);
+function toggleFav(id) { favs = isFav(id) ? favs.filter(x => x !== id) : [...favs, id]; store.set("favs", favs); toast(isFav(id) ? "★ Añadido a favoritos" : "Quitado de favoritos"); }
+
+/* ---------- búsqueda ---------- */
+function search(q) {
+  q = norm(q.trim()); if (!q) return TOOLS;
+  const terms = q.split(/\s+/);
+  return TOOLS.map(t => { const hay = norm(`${t.name} ${t.desc} ${t.kw} ${CATS[t.cat].name}`), nm = norm(t.name);
+    let s = 0; for (const w of terms) { if (!hay.includes(w)) return null; s += nm.startsWith(w) ? 5 : nm.includes(w) ? 3 : 1; } return [t, s]; })
+    .filter(Boolean).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+}
+
+/* ---------- vistas ---------- */
+const app = $("#app");
+const card = t => `<a class="card" href="#/${t.id}"><div class="ic">${t.ic}</div><div><h3>${esc(t.name)}</h3><p>${esc(t.desc)}</p></div><button class="fav ${isFav(t.id) ? "on" : ""}" data-fav="${t.id}" aria-label="Favorito">${isFav(t.id) ? "★" : "☆"}</button></a>`;
+function bindFavs(root) { $$("[data-fav]", root).forEach(b => b.onclick = e => { e.preventDefault(); e.stopPropagation(); toggleFav(b.dataset.fav); const on = isFav(b.dataset.fav); b.classList.toggle("on", on); b.textContent = on ? "★" : "☆"; if (!location.hash.slice(2)) homeLists(); }); }
+
+let curCat = "all", curQ = "";
+function home() {
+  document.title = "Nikolai Lab · Herramientas online gratis";
+  app.innerHTML = `<section class="hero"><span class="pill">⚡ ${TOOLS.length} herramientas · 100 % privadas · sin registro</span>
+  <h1>Todas tus herramientas, <span class="grad">en un solo lugar</span></h1>
+  <p>Texto, código, seguridad, color, imágenes y cálculos. Rápidas, gratuitas y sin subir nada a ningún servidor: todo ocurre en tu navegador.</p>
+  <div class="filter"><input id="q" placeholder="¿Qué necesitas hacer? Prueba “json”, “qr” o “contraseña”" autocomplete="off" value="${esc(curQ)}"></div>
+  <div class="stats"><div><b>${TOOLS.length}</b>herramientas</div><div><b>${Object.keys(CATS).length}</b>categorías</div><div><b>0</b>bytes enviados</div><div><b>∞</b>usos gratis</div></div></section>
+  <div class="chips" id="chips"></div><div id="lists"></div>`;
+  const chips = $("#chips");
+  chips.innerHTML = `<button class="chip" data-c="all">Todas<small>${TOOLS.length}</small></button>` + Object.entries(CATS).map(([k, c]) => `<button class="chip" data-c="${k}">${c.ic} ${c.name}<small>${TOOLS.filter(t => t.cat === k).length}</small></button>`).join("");
+  $$(".chip", chips).forEach(b => b.onclick = () => { curCat = b.dataset.c; homeLists(); });
+  $("#q").oninput = e => { curQ = e.target.value; homeLists(); };
+  homeLists();
+}
+function homeLists() {
+  const box = $("#lists"); if (!box) return;
+  $$("#chips .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.c === curCat));
+  let html = "";
+  if (curQ.trim()) { const r = search(curQ).filter(t => curCat === "all" || t.cat === curCat);
+    html = r.length ? `<h2 class="section-title">Resultados <small>${r.length}</small></h2><div class="grid">${r.map(card).join("")}</div>` : `<div class="empty">No hay herramientas para “${esc(curQ)}”.</div>`;
+  } else {
+    if (curCat === "all") {
+      const f = favs.map(id => TOOLS.find(t => t.id === id)).filter(Boolean), rc = recent.map(id => TOOLS.find(t => t.id === id)).filter(Boolean).slice(0, 4);
+      if (f.length) html += `<h2 class="section-title">★ Favoritos</h2><div class="grid">${f.map(card).join("")}</div>`;
+      if (rc.length) html += `<h2 class="section-title">🕘 Usadas recientemente</h2><div class="grid">${rc.map(card).join("")}</div>`;
+    }
+    Object.entries(CATS).filter(([k]) => curCat === "all" || curCat === k).forEach(([k, c]) => { const l = TOOLS.filter(t => t.cat === k);
+      html += `<h2 class="section-title">${c.ic} ${c.name} <small>${l.length}</small></h2><div class="grid">${l.map(card).join("")}</div>`; });
+  }
+  box.innerHTML = html; bindFavs(box);
+}
+function view(id) {
+  const t = TOOLS.find(x => x.id === id); if (!t) return home();
+  recent = [id, ...recent.filter(x => x !== id)].slice(0, 8); store.set("recent", recent);
+  document.title = t.name + " · Nikolai Lab";
+  app.innerHTML = `<section class="tool"><nav class="crumbs"><a href="#/">Inicio</a><span>›</span><a href="#/" data-cat="${t.cat}">${CATS[t.cat].name}</a><span>›</span><span>${esc(t.name)}</span></nav>
+  <div class="tool-head"><div class="ic">${t.ic}</div><div><h1>${esc(t.name)}</h1><p>${esc(t.desc)}</p></div><button class="fav" id="fv" aria-label="Favorito">${isFav(id) ? "★" : "☆"}</button></div>
+  <div id="body"></div><div class="related"><h2 class="section-title">Más de ${CATS[t.cat].name}</h2><div class="grid" id="rel"></div></div></section>`;
+  $("[data-cat]", app).onclick = () => { curCat = t.cat; curQ = ""; };
+  $("#fv").onclick = () => { toggleFav(id); $("#fv").textContent = isFav(id) ? "★" : "☆"; };
+  const rel = TOOLS.filter(x => x.cat === t.cat && x.id !== id).slice(0, 4); $("#rel").innerHTML = rel.map(card).join(""); bindFavs($("#rel"));
+  if (!rel.length) $(".related", app).remove();
+  try { t.render($("#body")); } catch (e) { $("#body").innerHTML = `<div class="panel msg bad">Error al cargar la herramienta: ${esc(e.message)}</div>`; console.error(e); }
+  scrollTo(0, 0);
+}
+function route() { const id = decodeURIComponent(location.hash.replace(/^#\/?/, "")); id ? view(id) : home(); }
+addEventListener("hashchange", route);
+
+/* ---------- paleta de comandos ---------- */
+const cmdk = $("#cmdk"), ci = $("#cmdInput"), cl = $("#cmdList"); let sel = 0, res = [];
+function openCmd() { cmdk.classList.add("open"); ci.value = ""; drawCmd(); setTimeout(() => ci.focus(), 10); }
+function closeCmd() { cmdk.classList.remove("open"); }
+function drawCmd() { res = search(ci.value).slice(0, 12); sel = Math.min(sel, Math.max(0, res.length - 1));
+  cl.innerHTML = res.length ? res.map((t, i) => `<li class="${i === sel ? "sel" : ""}" data-i="${i}"><em>${t.ic}</em><div><b>${esc(t.name)}</b><small>${esc(CATS[t.cat].name)} · ${esc(t.desc)}</small></div></li>`).join("") : `<li class="muted">Sin resultados</li>`;
+  $$("li[data-i]", cl).forEach(li => { li.onclick = () => go(+li.dataset.i); li.onmousemove = () => { if (sel !== +li.dataset.i) { sel = +li.dataset.i; $$("li", cl).forEach((x, j) => x.classList.toggle("sel", j === sel)); } }; });
+  const s = $("li.sel", cl); if (s) s.scrollIntoView({ block: "nearest" }); }
+function go(i) { if (res[i]) { location.hash = "#/" + res[i].id; closeCmd(); } }
+ci.oninput = () => { sel = 0; drawCmd(); };
+ci.onkeydown = e => { if (e.key === "ArrowDown") { sel = Math.min(res.length - 1, sel + 1); drawCmd(); e.preventDefault(); } else if (e.key === "ArrowUp") { sel = Math.max(0, sel - 1); drawCmd(); e.preventDefault(); } else if (e.key === "Enter") go(sel); };
+cmdk.onclick = e => { if (e.target === cmdk) closeCmd(); };
+$("#openCmd").onclick = openCmd;
+addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); cmdk.classList.contains("open") ? closeCmd() : openCmd(); }
+  else if (e.key === "Escape") closeCmd();
+  else if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); openCmd(); }
+});
+
+/* ---------- tema ---------- */
+const applyTheme = t => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; };
+applyTheme(store.get("theme", null));
+$("#themeBtn").onclick = () => { const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; const t = dark ? "light" : "dark"; applyTheme(t); store.set("theme", t); };
+
+route();
+</script>
+</body>
+</html>
