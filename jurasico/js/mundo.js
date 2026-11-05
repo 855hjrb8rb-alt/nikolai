@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Sky } from '../vendor/Sky.js';
 import { Water } from '../vendor/Water.js';
 import { mergeGeometries } from '../vendor/BufferGeometryUtils.js';
+import { PAD, RESORT, PADDOCKS, ZONES, flattenPark, parkClear, dinoAllowed, buildPark } from './parque.js';
 
 const $ = (s) => document.querySelector(s);
 const TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -75,6 +76,7 @@ function heightFn(x, z) {
     const w = 7 + (z + 40) * 0.018, rm = (1 - smooth(w, w + 26, Math.abs(x - riverX(z)))) * smooth(-70, -20, z);
     h = Math.min(h, lerp(h, -2.5, rm));
   }
+  h = flattenPark(x, z, h);
   // costa
   return lerp(h, -16, smooth(170, 470, z + fbm(n1, x * 0.003 + 3, 0.5, 3) * 90));
 }
@@ -427,6 +429,27 @@ function clearAround(x, z, r) {
   }
   return true;
 }
+// muros de edificios (segmentos) y plataformas transitables (muelle)
+const walls = [], platforms = [];
+function addWall(ax, az, bx, bz, t, top) { walls.push({ ax, az, bx, bz, t, top }); }
+function addPlatform(x0, z0, x1, z1, y) { platforms.push({ x0, z0, x1, z1, y }); }
+function groundAt(x, z) {
+  let g = groundH(x, z);
+  for (const p of platforms) if (x > p.x0 && x < p.x1 && z > p.z0 && z < p.z1) g = Math.max(g, p.y);
+  return g;
+}
+function collideWalls(p, pr) {
+  for (const w of walls) {
+    if (p.y > w.top) continue;
+    const dx = w.bx - w.ax, dz = w.bz - w.az, L2 = dx * dx + dz * dz;
+    const t = clamp(((p.x - w.ax) * dx + (p.z - w.az) * dz) / L2, 0, 1);
+    const cx = w.ax + dx * t, cz = w.az + dz * t, ex = p.x - cx, ez = p.z - cz, d = Math.hypot(ex, ez), m = pr + w.t / 2;
+    if (d < m) {
+      if (d > 1e-4) { p.x = cx + (ex / d) * m; p.z = cz + (ez / d) * m; }
+      else { const L = Math.sqrt(L2); p.x = cx - (dz / L) * m; p.z = cz + (dx / L) * m; }
+    }
+  }
+}
 const CH = 300, NCH = SIZE / CH, chunks = [];
 function scatter(geom, mat, count, test, { shadow = true, maxDist = 1e9, collider = 0, sink = 0.1, tilt = 0.06 } = {}) {
   const buckets = Array.from({ length: NCH * NCH }, () => []);
@@ -437,6 +460,7 @@ function scatter(geom, mat, count, test, { shadow = true, maxDist = 1e9, collide
   while (placed < count && tries < count * 40) {
     tries++;
     const x = rr(-HALF + 6, HALF - 6), z = rr(-HALF + 6, HALF - 6), h = groundH(x, z);
+    if (!parkClear(x, z)) continue;
     const sc = test(x, z, h, slopeAt(x, z));
     if (!sc) continue;
     e.set(rr(-tilt, tilt), rand() * Math.PI * 2, rr(-tilt, tilt));
@@ -596,20 +620,20 @@ function dinoGeoms(key) {
 
 const dinos = [];
 const herds = [];
-function validLand(x, z, wade = -0.8) {
-  return Math.abs(x) < HALF - 30 && Math.abs(z) < HALF - 30 && groundH(x, z) > wade && slopeAt(x, z) < 0.42;
+function validLand(x, z, wade = -0.8, zone = undefined) {
+  return Math.abs(x) < HALF - 30 && Math.abs(z) < HALF - 30 && groundH(x, z) > wade && slopeAt(x, z) < 0.42 && (zone === undefined || dinoAllowed(x, z, zone));
 }
-function findLand(cx, cz, r, tries = 200) {
+function findLand(cx, cz, r, tries = 200, zone = undefined) {
   for (let i = 0; i < tries; i++) {
     const a = rand() * Math.PI * 2, d = Math.sqrt(rand()) * r, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d;
-    if (validLand(x, z, 0.5)) return new V3(x, groundH(x, z), z);
+    if (validLand(x, z, 0.5, zone)) return new V3(x, groundH(x, z), z);
   }
   return null;
 }
 
 class Dino {
-  constructor(key, pos, herd, scale = 1) {
-    this.sp = SPECIES[key]; this.key = key; this.herd = herd; this.scale = scale;
+  constructor(key, pos, herd, scale = 1, zone = null) {
+    this.sp = SPECIES[key]; this.key = key; this.herd = herd; this.scale = scale; this.zone = herd ? herd.zone : zone;
     const { body, legs } = dinoGeoms(key);
     this.g = new THREE.Group();
     this.g.rotation.order = 'YZX';
@@ -631,7 +655,7 @@ class Dino {
   }
   pickTarget() {
     const a = this.herd ? this.herd.anchor : this.pos;
-    this.target = findLand(a.x, a.z, this.sp.range, 30);
+    this.target = findLand(a.x, a.z, this.sp.range, 30, this.zone);
   }
   update(dt) {
     const sp = this.sp;
@@ -659,7 +683,7 @@ class Dino {
     this.speed = lerp(this.speed, want, 1 - Math.exp(-dt * 1.5));
     const fx = Math.cos(this.yaw), fz = -Math.sin(this.yaw);
     const nx = this.pos.x + fx * this.speed * dt, nz = this.pos.z + fz * this.speed * dt;
-    if (validLand(nx, nz)) { this.pos.x = nx; this.pos.z = nz; } else { this.target = null; this.timer = 1; this.speed *= 0.5; }
+    if (validLand(nx, nz, -0.8, this.zone)) { this.pos.x = nx; this.pos.z = nz; } else { this.target = null; this.timer = 1; this.speed *= 0.5; }
     const half = (sp.radius * 1.4) * this.scale;
     const hf = groundH(this.pos.x + fx * half, this.pos.z + fz * half), hb = groundH(this.pos.x - fx * half, this.pos.z - fz * half);
     const gy = Math.min(groundH(this.pos.x, this.pos.z), (hf + hb) / 2 + 0.2);
@@ -710,25 +734,30 @@ class Ptero {
 const pteros = [];
 
 function spawnFauna() {
-  const herd = (key, cx, cz, n, juveniles = 0) => {
-    const anchor = findLand(cx, cz, 60) || findLand(cx, cz, 250);
+  const herd = (key, cx, cz, n, juveniles = 0, zone = null) => {
+    const anchor = findLand(cx, cz, 60, 200, zone) || findLand(cx, cz, 250, 400, zone);
     if (!anchor) return;
-    const h = { anchor, key, timer: rr(30, 60), members: [] };
+    const h = { anchor, key, timer: rr(30, 60), members: [], zone };
     herds.push(h);
     for (let i = 0; i < n + juveniles; i++) {
-      const p = findLand(anchor.x, anchor.z, 30) || anchor;
+      const p = findLand(anchor.x, anchor.z, 30, 200, zone) || anchor;
       const d = new Dino(key, p, h, i >= n ? rr(0.4, 0.55) : rr(0.88, 1.08));
       dinos.push(d); h.members.push(d);
     }
   };
-  herd('brachio', 40, -140, 3, 1);
-  herd('diplo', 10, 250, 4, 1);
-  herd('stego', 170, 60, 3, 1);
-  herd('stego', -330, 150, 2);
-  herd('brachio', -380, -200, 2);
-  for (const [x, z] of [[230, -60], [-260, -190], [120, 330]]) {
-    const p = findLand(x, z, 120);
-    if (p) dinos.push(new Dino('allo', p, null, rr(0.9, 1.05)));
+  const [sauro, stego, allo] = PADDOCKS;
+  // animales del parque, dentro de sus recintos
+  herd('brachio', sauro.x, sauro.z, 3, 1, sauro);
+  herd('diplo', sauro.x - 20, sauro.z + 20, 2, 0, sauro);
+  herd('stego', stego.x, stego.z, 3, 1, stego);
+  { const p = findLand(allo.x, allo.z, 30, 300, allo); if (p) dinos.push(new Dino('allo', p, null, 1, allo)); }
+  // fauna salvaje del resto del valle
+  herd('diplo', 10, 250, 4, 1, null);
+  herd('stego', -330, 150, 2, 0, null);
+  herd('brachio', -380, -200, 2, 0, null);
+  for (const [x, z] of [[-260, -190], [-380, 60]]) {
+    const p = findLand(x, z, 120, 300, null);
+    if (p) dinos.push(new Dino('allo', p, null, rr(0.9, 1.05), null));
   }
   for (let i = 0; i < 16; i++) {
     const c = i < 8 ? [LAKE.x + rr(-60, 60), LAKE.z + rr(-40, 40)] : [rr(-300, 300), rr(380, 470)];
@@ -739,13 +768,13 @@ function updateHerds(dt) {
   for (const h of herds) {
     if ((h.timer -= dt) > 0) continue;
     h.timer = rr(40, 90);
-    const n = findLand(h.anchor.x, h.anchor.z, 140);
+    const n = findLand(h.anchor.x, h.anchor.z, h.zone ? h.zone.r * 0.7 : 140, 200, h.zone);
     if (n) h.anchor = n;
   }
 }
 
 // ───────────────────────── jugador y controles ─────────────────────────
-const player = { pos: new V3(), vy: 0, yaw: 0, pitch: 0, onGround: true, drone: false, run: false, bob: 0, swim: false };
+const player = { prev: new V3(), pos: new V3(), vy: 0, yaw: 0, pitch: 0, onGround: true, drone: false, run: false, bob: 0, swim: false };
 const keys = new Set();
 let sens = 1, active = false, mapOpen = false;
 const joy = { x: 0, y: 0 }, touchBtn = { up: false, down: false };
@@ -854,7 +883,7 @@ function updatePlayer(dt) {
   const run = player.run || keys.has('ShiftLeft') || keys.has('ShiftRight');
   fwd.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
   right.set(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
-  const g = groundH(p.x, p.z);
+  const g = groundAt(p.x, p.z);
   if (player.drone) {
     const sp = run ? 95 : 32;
     fwd.set(-Math.sin(player.yaw) * Math.cos(player.pitch), Math.sin(player.pitch), -Math.cos(player.yaw) * Math.cos(player.pitch));
@@ -869,15 +898,27 @@ function updatePlayer(dt) {
     player.swim = depth > 1.35;
     const sp = (run ? 9 : 4.3) * (player.swim ? 0.45 : depth > 0.4 ? 0.7 : 1);
     const nx = p.x + (fwd.x * mz + right.x * mx) * sp * dt, nz = p.z + (fwd.z * mz + right.z * mx) * sp * dt;
-    const ng = groundH(nx, nz);
+    const ng = groundAt(nx, nz);
     if (!(ng > g && slopeAt(nx, nz) > 0.9 && ng > WATER)) { p.x = nx; p.z = nz; }
     p.x = clamp(p.x, -HALF + 8, HALF - 8); p.z = clamp(p.z, -HALF + 8, HALF - 8);
     collide(p, 0.35);
+    collideWalls(p, 0.35);
+    for (const pd of PADDOCKS) {
+      const d = Math.hypot(p.x - pd.x, p.z - pd.z), was = Math.hypot(player.prev.x - pd.x, player.prev.z - pd.z);
+      if (Math.abs(d - pd.r) < 1.2 && d > 0.01) {
+        const k = (was < pd.r ? pd.r - 1.2 : pd.r + 1.2) / d;
+        p.x = pd.x + (p.x - pd.x) * k; p.z = pd.z + (p.z - pd.z) * k;
+      }
+    }
+    for (const j of park.movers) {
+      const dx = p.x - j.pos.x, dz = p.z - j.pos.z, dd = Math.hypot(dx, dz);
+      if (dd < j.radius && dd > 0.01) { p.x = j.pos.x + (dx / dd) * j.radius; p.z = j.pos.z + (dz / dd) * j.radius; }
+    }
     for (const d of dinos) {
       const dx = p.x - d.pos.x, dz = p.z - d.pos.z, dd = Math.hypot(dx, dz);
       if (dd < d.radius && dd > 0.01) { p.x = d.pos.x + (dx / dd) * d.radius; p.z = d.pos.z + (dz / dd) * d.radius; }
     }
-    const gh = groundH(p.x, p.z);
+    const gh = groundAt(p.x, p.z);
     if (player.swim) { p.y = lerp(p.y, WATER - 1.45 + Math.sin(uTime.value * 2) * 0.05, 1 - Math.exp(-dt * 6)); player.vy = 0; player.onGround = true; }
     else {
       if ((keys.has('Space') || touchBtn.up) && player.onGround) { player.vy = 6.2; player.onGround = false; }
@@ -888,25 +929,30 @@ function updatePlayer(dt) {
     }
     if (ml > 0.1 && player.onGround && !player.swim) player.bob += dt * sp * 1.9;
   }
+  player.prev.copy(p);
   const bob = player.drone ? 0 : Math.sin(player.bob) * 0.045;
   camera.position.set(p.x, p.y + (player.drone ? 0 : 1.7) + bob, p.z);
   camera.rotation.set(player.pitch, player.yaw, 0);
 }
 
 // ───────────────────────── cielo y hora del día ─────────────────────────
-let hour = 9.5, envTimer = null;
+let hour = 9.5, envTimer = null, envIntensity = 0.55, park = null;
 function setHour(hh, regenEnv = true) {
   hour = hh;
-  const elev = Math.max(1.5, 66 * Math.sin((Math.PI * (hh - 6)) / 12));
+  const raw = 66 * Math.sin((Math.PI * (hh - 6)) / 12);
+  const elev = Math.max(1.5, raw), nightK = smooth(3, -7, raw);
   const theta = 90 - ((hh - 6) / 12) * 180;
   sunDir.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - elev), THREE.MathUtils.degToRad(theta));
   const u = sky.material.uniforms, t = smooth(0, 35, elev);
-  u.sunPosition.value.copy(sunDir);
+  u.sunPosition.value.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - Math.max(raw, -9)), THREE.MathUtils.degToRad(theta));
   u.turbidity.value = lerp(9, 4.5, t);
   u.rayleigh.value = lerp(2.8, 1.3, t);
   sun.color.setRGB(1, lerp(0.58, 0.95, t), lerp(0.36, 0.88, t), THREE.SRGBColorSpace);
-  sun.intensity = lerp(1.4, 3.3, t);
-  hemi.intensity = lerp(0.18, 0.4, t);
+  sun.intensity = lerp(1.4, 3.3, t) * (1 - nightK * 0.93);
+  hemi.intensity = lerp(0.18, 0.4, t) * (1 - nightK * 0.6) + nightK * 0.12;
+  envIntensity = 0.55 * (1 - nightK * 0.75);
+  renderer.toneMappingExposure = 0.5 + nightK * 0.35;
+  park?.setNight(nightK);
   if (water?.material.uniforms) water.material.uniforms.sunDirection.value.copy(sunDir);
   clouds?.material.uniforms.tint.value.setRGB(1, lerp(0.7, 1, t), lerp(0.55, 1, t), THREE.SRGBColorSpace);
   const txt = `${Math.floor(hh)}:${String(Math.round((hh % 1) * 60)).padStart(2, '0')}`;
@@ -917,7 +963,7 @@ function updateEnv() {
   envRT?.dispose();
   envRT = pmrem.fromScene(envScene, 0, 0.1, 1000);
   scene.environment = envRT.texture;
-  scene.environmentIntensity = 0.55;
+  scene.environmentIntensity = envIntensity;
   // color de la niebla = color real del cielo en el horizonte
   try {
     const perp = new V3(-sunDir.z, 0, sunDir.x).normalize();
@@ -931,13 +977,24 @@ function updateEnv() {
     let r = 0, g = 0, b = 0, n = 0;
     for (let y = 4; y < 8; y++) for (let x = 0; x < 32; x++) { const o = (y * 32 + x) * 4; r += px[o]; g += px[o + 1]; b += px[o + 2]; n++; }
     if (n && isFinite(r) && r + g + b > 0) scene.fog.color.setRGB(r / n, g / n, b / n);
-    hemi.color.copy(scene.fog.color).multiplyScalar(1.5);
+    hemi.color.copy(scene.fog.color).multiplyScalar(1.5).lerp(new THREE.Color(0.35, 0.45, 0.75), smooth(3, -7, 66 * Math.sin((Math.PI * (hour - 6)) / 12)));
   } catch { renderer.setRenderTarget(null); }
 }
 
 // ───────────────────────── HUD, mapa, sonido ─────────────────────────
 const mini = $('#mini'), mctx = mini.getContext('2d'), mapCv = $('#mapCv'), mapCtx = mapCv.getContext('2d');
 const MAPR = 256;
+const monCv = document.createElement('canvas'); monCv.width = monCv.height = 256;
+const monCtx = monCv.getContext('2d');
+const monitorTex = new THREE.CanvasTexture(monCv); monitorTex.colorSpace = THREE.SRGBColorSpace;
+function drawMonitor() {
+  monCtx.drawImage(mapImg, 0, 0, 256, 256);
+  monCtx.fillStyle = 'rgba(0,30,40,.25)'; monCtx.fillRect(0, 0, 256, 256);
+  drawMarkers(monCtx, 256, 0, 0, 256 / SIZE);
+  monCtx.fillStyle = '#7ff'; monCtx.font = 'bold 13px monospace'; monCtx.fillText('CONTROL · ' + $('#hourTxt').textContent, 8, 16);
+  monCtx.fillText('ANIMALES: ' + dinos.length, 8, 246);
+  monitorTex.needsUpdate = true;
+}
 let mapImg;
 function buildMapImage() {
   const cv = document.createElement('canvas'); cv.width = cv.height = MAPR;
@@ -958,6 +1015,16 @@ function buildMapImage() {
     img.data[o] = clamp(c[0] * 255, 0, 255); img.data[o + 1] = clamp(c[1] * 255, 0, 255); img.data[o + 2] = clamp(c[2] * 255, 0, 255); img.data[o + 3] = 255;
   }
   ctx.putImageData(img, 0, 0);
+  const k = MAPR / SIZE, X = (x) => (x + HALF) * k;
+  ctx.lineCap = ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(60,55,50,.9)'; ctx.lineWidth = 1.6;
+  for (const r of park.roads) { ctx.beginPath(); r.forEach(([x, z], i) => (i ? ctx.lineTo(X(x), X(z)) : ctx.moveTo(X(x), X(z)))); if (r.length > 10) ctx.closePath(); ctx.stroke(); }
+  ctx.fillStyle = '#eee7d6';
+  for (const [x0, z0, x1, z1] of park.mapRects) ctx.fillRect(X(x0), X(z0), Math.max(1.5, (x1 - x0) * k), Math.max(1.5, (z1 - z0) * k));
+  ctx.beginPath(); ctx.arc(X(RESORT.x), X(RESORT.z), 25 * k, 0, 7); ctx.fill();
+  ctx.setLineDash([2, 2]); ctx.strokeStyle = '#f2c230'; ctx.lineWidth = 1;
+  for (const p of PADDOCKS) { ctx.beginPath(); ctx.arc(X(p.x), X(p.z), p.r * k, 0, 7); ctx.stroke(); }
+  ctx.setLineDash([]);
   mapImg = cv;
 }
 function drawMarkers(ctx, S, ox, oz, scale) {
@@ -993,7 +1060,10 @@ function drawMap() {
   mapCtx.drawImage(mapImg, 0, 0, S, S);
   mapCtx.font = '600 15px system-ui'; mapCtx.textAlign = 'center';
   const label = (t, x, z) => { mapCtx.fillStyle = 'rgba(0,0,0,.55)'; mapCtx.fillText(t, (x + HALF) * scale + 1, (z + HALF) * scale + 1); mapCtx.fillStyle = '#fff'; mapCtx.fillText(t, (x + HALF) * scale, (z + HALF) * scale); };
-  label('Lago', LAKE.x, LAKE.z); label('Volcán', VOLC.x, VOLC.z + 60); label('Cordillera', -120, -500); label('Mar', 0, 520); label('Río', riverX(200) + 40, 200);
+  label('Lago', LAKE.x, LAKE.z); label('Volcán', VOLC.x, VOLC.z + 60); label('Cordillera', -120, -500); label('Mar', 0, 520); label('Río', riverX(200) - 45, 230);
+  mapCtx.font = '600 12px system-ui';
+  label('Parque Valle Jurásico', RESORT.x, RESORT.z - 8); label('Hotel', 232, 182); label('Saurópodos', PADDOCKS[0].x, PADDOCKS[0].z);
+  label('Estegosaurios', PADDOCKS[1].x, PADDOCKS[1].z); label('Allosaurus', PADDOCKS[2].x, PADDOCKS[2].z); label('Puerta', 178, 280); label('Muelle', 182, 340);
   drawMarkers(mapCtx, S, 0, 0, scale);
 }
 function toggleMap(force) {
@@ -1042,7 +1112,7 @@ function onStalk(d) {
   clearTimeout(alertT); alertT = setTimeout(() => a.classList.remove('on'), 4000);
   audio.roar(Math.hypot(d.pos.x - player.pos.x, d.pos.z - player.pos.z));
 }
-let hudT = 0;
+let hudT = 0, lastZone = null, monT = 0;
 function updateHUD(dt) {
   if ((hudT -= dt) > 0) return;
   hudT = 0.15;
@@ -1064,6 +1134,10 @@ function updateHUD(dt) {
     card.classList.add('on');
   } else card.classList.remove('on');
   const g = groundH(player.pos.x, player.pos.z);
+  const z = ZONES.find((z) => Math.hypot(player.pos.x - z.x, player.pos.z - z.z) < z.r);
+  if (z && z !== lastZone) toast(z.name);
+  lastZone = z || (lastZone && Math.hypot(player.pos.x - lastZone.x, player.pos.z - lastZone.z) < lastZone.r + 6 ? lastZone : null);
+  if ((monT -= 1) <= 0 && Math.hypot(player.pos.x - 110, player.pos.z - 145) < 70) { monT = 4; drawMonitor(); }
   $('#stats').textContent = `${player.drone ? `Dron · ${Math.round(player.pos.y - Math.max(g, 0))} m sobre el suelo` : (player.swim ? 'Nadando' : 'A pie') + ` · altitud ${Math.round(Math.max(g, 0))} m`} · ${$('#hourTxt').textContent}`;
 }
 
@@ -1164,6 +1238,7 @@ function frame(fixed) {
   for (const d of dinos) d.update(dt);
   for (const p of pteros) p.update(dt);
   updateSmoke(dt);
+  park.update(dt, uTime.value, player.pos);
   // sombras que siguen al jugador
   const sx = Math.round(player.pos.x), sz = Math.round(player.pos.z), sy = Math.round(groundH(sx, sz));
   sun.target.position.set(sx, sy, sz);
@@ -1184,19 +1259,17 @@ async function boot() {
   try {
     await step('Generando el terreno…', 8); buildTerrain();
     await step('Llenando el lago y el mar…', 30); buildWater(); buildClouds(); buildVolcano();
-    await step('Plantando araucarias, cícadas y helechos…', 45); buildVegetation();
+    await step('Construyendo el parque: hotel, centro de visitantes, oficinas…', 40);
+    park = buildPark({ scene, groundH, paint, addCollider, addWall, addPlatform, holoGeom: dinoGeoms('brachio').body, monitorTex });
+    await step('Plantando araucarias, cícadas y helechos…', 55); buildVegetation();
     await step('Despertando a los dinosaurios…', 75); spawnFauna();
     await step('Dibujando el mapa…', 88); buildMapImage();
-    const h0 = herds[0]?.anchor;
-    let sp = null;
-    if (h0) for (let i = 0; i < 400 && !sp; i++) {
-      const a = rand() * Math.PI * 2, d = rr(60, 85), x = h0.x + Math.cos(a) * d, z = h0.z + Math.sin(a) * d;
-      if (groundH(x, z) > 2 && slopeAt(x, z) < 0.25 && validLand(x, z) && clearAround(x, z, 7)) sp = new V3(x, groundH(x, z), z);
-    }
-    player.pos.copy(sp || findSpawn());
-    const look = h0 || LAKE;
-    player.yaw = Math.atan2(-(look.x - player.pos.x), -(look.z - player.pos.z));
-    player.pitch = 0.12;
+    // empezar en la plaza, mirando al centro de visitantes
+    player.pos.set(RESORT.x + 4, PAD, RESORT.z + 17);
+    player.prev.copy(player.pos);
+    player.yaw = 0.12;
+    player.pitch = 0.08;
+    void findSpawn; void clearAround;
     setHour(hour, false); updateEnv();
     camera.position.set(player.pos.x, player.pos.y + 1.7, player.pos.z);
     camera.rotation.set(player.pitch, player.yaw, 0);
