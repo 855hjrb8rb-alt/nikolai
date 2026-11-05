@@ -2,7 +2,7 @@
 <title>Mapas del Castillo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Oswald:wght@500;600&display=swap">
 <style>
 /* Leaflet 1.9.4 (BSD-2) */
 .leaflet-pane,
@@ -803,8 +803,82 @@ body.con-panel #capas { left: calc(424px + env(safe-area-inset-left, 0px)); }
 
 @media (prefers-reduced-motion: reduce) { #panel { transition: none; } }
 </style>
+<style>
+/* Vista 3D, vuelo en primera persona y aspecto de película de 1962. */
+:root { --font-titulo: "Oswald", "Arial Narrow", Impact, sans-serif; --hud: #f2c46b; --hud-fondo: rgba(12,14,16,.62); }
+#globo { position: fixed; inset: 0; z-index: 0; background: #000; touch-action: none; cursor: grab; }
+#globo.arrastrando { cursor: grabbing; }
+#globo canvas { display: block; width: 100%; height: 100%; }
+#etq3d { position: fixed; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; }
+.l3 { position: absolute; left: 0; top: 0; will-change: transform; }
+.l3 .ciudad { pointer-events: auto; }
+.ciudad .dist { font: 500 11px var(--font-mono); color: var(--hud); margin-left: 2px; }
+.l3 .fin-ruta { width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fff; transform: translate(-50%, -50%); box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.l3 .punto-medida { width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid #222; transform: translate(-50%, -50%); }
+#grano { position: fixed; inset: -50px; z-index: 8; pointer-events: none; opacity: .11; mix-blend-mode: overlay; animation: grano .6s steps(6) infinite; }
+#vineta { position: fixed; inset: 0; z-index: 8; pointer-events: none; background: radial-gradient(120% 95% at 50% 45%, transparent 58%, rgba(0,0,0,.5)); }
+@keyframes grano { 0% { transform: translate(0,0) } 20% { transform: translate(-18px,12px) } 40% { transform: translate(14px,-20px) } 60% { transform: translate(-10px,-8px) } 80% { transform: translate(20px,16px) } 100% { transform: translate(0,0) } }
+@media (prefers-reduced-motion: reduce) { #grano { animation: none; } }
+.estilos { grid-template-columns: repeat(5, 1fr); }
+.estilo canvas { width: 56px; height: 46px; }
+.vistas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.vista-op { border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 8px; cursor: pointer; display: flex; gap: 8px; align-items: center; font-weight: 500; }
+.vista-op.on { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.ctrl.texto3d { font: 700 13px var(--font-ui); letter-spacing: .02em; }
+#brujula svg { transition: transform .15s linear; }
 
-<div id="mapa" role="application" aria-label="Mapa del mundo de la serie El hombre en el castillo"></div>
+/* ----- Primera persona ----- */
+body.en-vuelo #buscador, body.en-vuelo #panel, body.en-vuelo #controles, body.en-vuelo #capas-btn, body.en-vuelo #capas, body.en-vuelo #info, body.en-vuelo .leaflet-control-container { display: none !important; }
+#hud { position: fixed; inset: 0; z-index: 31; pointer-events: none; color: var(--hud); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+#hud .placa { background: var(--hud-fondo); border: 1px solid rgba(242,196,107,.35); border-radius: 6px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+#hud-rumbo { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(420px, 62%); height: 38px; overflow: hidden; }
+#hud-cinta { position: absolute; top: 0; left: 50%; height: 100%; white-space: nowrap; display: flex; align-items: flex-end; }
+#hud-cinta span { display: inline-block; width: 30px; text-align: center; font-size: 11px; padding-bottom: 6px; position: relative; }
+#hud-cinta span::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 1px; height: 5px; background: currentColor; opacity: .7; }
+#hud-cinta span.mayor { font-size: 13px; font-weight: 600; }
+#hud-rumbo::after { content: ""; position: absolute; left: 50%; top: 0; width: 2px; height: 10px; background: #fff; transform: translateX(-50%); }
+#hud-grados { position: absolute; top: calc(56px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); padding: 2px 8px; font-size: 13px; font-weight: 600; }
+.instr { position: absolute; top: 50%; transform: translateY(-50%); padding: 10px 12px; min-width: 92px; text-align: center; }
+.instr small { display: block; font-size: 10px; letter-spacing: .14em; opacity: .8; text-transform: uppercase; }
+.instr b { display: block; font-size: 22px; font-weight: 600; margin: 2px 0; }
+#hud-vel { left: calc(14px + env(safe-area-inset-left, 0px)); }
+#hud-alt { right: calc(14px + env(safe-area-inset-right, 0px)); }
+#hud-mira { position: absolute; left: 50%; top: 50%; width: 120px; height: 24px; transform: translate(-50%, -50%); }
+#hud-sobre { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); padding: 8px 14px; text-align: center; max-width: calc(100% - 32px); font-family: var(--font-ui); color: #f6eedd; }
+#hud-sobre small { display: block; color: var(--hud); font: 10.5px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; }
+#hud-sobre b { font: 600 17px var(--font-titulo); letter-spacing: .06em; text-transform: uppercase; }
+#hud-entrada { position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%); text-align: center; color: #f6eedd; text-shadow: 0 2px 12px rgba(0,0,0,.8); transition: opacity .6s; max-width: calc(100% - 32px); }
+#hud-entrada small { display: block; font: 12px var(--font-mono); letter-spacing: .3em; color: var(--hud); text-transform: uppercase; margin-bottom: 6px; }
+#hud-entrada b { font: 600 clamp(22px, 5vw, 38px)/1.1 var(--font-titulo); letter-spacing: .08em; text-transform: uppercase; text-wrap: balance; }
+#hud-salir { position: absolute; pointer-events: auto; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px)); color: #f6eedd; border: 1px solid rgba(242,196,107,.35); background: var(--hud-fondo); border-radius: 20px; height: 38px; padding: 0 14px; display: flex; align-items: center; gap: 6px; cursor: pointer; font: 600 13px var(--font-ui); }
+#hud-viaje { position: absolute; left: calc(14px + env(safe-area-inset-left, 0px)); top: calc(14px + env(safe-area-inset-top, 0px)); padding: 8px 12px; font-size: 12px; max-width: 42%; }
+#hud-viaje b { font-family: var(--font-ui); color: #f6eedd; font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#hud-barra { height: 4px; background: rgba(242,196,107,.25); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+#hud-barra i { display: block; height: 100%; width: 0; background: var(--hud); }
+#mandos { position: absolute; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(14px, env(safe-area-inset-right, 0px)) 0 max(14px, env(safe-area-inset-left, 0px)); gap: 10px; pointer-events: none; }
+.cruceta { display: grid; grid-template-columns: repeat(2, 56px); gap: 8px; pointer-events: auto; }
+.mando { width: 56px; height: 56px; border-radius: 14px; border: 1px solid rgba(242,196,107,.4); background: var(--hud-fondo); color: var(--hud); display: grid; place-items: center; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; font: 600 12px var(--font-mono); }
+.mando:active, .mando.pulsado { background: rgba(242,196,107,.28); color: #fff; }
+.mando .icon { width: 26px; height: 26px; }
+.potencia { pointer-events: auto; display: grid; gap: 6px; justify-items: center; padding: 8px; }
+.potencia small { font-size: 10px; letter-spacing: .14em; }
+.potencia .fila-btn { display: flex; gap: 8px; }
+#ayuda-vuelo { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); font: 11.5px var(--font-mono); color: rgba(246,238,221,.75); text-align: center; white-space: nowrap; }
+@media (max-width: 759px) {
+  #hud-rumbo { left: calc(14px + env(safe-area-inset-left, 0px)); transform: none; width: calc(100% - 172px); }
+  #hud-grados { left: calc(14px + (100% - 172px) / 2); }
+  .mando { width: 48px; height: 48px; border-radius: 12px; }
+  .cruceta { grid-template-columns: repeat(2, 48px); gap: 6px; }
+  .potencia { padding: 6px; }
+  #ayuda-vuelo { display: none; } #hud-sobre { bottom: calc(160px + env(safe-area-inset-bottom, 0px)); } .instr { top: calc(92px + env(safe-area-inset-top, 0px)); transform: none; min-width: 78px; padding: 8px; } .instr b { font-size: 18px; } }
+@media (hover: hover) and (pointer: fine) { #mandos .cruceta { opacity: .85; } }
+</style>
+
+<div id="globo" role="application" aria-label="Globo terráqueo en 3D del mundo de la serie"></div>
+<div id="etq3d"></div>
+<div id="mapa" hidden role="application" aria-label="Mapa plano del mundo de la serie"></div>
+<div id="grano" hidden></div>
+<div id="vineta" hidden></div>
 
 <div id="buscador">
   <div class="caja">
@@ -816,8 +890,9 @@ body.con-panel #capas { left: calc(424px + env(safe-area-inset-left, 0px)); }
   </div>
   <div id="sugerencias" hidden></div>
   <div id="chips">
-    <button class="chip" data-chip="capital"><svg class="icon"><use href="#i-capital"/></svg>Capitales</button>
+    <button class="chip" data-chip="vuelo"><svg class="icon"><use href="#i-avion"/></svg>Volar en primera persona</button>
     <button class="chip" data-chip="serie"><svg class="icon"><use href="#i-pelicula"/></svg>Lugares de la serie</button>
+    <button class="chip" data-chip="capital"><svg class="icon"><use href="#i-capital"/></svg>Capitales</button>
     <button class="chip" data-chip="base"><svg class="icon"><use href="#i-cohete"/></svg>Bases y puertos</button>
     <button class="chip" data-chip="X"><svg class="icon"><use href="#i-bandera"/></svg>Neutrales</button>
     <button class="chip" data-chip="guardados"><svg class="icon"><use href="#i-guardar"/></svg>Guardados</button>
@@ -832,7 +907,10 @@ body.con-panel #capas { left: calc(424px + env(safe-area-inset-left, 0px)); }
 
 <div id="controles">
   <div class="grupo"><button class="ctrl" id="btn-pantalla" aria-label="Pantalla completa" title="Pantalla completa"><svg class="icon"><use href="#i-pantalla"/></svg></button></div>
+  <div class="grupo"><button class="ctrl" id="btn-vuelo" aria-label="Volar en primera persona" title="Volar en primera persona"><svg class="icon"><use href="#i-avion"/></svg></button></div>
   <div class="grupo"><button class="ctrl" id="btn-medir" aria-label="Medir distancia" title="Medir distancia"><svg class="icon"><use href="#i-regla"/></svg></button></div>
+  <div class="grupo"><button class="ctrl texto3d" id="btn-vista" aria-label="Cambiar entre globo 3D y mapa plano" title="Cambiar entre globo 3D y mapa plano">2D</button></div>
+  <div class="grupo"><button class="ctrl" id="brujula" aria-label="Orientar al norte y quitar inclinación" title="Orientar al norte"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2l4 10h-8z" fill="#c0392b"/><path d="M12 22l-4-10h8z" fill="currentColor"/></svg></button></div>
   <div class="grupo"><button class="ctrl" id="btn-mundo" aria-label="Ver el mundo entero" title="Ver el mundo entero"><svg class="icon"><use href="#i-globo"/></svg></button></div>
   <div class="grupo">
     <button class="ctrl" id="btn-mas" aria-label="Acercar" title="Acercar"><svg class="icon"><use href="#i-mas"/></svg></button>
@@ -842,7 +920,12 @@ body.con-panel #capas { left: calc(424px + env(safe-area-inset-left, 0px)); }
 
 <button id="capas-btn" aria-label="Capas del mapa"><canvas id="capas-mini" width="144" height="144"></canvas><span><svg class="icon sm"><use href="#i-capas"/></svg>Capas</span></button>
 <div id="capas" hidden role="dialog" aria-label="Capas del mapa">
-  <h3>Tipo de mapa</h3>
+  <h3>Vista</h3>
+  <div class="vistas">
+    <button class="vista-op" data-vista="3d"><svg class="icon sm"><use href="#i-globo"/></svg>Globo 3D</button>
+    <button class="vista-op" data-vista="2d"><svg class="icon sm"><use href="#i-capas"/></svg>Mapa plano</button>
+  </div>
+  <h3>Estilo</h3>
   <div class="estilos" id="estilos"></div>
   <h3>Detalles del mapa</h3>
   <label class="opcion">Fronteras de antes de la guerra <input type="checkbox" id="c-fronteras"></label>
@@ -851,6 +934,9 @@ body.con-panel #capas { left: calc(424px + env(safe-area-inset-left, 0px)); }
   <label class="opcion">Nombres de territorios <input type="checkbox" id="c-etiquetas"></label>
   <label class="opcion">Rutas de cohete y vuelo <input type="checkbox" id="c-cohetes"></label>
   <label class="opcion">Meridianos y paralelos <input type="checkbox" id="c-cuadricula"></label>
+  <label class="opcion">Nubes (globo y vuelo) <input type="checkbox" id="c-nubes"></label>
+  <label class="opcion">Día y noche reales (globo) <input type="checkbox" id="c-sol"></label>
+  <label class="opcion">Grano de película <input type="checkbox" id="c-grano"></label>
 </div>
 
 <div id="info"><span id="coords">—</span></div>
@@ -860,6 +946,32 @@ body.con-panel #capas { left: calc(424px + env(safe-area-inset-left, 0px)); }
 <div id="aviso" hidden role="status"></div>
 <div id="velo" hidden></div>
 <nav id="cajon" hidden aria-label="Menú principal"></nav>
+
+<div id="hud" hidden>
+  <div id="hud-rumbo" class="placa"><div id="hud-cinta"></div></div>
+  <div id="hud-grados" class="placa">000°</div>
+  <div id="hud-vel" class="instr placa"><small>Velocidad</small><b id="hud-vel-v">0</b><small>km/h</small></div>
+  <div id="hud-alt" class="instr placa"><small>Altitud</small><b id="hud-alt-v">0</b><small>km</small></div>
+  <svg id="hud-mira" viewBox="0 0 120 24" aria-hidden="true"><path d="M0 12h38l8 8 8-8h12l8 8 8-8h38" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="60" cy="12" r="2.5" fill="currentColor"/></svg>
+  <div id="hud-viaje" class="placa" hidden><b id="hud-viaje-t"></b><span id="hud-viaje-s"></span><div id="hud-barra"><i></i></div></div>
+  <div id="hud-entrada" style="opacity:0"><small id="hud-entrada-s">Entrando en</small><b id="hud-entrada-t"></b></div>
+  <div id="hud-sobre" class="placa"><small>Sobrevolando</small><b id="hud-sobre-t">—</b><div id="hud-sobre-s" style="font-size:12px;opacity:.8"></div></div>
+  <button id="hud-salir"><svg class="icon sm"><use href="#i-cerrar"/></svg>Salir del vuelo</button>
+  <div id="ayuda-vuelo">W/S velocidad · A/D o ←/→ girar · ↑/↓ subir y bajar · arrastra para mirar · tiempo ×60</div>
+  <div id="mandos">
+    <div class="cruceta">
+      <button class="mando" data-mando="izq" aria-label="Girar a la izquierda"><svg class="icon" viewBox="0 0 24 24"><path d="M15.4 7.4L14 6l-6 6 6 6 1.4-1.4L10.8 12z" fill="currentColor"/></svg></button>
+      <button class="mando" data-mando="der" aria-label="Girar a la derecha"><svg class="icon" viewBox="0 0 24 24"><path d="M8.6 16.6L10 18l6-6-6-6-1.4 1.4 4.6 4.6z" fill="currentColor"/></svg></button>
+    </div>
+    <div class="potencia placa"><small>POTENCIA</small><div class="fila-btn">
+      <button class="mando" data-mando="menos" aria-label="Más lento">−</button>
+      <button class="mando" data-mando="mas" aria-label="Más rápido">+</button></div></div>
+    <div class="cruceta">
+      <button class="mando" data-mando="subir" aria-label="Subir"><svg class="icon" viewBox="0 0 24 24"><path d="M7.4 15.4L6 14l6-6 6 6-1.4 1.4-4.6-4.6z" fill="currentColor"/></svg></button>
+      <button class="mando" data-mando="bajar" aria-label="Bajar"><svg class="icon" viewBox="0 0 24 24"><path d="M16.6 8.6L18 10l-6 6-6-6 1.4-1.4 4.6 4.6z" fill="currentColor"/></svg></button>
+    </div>
+  </div>
+</div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></symbol>
@@ -894,11 +1006,12 @@ body.con-panel #capas { left: calc(424px + env(safe-area-inset-left, 0px)); }
   <symbol id="i-cronologia" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l4 4 4-4H6a7 7 0 1 1 2 4.9l-1.4 1.4A9 9 0 1 0 13 3zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8z"/></symbol>
 </svg>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
 "use strict";
-/* ================== Datos de la línea temporal (serie, 1962) ================== */
+/* ================== Mundo de la serie (1962) ================== */
 const FACCIONES = {
   R:  { n: "Gran Reich Nazi", c: "Reich", d: "La potencia que domina Europa, África y Oriente Medio desde Berlín. Gobierna los territorios conquistados como provincias y comisariados del Reich." },
   RA: { n: "Reich Americano", c: "Reich Am.", d: "Los antiguos Estados Unidos al este de las Montañas Rocosas, junto con Canadá. Se gobiernan desde Nueva York como parte del Gran Reich Nazi." },
@@ -911,7 +1024,6 @@ const FACCIONES = {
 };
 const ORDEN_FAC = ["R", "RA", "I", "J", "JP", "N", "X", "U"];
 
-// t: capital | ciudad | serie | base. Coordenadas [lat, lon].
 const LUGARES = [
   { id: "berlin", n: "Berlín", lat: 52.52, lon: 13.405, f: "R", t: "capital", s: "Capital del Gran Reich Nazi", d: "Corazón del Reich y sede de la Cancillería. Desde aquí se decide la política hacia Japón y hacia los territorios de Norteamérica." },
   { id: "nueva-york", n: "Nueva York", lat: 40.7128, lon: -74.006, f: "RA", t: "capital", s: "Sede del Reich Americano", d: "Centro administrativo del Reich en Norteamérica. Aquí está el mando de las SS americanas y aquí se celebra cada año el Día de la Victoria sobre América." },
@@ -955,41 +1067,47 @@ const LUGARES = [
   { id: "buenos-aires", n: "Buenos Aires", lat: -34.6037, lon: -58.3816, f: "X", t: "ciudad", s: "Argentina neutral", d: "Gran capital sudamericana fuera de los dos imperios." },
   { id: "rio", n: "Río de Janeiro", lat: -22.9068, lon: -43.1729, f: "X", t: "ciudad", s: "Brasil neutral", d: "Puerto atlántico de Sudamérica." },
 ];
+const porId = Object.fromEntries(LUGARES.map((l) => [l.id, l]));
 const RUTAS_COHETE = [
-  { de: "berlin", a: "nueva-york", n: "Cohete Berlín – Nueva York" },
-  { de: "peenemunde", a: "nueva-york", n: "Cohete Peenemünde – Nueva York" },
+  { de: "berlin", a: "nueva-york", n: "Cohete Berlín – Nueva York", cohete: true },
+  { de: "peenemunde", a: "nueva-york", n: "Cohete Peenemünde – Nueva York", cohete: true },
   { de: "tokio", a: "san-francisco", n: "Vuelo Tokio – San Francisco" },
   { de: "tokio", a: "honolulu", n: "Vuelo Tokio – Honolulu" },
   { de: "berlin", a: "roma", n: "Vuelo Berlín – Roma" },
 ];
 const ETIQ_FAC = [
-  { t: "Gran Reich Nazi", lat: 56, lon: 52, z: [2, 5] },
-  { t: "África del Reich", lat: 6, lon: 22, z: [2, 4], peq: 1 },
-  { t: "Reich Americano", lat: 37.5, lon: -88, z: [2, 5] },
-  { t: "Canadá del Reich", lat: 58, lon: -100, z: [3, 5], peq: 1 },
-  { t: "Estados Japoneses\ndel Pacífico", lat: 41.5, lon: -119.8, z: [3, 6], peq: 1 },
-  { t: "EJP", lat: 44.5, lon: -120.5, z: [2, 2.5], peq: 1 },
-  { t: "Zona Neutral", lat: 41.5, lon: -108.5, z: [3, 6], peq: 1 },
-  { t: "Imperio Japonés", lat: 33, lon: 104, z: [2, 5] },
-  { t: "Australia japonesa", lat: -24, lon: 134, z: [3, 5], peq: 1 },
-  { t: "Imperio Italiano", lat: 27, lon: 17, z: [3, 5], peq: 1 },
-  { t: "Iberoamérica neutral", lat: -10, lon: -60, z: [2, 4], peq: 1 },
+  { t: "Gran Reich Nazi", lat: 56, lon: 52, z: [1, 5] },
+  { t: "África del Reich", lat: 6, lon: 22, z: [2, 4.5], peq: 1 },
+  { t: "Reich Americano", lat: 37.5, lon: -88, z: [1, 5.5] },
+  { t: "Canadá del Reich", lat: 58, lon: -100, z: [2.5, 5], peq: 1 },
+  { t: "Estados Japoneses\ndel Pacífico", lat: 41.5, lon: -119.8, z: [3, 6.5], peq: 1 },
+  { t: "EJP", lat: 44.5, lon: -120.5, z: [1, 2.9], peq: 1 },
+  { t: "Zona Neutral", lat: 41.5, lon: -108.5, z: [2.6, 6.5], peq: 1 },
+  { t: "Imperio Japonés", lat: 33, lon: 104, z: [1, 5] },
+  { t: "Australia japonesa", lat: -24, lon: 134, z: [2.5, 5], peq: 1 },
+  { t: "Imperio Italiano", lat: 27, lon: 17, z: [2.5, 5], peq: 1 },
+  { t: "Iberoamérica neutral", lat: -10, lon: -60, z: [1.5, 4.5], peq: 1 },
 ];
 
-/* ================== Estilos del mapa ================== */
+/* ================== Estilos ================== */
 const ESTILOS = {
+  serie: { n: "Serie", oceano: "#0f1d28", halo: "rgba(8,12,16,.88)", haloS: "#0f1d28", etF: "#f0dfbd", etP: "#d9cdb5", etC: "#f6eedd", frente: "#e7b65c", borde: 0.5, cine: true,
+    fill: { R: "#7a1f1b", RA: "#973b2e", I: "#5b4762", J: "#d8ccb2", JP: "#c4b388", N: "#56613f", X: "#3a4047", U: "#c9ced2" },
+    stroke: { R: "#a3352d", RA: "#b9574a", I: "#7e6787", J: "#b2a483", JP: "#a3925f", N: "#7a8660", X: "#59616b", U: "#e1e4e6" },
+    ciudad: "#f0dfbd", grid: "rgba(220,200,160,.16)", cielo: "#7f8c95", linea: "#eadcbf" },
   mapa: { n: "Mapa", oceano: "#b4d3e8", halo: "rgba(255,255,255,.95)", haloS: "#fff", etF: "#5b2a20", etP: "#4a4038", etC: "#2a2420", frente: "#6d2a1f", borde: 0.55,
     fill: { R: "#e8aa9d", RA: "#efc4b9", I: "#d9bfe0", J: "#f2d488", JP: "#f7e4b0", N: "#bcd8b2", X: "#e9e6de", U: "#fbfbf9" },
-    stroke: { R: "#c98576", RA: "#d6a296", I: "#b99bc2", J: "#d4b45f", JP: "#dcc68b", N: "#97b78b", X: "#c8c3b8", U: "#ddd" }, ciudad: "#3b342e", grid: "rgba(40,70,100,.25)" },
-  archivo: { n: "Archivo", oceano: "#d7cdb3", halo: "rgba(244,236,214,.95)", haloS: "#f3ead3", etF: "#4a1d14", etP: "#4b3b2a", etC: "#2e2418", frente: "#3d1810", borde: 0.6,
+    stroke: { R: "#c98576", RA: "#d6a296", I: "#b99bc2", J: "#d4b45f", JP: "#dcc68b", N: "#97b78b", X: "#c8c3b8", U: "#ddd" }, ciudad: "#3b342e", grid: "rgba(40,70,100,.25)", cielo: "#a9c7dc", linea: "#6b5d50" },
+  archivo: { n: "Archivo", oceano: "#d7cdb3", halo: "rgba(244,236,214,.95)", haloS: "#f3ead3", etF: "#4a1d14", etP: "#4b3b2a", etC: "#2e2418", frente: "#3d1810", borde: 0.6, cine: true,
     fill: { R: "#b9665a", RA: "#c99183", I: "#a58aa2", J: "#cfa856", JP: "#dcc289", N: "#90a684", X: "#ece3cc", U: "#f4eee0" },
-    stroke: { R: "#8a4136", RA: "#9c6a5e", I: "#7e6479", J: "#9e7d34", JP: "#ae955f", N: "#68805d", X: "#b8ab8c", U: "#cfc5ad" }, ciudad: "#2e2418", grid: "rgba(70,50,30,.35)" },
+    stroke: { R: "#8a4136", RA: "#9c6a5e", I: "#7e6479", J: "#9e7d34", JP: "#ae955f", N: "#68805d", X: "#b8ab8c", U: "#cfc5ad" }, ciudad: "#2e2418", grid: "rgba(70,50,30,.35)", cielo: "#cbbf9f", linea: "#3d2e20" },
   noche: { n: "Noche", oceano: "#0e1724", halo: "rgba(10,14,20,.9)", haloS: "#0e1724", etF: "#f1b6a8", etP: "#c6cdd8", etC: "#eef1f5", frente: "#ff8c74", borde: 0.5,
     fill: { R: "#5b2c29", RA: "#6c3c35", I: "#4c3854", J: "#5f4d20", JP: "#6c5c33", N: "#2e4a37", X: "#2a3039", U: "#3a4250" },
-    stroke: { R: "#7d413b", RA: "#8a544c", I: "#6a5175", J: "#86702f", JP: "#8f7b46", N: "#43674f", X: "#3c4450", U: "#4c5566" }, ciudad: "#f3d9a4", grid: "rgba(160,190,230,.18)" },
+    stroke: { R: "#7d413b", RA: "#8a544c", I: "#6a5175", J: "#86702f", JP: "#8f7b46", N: "#43674f", X: "#3c4450", U: "#4c5566" }, ciudad: "#f3d9a4", grid: "rgba(160,190,230,.18)", cielo: "#1b2636", linea: "#9aa7b8" },
   real: { n: "Real 1962", oceano: "#aad3df", halo: "rgba(255,255,255,.95)", haloS: "#fff", etF: "#666", etP: "#3d3d3d", etC: "#222", frente: "#666", borde: 0.7, real: true,
-    tierra: "#f2efe9", lineaReal: "#b4a59a", ciudad: "#333", grid: "rgba(40,70,100,.25)" },
+    tierra: "#f2efe9", lineaReal: "#b4a59a", ciudad: "#333", grid: "rgba(40,70,100,.25)", cielo: "#a9c7dc", linea: "#8a7a6c" },
 };
+const colorFac = (f) => { const e = ESTILOS[estilo]; return e.real ? e.tierra : e.fill[f]; };
 
 /* ================== Utilidades ================== */
 const $ = (s, r = document) => r.querySelector(s);
@@ -1001,9 +1119,21 @@ const almacen = {
   guardar(k, v) { try { localStorage.setItem("mapa-castillo:" + k, JSON.stringify(v)); } catch (e) {} },
 };
 const RT = 6371, rad = (d) => d * Math.PI / 180, grados = (r) => r * 180 / Math.PI;
+const limitar = (v, a, b) => Math.max(a, Math.min(b, v));
+const normLon = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
 function distancia(a, b) {
   const h = Math.sin(rad(b[0] - a[0]) / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(rad(b[1] - a[1]) / 2) ** 2;
   return 2 * RT * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+function rumboEntre(a, b) {
+  const p1 = rad(a[0]), p2 = rad(b[0]), dl = rad(b[1] - a[1]);
+  return (grados(Math.atan2(Math.sin(dl) * Math.cos(p2), Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl))) + 360) % 360;
+}
+function destino(lat, lon, rumbo, km) {
+  const d = km / RT, h = rad(rumbo), p1 = rad(lat), l1 = rad(lon);
+  const p2 = Math.asin(Math.sin(p1) * Math.cos(d) + Math.cos(p1) * Math.sin(d) * Math.cos(h));
+  const l2 = l1 + Math.atan2(Math.sin(h) * Math.sin(d) * Math.cos(p1), Math.cos(d) - Math.sin(p1) * Math.sin(p2));
+  return [grados(p2), normLon(grados(l2))];
 }
 function granCirculo(a, b, n = 128) {
   const p1 = rad(a[0]), l1 = rad(a[1]), p2 = rad(b[0]), l2 = rad(b[1]);
@@ -1041,18 +1171,20 @@ function fmtCoord(lat, lon) {
   const f = (v, p, n) => `${Math.abs(v).toFixed(4).replace(".", ",")}° ${v >= 0 ? p : n}`;
   return `${f(lat, "N", "S")}, ${f(lon, "E", "O")}`;
 }
-const normLon = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
 function aviso(msg) {
   const el = $("#aviso"); el.textContent = msg; el.hidden = false;
-  clearTimeout(aviso.t); aviso.t = setTimeout(() => (el.hidden = true), 2600);
+  clearTimeout(aviso.t); aviso.t = setTimeout(() => (el.hidden = true), 2800);
 }
 async function copiar(texto, ok = "Copiado") {
-  try { await navigator.clipboard.writeText(texto); aviso(ok); }
-  catch (e) { aviso(texto); }
+  try { await navigator.clipboard.writeText(texto); aviso(ok); } catch (e) { aviso(texto); }
 }
+const esMovil = () => matchMedia("(max-width: 759px)").matches;
+const zoomDeAlt = (alt) => 1 + Math.log2(40000 / alt);
+const altDeZoom = (z) => 40000 / 2 ** (z - 1);
 
-/* ================== Geometría de territorios ================== */
-const TERR = [];       // { id, n, f, feat, bb, area, c:[lat,lon], tipo }
+/* ================== Territorios ================== */
+let DATOS = null, MUNDO = [], EEUU = [];
+const TERR = [];
 function enAnillo(x, y, r) {
   let d = false;
   for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
@@ -1067,15 +1199,22 @@ function territorioEn(lat, lon) {
   for (const t of TERR) {
     for (const x of [lon, lon + 360, lon - 360]) {
       if (x < t.bb[0] || x > t.bb[2] || lat < t.bb[1] || lat > t.bb[3]) continue;
-      for (const p of poligonos(t.feat.geometry)) {
-        if (enAnillo(x, lat, p[0]) && !p.slice(1).some((h) => enAnillo(x, lat, h))) return t;
-      }
+      for (const p of poligonos(t.feat.geometry)) if (enAnillo(x, lat, p[0]) && !p.slice(1).some((h) => enAnillo(x, lat, h))) return t;
     }
   }
   return null;
 }
-function analizar(feat, tipo) {
-  let bb = [180, 90, -180, -90], mejor = null, total = 0;
+function desenrollar(feat) {
+  for (const p of poligonos(feat.geometry)) for (const r of p) {
+    let off = 0; const nuevo = [r[0][0]];
+    for (let i = 1; i < r.length; i++) { const d = r[i][0] - r[i - 1][0]; if (d > 180) off -= 360; else if (d < -180) off += 360; nuevo.push(r[i][0] + off); }
+    if (off !== 0) continue;
+    const media = nuevo.reduce((a, b) => a + b, 0) / nuevo.length, aj = media > 180 ? -360 : media < -180 ? 360 : 0;
+    nuevo.forEach((x, i) => { r[i][0] = x + aj; });
+  }
+}
+function analizar(feat) {
+  let bb = [999, 90, -999, -90], mejor = null, total = 0;
   for (const p of poligonos(feat.geometry)) {
     const r = p[0]; let a = 0, cx = 0, cy = 0;
     for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
@@ -1084,183 +1223,949 @@ function analizar(feat, tipo) {
       if (x1 < bb[0]) bb[0] = x1; if (x1 > bb[2]) bb[2] = x1; if (y1 < bb[1]) bb[1] = y1; if (y1 > bb[3]) bb[3] = y1;
     }
     a /= 2; const A = Math.abs(a); total += A;
-    if (!mejor || A > mejor.a && A > 0) mejor = { a: A, c: a ? [cy / (6 * a), cx / (6 * a)] : [r[0][1], r[0][0]] };
+    if (!mejor || A > mejor.a) mejor = { a: A, c: a ? [cy / (6 * a), normLon(cx / (6 * a))] : [r[0][1], r[0][0]] };
   }
-  return { bb, area: total, c: mejor ? mejor.c : [0, 0], tipo };
+  return { bb, area: total, c: mejor ? mejor.c : [0, 0] };
 }
+function prepararDatos(datos) {
+  DATOS = datos;
+  MUNDO = topojson.feature(datos.mundo, datos.mundo.objects.countries).features;
+  EEUU = topojson.feature(datos.eeuu, datos.eeuu.objects.states).features;
+  MUNDO.forEach(desenrollar);
+  EEUU.forEach((f) => (f.properties.us = true));
+  EEUU.forEach((f, i) => TERR.push({ id: "us-" + i, n: f.properties.n, f: f.properties.f, feat: f, tipo: "estado", ...analizar(f) }));
+  MUNDO.forEach((f, i) => TERR.push({ id: "w-" + i, n: f.properties.n, f: f.properties.f, feat: f, tipo: "pais", ...analizar(f) }));
+  const fijo = { "Francia": [46.6, 2.4], "Noruega": [61.5, 9], "Rusia": [61, 95], "Canadá": [57, -100], "Chile": [-31, -71], "Indonesia": [-1.5, 114] };
+  TERR.forEach((t) => {
+    if (fijo[t.n]) t.c = fijo[t.n];
+    const a = t.area; t.zmin = a > 900 ? 3 : a > 200 ? 4 : a > 40 ? 5 : a > 6 ? 6 : a > 0.8 ? 7 : 8;
+    if (t.tipo === "estado") t.zmin = Math.max(5, t.zmin);
+  });
+}
+const esquinas = (t) => t.n === "Rusia" ? [[42, 28], [77, 178], [60, 95]] : [[t.bb[1], t.bb[0]], [t.bb[3], t.bb[2]], t.c];
 
-/* ================== Estado ================== */
-let estilo = almacen.leer("estilo", null) || (matchMedia("(prefers-color-scheme: dark)").matches ? "noche" : "mapa");
-if (!ESTILOS[estilo]) estilo = "mapa";
-const capas = Object.assign({ fronteras: false, frentes: true, ciudades: true, etiquetas: true, cohetes: true, cuadricula: false }, almacen.leer("capas", {}));
+/* ================== Estado compartido ================== */
+let estilo = almacen.leer("estilo", "serie"); if (!ESTILOS[estilo]) estilo = "serie";
+const capas = Object.assign({ fronteras: false, frentes: true, ciudades: true, etiquetas: true, cohetes: true, cuadricula: false, sol: false, grano: true, nubes: true }, almacen.leer("capas", {}));
 let guardados = almacen.leer("guardados", []);
-let mapa, capaMundo, capaEEUU, capaFrentes, capaCuadricula, capaCiudades, capaEtiquetas, capaCohetes, capaRuta, capaMedida, capaPin;
-const marcadoresLugar = new Map();
-let modoElegir = null, midiendo = false, puntosMedida = [];
-const esMovil = () => matchMedia("(max-width: 759px)").matches;
+let vista = almacen.leer("vista", "3d");
+let V = null;                     // vista activa (V3 o V2)
+const escena = { ruta: null, pin: null, resaltados: [], medida: [] };
+let modoElegir = null, midiendo = false;
 
-/* ================== Mapa ================== */
-function iniciarMapa() {
-  mapa = L.map("mapa", {
-    zoomControl: false, preferCanvas: true, minZoom: 2, maxZoom: 10, zoomSnap: 0.5, worldCopyJump: false,
-    maxBounds: [[-86, -230], [86, 230]], maxBoundsViscosity: 0.9, attributionControl: true, tapHold: true,
-  }).setView([30, -20], 2.5);
-  mapa.attributionControl.setPrefix(false).addAttribution("Fronteras: Natural Earth · Mapa de fans de la serie El hombre en el castillo");
-  L.control.scale({ metric: true, imperial: false, position: "bottomright", maxWidth: 110 }).addTo(mapa);
-  mapa.createPane("frentes").style.zIndex = 420;
-  mapa.createPane("rutas").style.zIndex = 450;
-  mapa.createPane("etiquetas").style.zIndex = 600;
-  mapa.getPane("etiquetas").style.pointerEvents = "none";
-  capaRuta = L.layerGroup().addTo(mapa);
-  capaMedida = L.layerGroup().addTo(mapa);
-  capaPin = L.layerGroup().addTo(mapa);
-
-  mapa.on("mousemove", (e) => { $("#coords").textContent = fmtCoord(e.latlng.lat, normLon(e.latlng.lng)); });
-  mapa.on("zoomend", actualizarZoom);
-  mapa.on("click", alHacerClicMapa);
-  mapa.on("contextmenu", (e) => { e.originalEvent && e.originalEvent.preventDefault(); abrirMenuCtx(e); });
-  mapa.on("movestart", cerrarMenuCtx);
-  actualizarZoom();
+/* ================== Etiquetas y marcadores comunes ================== */
+function htmlCiudad(l) { return `<div class="ciudad ${l.t}" data-id="${l.id}"><span class="pt"></span><span class="nm">${esc(l.n)}</span></div>`; }
+const zCiudad = (l) => l.t === "capital" ? 1 : l.t === "serie" ? 2.6 : l.t === "base" ? 3.5 : 3.8;
+function aplicarResaltado() {
+  const set = new Set(escena.resaltados);
+  document.querySelectorAll(".ciudad[data-id]").forEach((c) => {
+    c.classList.toggle("resaltada", set.has(c.dataset.id));
+    c.classList.toggle("atenuada", set.size > 1 && !set.has(c.dataset.id));
+  });
 }
+function resaltar(ids) { escena.resaltados = ids; aplicarResaltado(); }
+function ponerRuta(pts, aire, modo) { escena.ruta = { pts, aire, modo }; V && V.dibujarRuta(); }
+function quitarRuta() { escena.ruta = null; V && V.dibujarRuta(); }
+function ponerPin(lat, lon) { escena.pin = [lat, lon]; V && V.dibujarPin(); }
+function quitarPin() { escena.pin = null; V && V.dibujarPin(); }
 
-function estiloTerritorio(f) {
-  const e = ESTILOS[estilo];
-  if (e.real) return { fillColor: e.tierra, fillOpacity: 1, color: e.lineaReal, weight: f.properties.us ? 0.5 : 0.8, opacity: 1 };
-  const fac = f.properties.f;
-  const mostrar = capas.fronteras;
-  return { fillColor: e.fill[fac], fillOpacity: 1, color: mostrar ? e.stroke[fac] : e.fill[fac], weight: mostrar ? e.borde + 0.2 : 0.6, opacity: 1, dashArray: mostrar && f.properties.us ? "3 3" : null };
+function variablesEstilo() {
+  const e = ESTILOS[estilo], r = document.documentElement.style;
+  r.setProperty("--oceano", e.oceano); r.setProperty("--halo", e.halo); r.setProperty("--halo-solido", e.haloS);
+  r.setProperty("--et-faccion", e.etF); r.setProperty("--et-pais", e.etP); r.setProperty("--et-ciudad", e.etC); r.setProperty("--pt", e.ciudad);
+  const cine = e.cine && capas.grano && vista === "3d";
+  $("#grano").hidden = !cine; $("#vineta").hidden = !(e.cine && vista === "3d");
 }
+(function crearGrano() {
+  const c = document.createElement("canvas"); c.width = c.height = 180; const g = c.getContext("2d"), d = g.createImageData(180, 180);
+  for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+  g.putImageData(d, 0, 0); $("#grano").style.backgroundImage = `url(${c.toDataURL()})`;
+})();
 
-// Une los anillos cortados en ±180° para que no se dibujen franjas de lado a lado del mapa.
-function desenrollar(feat) {
-  for (const p of poligonos(feat.geometry)) {
-    for (const r of p) {
-      let off = 0; const nuevo = [r[0].slice()];
-      for (let i = 1; i < r.length; i++) {
-        const d = r[i][0] - r[i - 1][0];
-        if (d > 180) off -= 360; else if (d < -180) off += 360;
-        nuevo.push([r[i][0] + off, r[i][1]]);
+/* ================================================================
+   VISTA 3D — globo con texturas pintadas a mano, controles tipo Google Earth
+   ================================================================ */
+const V3 = {
+  listo: false,
+  st: { lat: 34, lon: -98, alt: 26000, rumbo: 0, inclExtra: 0, inclinar: true },
+  vel: { lat: 0, lon: 0 },
+  anim: null, sucio: true, offset: { x: 0, y: 0 },
+  xyz(lat, lon, r = 1) {
+    const phi = rad(lon + 180), th = rad(lat);
+    return new THREE.Vector3(-Math.cos(phi) * Math.cos(th) * r, Math.sin(th) * r, Math.sin(phi) * Math.cos(th) * r);
+  },
+  latlon(p) { const r = p.length(); return [grados(Math.asin(p.y / r)), normLon(grados(Math.atan2(p.z, -p.x)) - 180)]; },
+  marco(lat, lon) {
+    const n = this.xyz(lat, lon).normalize();
+    const e = new THREE.Vector3(0, 1, 0).cross(n).normalize();
+    const u = n.clone().cross(e).normalize();
+    return { n, e, u };
+  },
+
+  init() {
+    const cont = $("#globo");
+    const r = this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true, powerPreference: "high-performance" });
+    r.setClearColor(0x000000, 0);
+    r.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); r.setSize(innerWidth, innerHeight);
+    r.outputEncoding = THREE.sRGBEncoding;
+    cont.appendChild(r.domElement);
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1e-5, 400);
+    const maxTex = r.capabilities.maxTextureSize;
+    const pequeno = esMovil() || (navigator.deviceMemory && navigator.deviceMemory <= 4);
+    this.W = Math.min(maxTex, pequeno ? 4096 : 8192);
+
+    this.lienzo = document.createElement("canvas"); this.lienzo.width = this.W; this.lienzo.height = this.W / 2;
+    this.tex = new THREE.CanvasTexture(this.lienzo); this.tex.anisotropy = r.capabilities.getMaxAnisotropy(); this.tex.encoding = THREE.sRGBEncoding;
+    this.lienzoBrillo = document.createElement("canvas"); this.lienzoBrillo.width = 2048; this.lienzoBrillo.height = 1024;
+    this.texBrillo = new THREE.CanvasTexture(this.lienzoBrillo);
+    this.mat = new THREE.MeshPhongMaterial({ map: this.tex, specularMap: this.texBrillo, specular: new THREE.Color(0x3a4048), shininess: 22 });
+    this.globo = new THREE.Mesh(new THREE.SphereGeometry(1, 256, 128), this.mat);
+    this.scene.add(this.globo);
+
+    this.luz = new THREE.DirectionalLight(0xfff4e2, 1.1); this.scene.add(this.luz); this.scene.add(this.luz.target);
+    this.amb = new THREE.AmbientLight(0xffffff, 0.42); this.scene.add(this.amb);
+
+    // Atmósfera
+    const atm = new THREE.ShaderMaterial({
+      uniforms: { color: { value: new THREE.Color(0x9fb8d6) }, fuerza: { value: 1 } },
+      vertexShader: `#include <common>
+        #include <logdepthbuf_pars_vertex>
+        varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        #include <logdepthbuf_vertex>
+        }`,
+      fragmentShader: `#include <logdepthbuf_pars_fragment>
+        uniform vec3 color; uniform float fuerza; varying vec3 vN; void main(){
+        #include <logdepthbuf_fragment>
+        float i = pow(max(0.0, 0.72 - dot(vN, vec3(0.0, 0.0, 1.0))), 2.6) * fuerza; gl_FragColor = vec4(color * i, i); }`,
+      side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
+    });
+    this.atmos = new THREE.Mesh(new THREE.SphereGeometry(1.14, 96, 48), atm); this.scene.add(this.atmos);
+
+    // Estrellas
+    const n = 2600, pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const v = new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize().multiplyScalar(180); pos.set([v.x, v.y, v.z], i * 3); }
+    const gs = new THREE.BufferGeometry(); gs.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    this.estrellas = new THREE.Points(gs, new THREE.PointsMaterial({ color: 0xd8d2c4, size: 1.3, sizeAttenuation: false, fog: false }));
+    this.scene.add(this.estrellas);
+
+    this.lineas = this.crearLineas(topojson.mesh(DATOS.mundo, DATOS.mundo.objects.countries), 1.00025);
+    this.lineasEEUU = this.crearLineas(topojson.mesh(DATOS.eeuu, DATOS.eeuu.objects.states, (a, b) => a !== b), 1.00025);
+    const mf = topojson.mesh(DATOS.mundo, DATOS.mundo.objects.countries, (a, b) => a !== b && a.properties.f !== b.properties.f);
+    const mu = topojson.mesh(DATOS.eeuu, DATOS.eeuu.objects.states, (a, b) => a !== b && a.properties.f !== b.properties.f);
+    this.frentes = this.crearLineas({ type: "MultiLineString", coordinates: [...mf.coordinates, ...mu.coordinates] }, 1.0004);
+    this.scene.add(this.lineas, this.lineasEEUU, this.frentes);
+
+    // Nubes: ruido periódico pintado una vez
+    this.nubes = new THREE.Mesh(new THREE.SphereGeometry(1 + 6 / RT, 192, 96),
+      new THREE.MeshLambertMaterial({ map: this.texturaNubes(), transparent: true, depthWrite: false, opacity: 0.5, side: THREE.DoubleSide }));
+    this.scene.add(this.nubes);
+    // Faros: columnas de luz sobre capitales y lugares de la serie
+    this.faros = new THREE.Group();
+    const geoFaro = new THREE.CylinderGeometry(0.5 / RT, 1.6 / RT, 30 / RT, 8, 1, true);
+    for (const l of LUGARES) {
+      if (l.t === "ciudad") continue;
+      const m = new THREE.Mesh(geoFaro, new THREE.MeshBasicMaterial({ color: 0xf2b54a, transparent: true, opacity: 0.6, depthWrite: false, fog: false }));
+      const n = this.xyz(l.lat, l.lon).normalize();
+      m.position.copy(n).multiplyScalar(1 + 15 / RT); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n);
+      this.faros.add(m);
+    }
+    this.scene.add(this.faros);
+    this.grupoRuta = new THREE.Group(); this.grupoMedida = new THREE.Group(); this.grupoCohetes = new THREE.Group();
+    this.scene.add(this.grupoRuta, this.grupoMedida, this.grupoCohetes);
+    this.arcos = [...topojson.mesh(DATOS.mundo, DATOS.mundo.objects.countries).coordinates, ...topojson.mesh(DATOS.eeuu, DATOS.eeuu.objects.states, (a, b) => a !== b).coordinates]
+      .map((l) => { let bb = [999, 90, -999, -90]; for (const [x, y] of l) { if (x < bb[0]) bb[0] = x; if (x > bb[2]) bb[2] = x; if (y < bb[1]) bb[1] = y; if (y > bb[3]) bb[3] = y; } return { l, bb }; });
+    this.arcosFrente = [...mf.coordinates, ...mu.coordinates];
+    const D = esMovil() ? 1536 : 2048;
+    this.detLienzo = document.createElement("canvas"); this.detLienzo.width = this.detLienzo.height = D;
+    this.detTex = new THREE.CanvasTexture(this.detLienzo); this.detTex.encoding = THREE.sRGBEncoding; this.detTex.anisotropy = r.capabilities.getMaxAnisotropy();
+    this.detMat = new THREE.MeshPhongMaterial({ map: this.detTex, specular: 0x1a1d22, shininess: 10, transparent: true });
+    this.detMesh = new THREE.Mesh(new THREE.BufferGeometry(), this.detMat); this.detMesh.visible = false; this.scene.add(this.detMesh);
+    this.ruido = this.tejidoRuido();
+    this.construirCohetes();
+    this.construirEtiquetas();
+    this.conectarEventos();
+    this.pintar();
+    this.listo = true;
+    const bucle = (t) => { this.tick(t); requestAnimationFrame(bucle); };
+    requestAnimationFrame(bucle);
+  },
+
+  tejidoRuido() {
+    const N = 256, c = document.createElement("canvas"); c.width = c.height = N; const g = c.getContext("2d"), img = g.createImageData(N, N);
+    let semilla = 4517; const azar = () => ((semilla = (semilla * 16807) % 2147483647) / 2147483647);
+    const oct = [4, 8, 16, 32, 64].map((n, o) => { const tab = new Float32Array(n * n); for (let i = 0; i < tab.length; i++) tab[i] = azar(); return { n, tab, a: 0.55 ** o }; });
+    const suave = (x) => x * x * (3 - 2 * x);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      let v = 0, s = 0;
+      for (const o of oct) {
+        const fx = x / N * o.n, fy = y / N * o.n, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = suave(fx - x0), ty = suave(fy - y0), x1 = (x0 + 1) % o.n, y1 = (y0 + 1) % o.n, T = o.tab, n = o.n;
+        const a = T[y0 * n + x0] + (T[y0 * n + x1] - T[y0 * n + x0]) * tx, b = T[y1 * n + x0] + (T[y1 * n + x1] - T[y1 * n + x0]) * tx;
+        v += (a + (b - a) * ty) * o.a; s += o.a;
       }
-      if (off !== 0) continue; // anillo que rodea un polo (Antártida): se deja como está
-      let media = 0; nuevo.forEach((c) => (media += c[0])); media /= nuevo.length;
-      const ajuste = media > 180 ? -360 : media < -180 ? 360 : 0;
-      nuevo.forEach((c, i) => { r[i][0] = c[0] + ajuste; });
+      const k = Math.round(limitar(v / s * 1.6 - 0.3, 0, 1) * 255), i = (y * N + x) * 4;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = k; img.data[i + 3] = 255;
     }
-  }
-}
-function construirTerritorios(datos) {
-  const mundo = topojson.feature(datos.mundo, datos.mundo.objects.countries).features;
-  mundo.forEach(desenrollar);
-  const eeuu = topojson.feature(datos.eeuu, datos.eeuu.objects.states).features;
-  eeuu.forEach((f) => (f.properties.us = true));
-  const alAtravesar = (f, capa) => {
-    capa.on("mouseover", () => { if (!modoElegir && !midiendo) capa.setStyle({ weight: 2.2, color: ESTILOS[estilo].frente, dashArray: null }); });
-    capa.on("mouseout", () => capa.setStyle(estiloTerritorio(f)));
-    capa.on("click", (e) => {
-      if (modoElegir || midiendo) return;
-      L.DomEvent.stopPropagation(e);
-      cerrarMenuCtx();
-      abrirTerritorio(TERR.find((t) => t.feat === f), e.latlng);
-    });
-  };
-  capaMundo = L.geoJSON(mundo, { style: estiloTerritorio, onEachFeature: alAtravesar, smoothFactor: 0.6 }).addTo(mapa);
-  capaEEUU = L.geoJSON(eeuu, { style: estiloTerritorio, onEachFeature: alAtravesar, smoothFactor: 0.6 }).addTo(mapa);
-  eeuu.forEach((f, i) => TERR.push({ id: "us-" + i, n: f.properties.n, f: f.properties.f, feat: f, ...analizar(f, "estado") }));
-  mundo.forEach((f, i) => TERR.push({ id: "w-" + i, n: f.properties.n, f: f.properties.f, feat: f, ...analizar(f, "pais") }));
-  // Ajustes de etiqueta para territorios cuyo centro cae lejos.
-  const fijo = { "Estados Unidos": null, "Francia": [46.6, 2.4], "Noruega": [61.5, 9], "Rusia": [61, 95], "Canadá": [57, -100], "Chile": [-31, -71], "Indonesia": [-1.5, 114] };
-  TERR.forEach((t) => { if (fijo[t.n]) t.c = fijo[t.n]; });
-
-  const meshW = topojson.mesh(datos.mundo, datos.mundo.objects.countries, (a, b) => a !== b && a.properties.f !== b.properties.f);
-  const meshU = topojson.mesh(datos.eeuu, datos.eeuu.objects.states, (a, b) => a !== b && a.properties.f !== b.properties.f);
-  capaFrentes = L.geoJSON({ type: "FeatureCollection", features: [{ type: "Feature", geometry: meshW }, { type: "Feature", geometry: meshU }] },
-    { pane: "frentes", interactive: false, style: () => ({ color: ESTILOS[estilo].frente, weight: 1.6, opacity: 0.85, dashArray: "6 4" }) });
-
-  capaCuadricula = L.layerGroup();
-  for (let lat = -75; lat <= 75; lat += 15) capaCuadricula.addLayer(L.polyline([[lat, -180], [lat, 180]], { interactive: false, weight: lat === 0 ? 1.2 : 0.7 }));
-  for (let lon = -180; lon <= 180; lon += 15) capaCuadricula.addLayer(L.polyline([[-85, lon], [85, lon]], { interactive: false, weight: lon === 0 ? 1.2 : 0.7 }));
-
-  construirEtiquetas();
-  construirCiudades();
-  construirCohetes();
-  aplicarEstilo();
-}
-
-function construirEtiquetas() {
-  capaEtiquetas = L.layerGroup();
-  const icono = (html, cls) => L.divIcon({ className: "", html: `<div class="et ${cls}">${html}</div>`, iconSize: [0, 0] });
-  for (const e of ETIQ_FAC) {
-    const m = L.marker([e.lat, e.lon], { icon: icono(esc(e.t).replace("\n", "<br>"), "et-faccion" + (e.peq ? " peq" : "")), interactive: false, pane: "etiquetas", keyboard: false });
-    m._z = e.z; capaEtiquetas.addLayer(m);
-  }
-  for (const t of TERR) {
-    const a = t.area;
-    let min = a > 900 ? 3 : a > 200 ? 4 : a > 40 ? 5 : a > 6 ? 6 : a > 0.8 ? 7 : 8;
-    if (t.tipo === "estado") min = Math.max(5, min);
-    if (t.n === "Estados Unidos") continue;
-    const m = L.marker(t.c, { icon: icono(esc(t.n), t.tipo === "estado" ? "et-estado" : "et-pais"), interactive: false, pane: "etiquetas", keyboard: false });
-    m._z = [min, 99]; capaEtiquetas.addLayer(m);
-  }
-}
-
-function construirCiudades() {
-  capaCiudades = L.layerGroup();
-  for (const l of LUGARES) {
-    const min = l.t === "capital" ? 2 : l.t === "serie" ? 3 : l.t === "base" ? 4 : 4;
-    const m = L.marker([l.lat, l.lon], {
-      icon: L.divIcon({ className: "", html: `<div class="ciudad ${l.t}" data-id="${l.id}"><span class="pt"></span><span class="nm">${esc(l.n)}</span></div>`, iconSize: [0, 0] }),
-      keyboard: true, title: l.n, riseOnHover: true,
-    });
-    m._z = [min, 99]; m._lugar = l;
-    m.on("click", (e) => { if (modoElegir || midiendo) return alHacerClicMapa(e); L.DomEvent.stopPropagation(e); abrirLugar(l); });
-    capaCiudades.addLayer(m); marcadoresLugar.set(l.id, m);
-  }
-}
-
-function construirCohetes() {
-  capaCohetes = L.layerGroup();
-  const porId = Object.fromEntries(LUGARES.map((l) => [l.id, l]));
-  for (const r of RUTAS_COHETE) {
-    const a = porId[r.de], b = porId[r.a];
-    for (const seg of partirAntimeridiano(granCirculo([a.lat, a.lon], [b.lat, b.lon], 96))) {
-      capaCohetes.addLayer(L.polyline(seg, { pane: "rutas", weight: 1.6, dashArray: "2 6", lineCap: "round", interactive: true }).bindTooltip(r.n, { sticky: true }));
+    g.putImageData(img, 0, 0); return c;
+  },
+  /* Parche de alta resolución bajo la cámara: costas y fronteras nítidas de cerca y en vuelo */
+  actualizarDetalle(lat, lon, alt, ahora) {
+    if (alt > 2600) { this.detMesh.visible = false; return; }
+    const hor = Math.sqrt(2 * RT * alt + alt * alt);
+    const sLat = limitar(this.enVuelo ? hor * 2.4 / 111 : alt * 2.6 / 111, 0.8, 46);
+    const d = this.det;
+    if (d && Math.abs(lat - d.lat) < d.sLat * 0.2 && Math.abs(((lon - d.lon + 540) % 360) - 180) < d.sLon * 0.2 && sLat / d.sLat > 0.62 && sLat / d.sLat < 1.6) { this.detMesh.visible = true; return; }
+    if (ahora - (this.tDet || 0) < 180) { this.sucio = true; return; }
+    this.tDet = ahora;
+    const lat0 = limitar(lat - sLat / 2, -89.9, 89.9 - sLat), lat1 = lat0 + sLat;
+    const sLon = Math.min(170, sLat / Math.max(0.18, Math.cos(rad(limitar(lat, -80, 80)))));
+    const lon0 = lon - sLon / 2, lon1 = lon + sLon / 2;
+    this.pintarDetalle(lat0, lat1, lon0, lon1);
+    this.detMesh.geometry.dispose();
+    this.detMesh.geometry = new THREE.SphereGeometry(1.00003, 64, 64, rad(lon0 + 180), rad(sLon), rad(90 - lat1), rad(sLat));
+    this.detMesh.visible = true;
+    this.det = { lat, lon, sLat, sLon };
+  },
+  pintarDetalle(lat0, lat1, lon0, lon1) {
+    const e = ESTILOS[estilo], W = this.detLienzo.width, H = W, g = this.detLienzo.getContext("2d");
+    const X = (x) => (x - lon0) / (lon1 - lon0) * W, Y = (y) => (lat1 - y) / (lat1 - lat0) * H;
+    g.globalAlpha = 1; g.setLineDash([]);
+    g.fillStyle = e.oceano; g.fillRect(0, 0, W, H);
+    const desp = [-360, 0, 360];
+    for (const t of TERR) for (const s of desp) {
+      if (t.bb[2] + s < lon0 || t.bb[0] + s > lon1 || t.bb[3] < lat0 || t.bb[1] > lat1) continue;
+      g.beginPath();
+      for (const p of poligonos(t.feat.geometry)) for (const r of p) { r.forEach(([x, y], i) => (i ? g.lineTo(X(x + s), Y(y)) : g.moveTo(X(x + s), Y(y)))); g.closePath(); }
+      g.fillStyle = e.real ? e.tierra : e.fill[t.f]; g.fill("evenodd");
     }
+    if (lat0 < -84.5) { g.fillStyle = e.real ? e.tierra : e.fill.U; g.fillRect(0, Y(-84.5), W, H); }
+    // Relieve: ruido anclado al terreno (un mosaico cada 90 km)
+    const kmPx = (lat1 - lat0) * 111 / H, esc = (140 / 256) / kmPx;
+    const pat = g.createPattern(this.ruido, "repeat");
+    pat.setTransform(new DOMMatrix().translate(X(0), Y(0)).scale(esc));
+    g.globalCompositeOperation = "soft-light"; g.globalAlpha = e.cine ? 0.34 : 0.26; g.fillStyle = pat; g.fillRect(0, 0, W, H);
+    pat.setTransform(new DOMMatrix().translate(X(0), Y(0)).rotate(37).scale(esc / 7));
+    g.globalAlpha = 0.24; g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+    // Costas y fronteras
+    const trazo = (l, s) => { g.beginPath(); l.forEach(([x, y], i) => { if (i && Math.abs(x - l[i - 1][0]) > 180) g.moveTo(X(x + s), Y(y)); else i ? g.lineTo(X(x + s), Y(y)) : g.moveTo(X(x + s), Y(y)); }); g.stroke(); };
+    g.strokeStyle = e.linea; g.globalAlpha = e.real || capas.fronteras ? 0.9 : 0.55; g.lineWidth = Math.max(1.2, W / 1400);
+    for (const a of this.arcos) for (const s of desp) { if (a.bb[2] + s < lon0 || a.bb[0] + s > lon1 || a.bb[3] < lat0 || a.bb[1] > lat1) continue; trazo(a.l, s); }
+    if (capas.frentes && !e.real) {
+      g.strokeStyle = e.frente; g.globalAlpha = 0.95; g.lineWidth = Math.max(2.5, W / 600); g.setLineDash([W / 90, W / 150]);
+      for (const l of this.arcosFrente) for (const s of desp) trazo(l, s);
+      g.setLineDash([]);
+    }
+    if (capas.cuadricula || e.cine) {
+      g.strokeStyle = e.grid; g.globalAlpha = 1; g.lineWidth = 1.5; const paso = lat1 - lat0 > 20 ? 15 : lat1 - lat0 > 6 ? 5 : 1;
+      for (let y = Math.ceil(lat0 / paso) * paso; y <= lat1; y += paso) { g.beginPath(); g.moveTo(0, Y(y)); g.lineTo(W, Y(y)); g.stroke(); }
+      for (let x = Math.ceil(lon0 / paso) * paso; x <= lon1; x += paso) { g.beginPath(); g.moveTo(X(x), 0); g.lineTo(X(x), H); g.stroke(); }
+    }
+    g.globalAlpha = 1;
+    // Bordes difuminados para que el parche se funda con el globo
+    g.globalCompositeOperation = "destination-in";
+    const borde = W * 0.12;
+    const gx = g.createLinearGradient(0, 0, W, 0); gx.addColorStop(0, "rgba(0,0,0,0)"); gx.addColorStop(borde / W, "#000"); gx.addColorStop(1 - borde / W, "#000"); gx.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gx; g.fillRect(0, 0, W, H);
+    const gy = g.createLinearGradient(0, 0, 0, H); gy.addColorStop(0, "rgba(0,0,0,0)"); gy.addColorStop(borde / H, "#000"); gy.addColorStop(1 - borde / H, "#000"); gy.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gy; g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = "source-over";
+    this.detTex.needsUpdate = true;
+  },
+  texturaNubes() {
+    const W = 1024, H = 512, c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d"), img = g.createImageData(W, H);
+    let semilla = 1962; const azar = () => ((semilla = (semilla * 16807) % 2147483647) / 2147483647);
+    const octavas = [];
+    for (let o = 0; o < 6; o++) { const gx = 6 * 2 ** o, gy = 3 * 2 ** o, tab = new Float32Array(gx * (gy + 1)); for (let i = 0; i < tab.length; i++) tab[i] = azar(); octavas.push({ gx, gy, tab, a: 0.5 ** o }); }
+    const suave = (x) => x * x * (3 - 2 * x);
+    for (let y = 0; y < H; y++) {
+      const lat = 90 - (y + 0.5) / H * 180, banda = 0.12 * Math.cos(rad(lat) * 3) + (Math.abs(lat) > 70 ? -0.1 : 0);
+      for (let x = 0; x < W; x++) {
+        let v = 0, s = 0;
+        for (const o of octavas) {
+          const fx = x / W * o.gx, fy = y / H * o.gy, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = suave(fx - x0), ty = suave(fy - y0);
+          const x1 = (x0 + 1) % o.gx, y1 = Math.min(o.gy, y0 + 1), T = o.tab, w = o.gx;
+          const a = T[y0 * w + x0] + (T[y0 * w + x1] - T[y0 * w + x0]) * tx, b = T[y1 * w + x0] + (T[y1 * w + x1] - T[y1 * w + x0]) * tx;
+          v += (a + (b - a) * ty) * o.a; s += o.a;
+        }
+        v = v / s + banda;
+        const k = limitar((v - 0.57) / 0.13, 0, 1), i = (y * W + x) * 4;
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = 255; img.data[i + 3] = k * k * 235;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    const tx = new THREE.CanvasTexture(c); tx.encoding = THREE.sRGBEncoding; return tx;
+  },
+  crearLineas(mesh, r) {
+    const pos = [];
+    for (const linea of mesh.coordinates) for (let i = 1; i < linea.length; i++) {
+      const a = linea[i - 1], b = linea[i];
+      if (Math.abs(a[0] - b[0]) > 180 || (Math.abs(a[0]) === 180 && Math.abs(b[0]) === 180)) continue;
+      const pa = this.xyz(a[1], a[0], r), pb = this.xyz(b[1], b[0], r);
+      pos.push(pa.x, pa.y, pa.z, pb.x, pb.y, pb.z);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    return new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false }));
+  },
+  arco(pts, alturaMax, r0 = 1.0008) {
+    const v = pts.map((p, i) => { const t = i / (pts.length - 1); return this.xyz(p[0], p[1], r0 + alturaMax * Math.sin(Math.PI * t)); });
+    return new THREE.BufferGeometry().setFromPoints(v);
+  },
+  construirCohetes() {
+    this.grupoCohetes.clear();
+    for (const r of RUTAS_COHETE) {
+      const a = porId[r.de], b = porId[r.a], d = distancia([a.lat, a.lon], [b.lat, b.lon]);
+      const g = this.arco(granCirculo([a.lat, a.lon], [b.lat, b.lon], 120), (r.cohete ? 0.22 : 0.08) * d / RT);
+      const l = new THREE.Line(g, new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.008, gapSize: 0.008, transparent: true, opacity: 0.85 }));
+      l.computeLineDistances(); this.grupoCohetes.add(l);
+    }
+  },
+
+  /* ---------- Textura ---------- */
+  pintar() {
+    const e = ESTILOS[estilo], W = this.W, H = W / 2, g = this.lienzo.getContext("2d");
+    const X = (lon) => (lon + 180) / 360 * W, Y = (lat) => (90 - lat) / 180 * H;
+    g.fillStyle = e.oceano; g.fillRect(0, 0, W, H);
+    if (e.cine) { // olas de tinta en el mar: degradado suave hacia los polos
+      const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "rgba(0,0,0,.28)"); gr.addColorStop(0.5, "rgba(255,255,255,.03)"); gr.addColorStop(1, "rgba(0,0,0,.28)");
+      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    }
+    const trazar = (feat, desp) => {
+      for (const p of poligonos(feat.geometry)) for (const r of p) {
+        r.forEach(([lon, lat], i) => (i ? g.lineTo(X(lon + desp), Y(lat)) : g.moveTo(X(lon + desp), Y(lat))));
+        g.closePath();
+      }
+    };
+    const desplazamientos = (t) => [0, ...(t.bb[2] > 180 ? [-360] : []), ...(t.bb[0] < -180 ? [360] : [])];
+    const brillo = this.lienzoBrillo.getContext("2d"), kb = 2048 / W;
+    brillo.fillStyle = "#fff"; brillo.fillRect(0, 0, 2048, 1024); brillo.fillStyle = "#000";
+    for (const t of TERR) {
+      const fill = e.real ? e.tierra : e.fill[t.f];
+      g.beginPath(); desplazamientos(t).forEach((d) => trazar(t.feat, d)); g.fillStyle = fill; g.fill("evenodd");
+      if (e.real || capas.fronteras) { g.lineWidth = W / 8192 * (t.tipo === "estado" ? 1 : 1.6); g.strokeStyle = e.real ? e.lineaReal : e.stroke[t.f]; g.stroke(); }
+      brillo.save(); brillo.scale(kb, kb); brillo.beginPath(); desplazamientos(t).forEach((d) => {
+        for (const p of poligonos(t.feat.geometry)) for (const r of p) { r.forEach(([lon, lat], i) => (i ? brillo.lineTo(X(lon + d), Y(lat)) : brillo.moveTo(X(lon + d), Y(lat)))); brillo.closePath(); }
+      }); brillo.fill("evenodd"); brillo.lineWidth = 3 / kb; brillo.strokeStyle = "#000"; brillo.stroke(); brillo.restore();
+    }
+    { // suaviza la máscara de brillo en una sola pasada (evita dientes de sierra en la costa)
+      const tmp = document.createElement("canvas"); tmp.width = 1024; tmp.height = 512; const tg = tmp.getContext("2d");
+      tg.drawImage(this.lienzoBrillo, 0, 0, 1024, 512); brillo.imageSmoothingQuality = "high"; brillo.drawImage(tmp, 0, 0, 2048, 1024);
+    }
+    // Antártida: el anillo rodea el polo y se cierra por abajo
+    g.fillStyle = e.real ? e.tierra : e.fill.U; g.fillRect(0, Y(-84.5), W, H - Y(-84.5));
+    // Frentes pintados con grosor (las líneas 3D son finas)
+    if (capas.frentes && !e.real) {
+      const mf = topojson.mesh(DATOS.mundo, DATOS.mundo.objects.countries, (a, b) => a !== b && a.properties.f !== b.properties.f);
+      const mu = topojson.mesh(DATOS.eeuu, DATOS.eeuu.objects.states, (a, b) => a !== b && a.properties.f !== b.properties.f);
+      g.strokeStyle = e.frente; g.globalAlpha = 0.85; g.lineWidth = W / 8192 * 4; g.setLineDash([W / 8192 * 10, W / 8192 * 7]);
+      for (const m of [mf, mu]) for (const l of m.coordinates) { g.beginPath(); l.forEach(([lon, lat], i) => { if (i && Math.abs(lon - l[i - 1][0]) > 180) g.moveTo(X(lon), Y(lat)); else i ? g.lineTo(X(lon), Y(lat)) : g.moveTo(X(lon), Y(lat)); }); g.stroke(); }
+      g.setLineDash([]); g.globalAlpha = 1;
+    }
+    if (capas.cuadricula || e.cine) {
+      g.strokeStyle = e.grid; g.lineWidth = W / 8192 * (capas.cuadricula ? 2 : 1.2);
+      for (let lat = -75; lat <= 75; lat += 15) { g.beginPath(); g.moveTo(0, Y(lat)); g.lineTo(W, Y(lat)); g.stroke(); }
+      for (let lon = -180; lon <= 180; lon += 15) { g.beginPath(); g.moveTo(X(lon), 0); g.lineTo(X(lon), H); g.stroke(); }
+    }
+    if (e.cine) { // grano de papel impreso
+      const t = document.createElement("canvas"); t.width = t.height = 256; const tg = t.getContext("2d"), d = tg.createImageData(256, 256);
+      for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() < 0.5 ? 0 : 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = Math.random() * 9; }
+      tg.putImageData(d, 0, 0); g.fillStyle = g.createPattern(t, "repeat"); g.fillRect(0, 0, W, H);
+    }
+    this.tex.needsUpdate = true; this.texBrillo.needsUpdate = true; this.det = null;
+    // Colores de líneas
+    const lin = new THREE.Color(e.linea);
+    this.lineas.material.color.copy(lin); this.lineasEEUU.material.color.copy(lin);
+    this.faros && this.faros.children.forEach((m) => m.material.color.set(e.cine || estilo === "noche" ? 0xf2b54a : 0xc0392b));
+    this.frentes.material.color.set(e.frente); this.frentes.visible = capas.frentes && !e.real;
+    this.grupoCohetes.children.forEach((l) => l.material.color.set(e.frente)); this.grupoCohetes.visible = capas.cohetes && !e.real;
+    this.mat.specular.set(e.cine || estilo === "noche" ? 0x3a4048 : 0x222222);
+    this.sucio = true;
+  },
+  aplicarEstilo() { if (this.listo) { this.pintar(); this.etqFaccionVisibles(); } },
+
+  /* ---------- Etiquetas HTML proyectadas ---------- */
+  construirEtiquetas() {
+    const cont = $("#etq3d"); cont.innerHTML = ""; this.etq = [];
+    const nueva = (html, lat, lon, pri, z, extra = {}) => {
+      const el = document.createElement("div"); el.className = "l3"; el.innerHTML = html; el.style.display = "none"; cont.appendChild(el);
+      const o = { el, v: this.xyz(lat, lon, 1.0006), pri, z, vis: false, w: 0, h: 0, ...extra }; this.etq.push(o); return o;
+    };
+    for (const e of ETIQ_FAC) nueva(`<div class="et et-faccion${e.peq ? " peq" : ""}">${esc(e.t).replace("\n", "<br>")}</div>`, e.lat, e.lon, 100, e.z, { fac: true, centrado: true });
+    for (const l of LUGARES) {
+      const o = nueva(htmlCiudad(l), l.lat, l.lon, l.t === "capital" ? 90 : l.t === "serie" ? 85 : 70, [zCiudad(l), 99], { ciudad: l, vAlto: this.xyz(l.lat, l.lon, 1 + (l.t === "ciudad" ? 2 : 30) / RT) });
+      o.dist = document.createElement("span"); o.dist.className = "dist"; o.el.firstChild.appendChild(o.dist);
+      o.el.firstChild.addEventListener("click", (ev) => { ev.stopPropagation(); if (modoElegir || midiendo) { this.alClicPantalla(ev.clientX, ev.clientY); return; } abrirLugar(l); });
+    }
+    for (const t of TERR) {
+      if (t.n === "Estados Unidos") continue;
+      nueva(`<div class="et ${t.tipo === "estado" ? "et-estado" : "et-pais"}">${esc(t.n)}</div>`, t.c[0], t.c[1], 40 + Math.min(20, Math.log(1 + t.area) * 3), [t.zmin - 0.5, 99], { pais: true, centrado: true });
+    }
+    this.etq.sort((a, b) => b.pri - a.pri);
+    this.etqPin = nueva(`<div class="pin"><svg viewBox="0 0 30 40"><path d="M15 0C6.7 0 0 6.6 0 14.8 0 26 15 40 15 40s15-14 15-25.2C30 6.6 23.3 0 15 0z" fill="#c0392b"/><circle cx="15" cy="14.5" r="5.5" fill="#6e1a12"/></svg></div>`, 0, 0, 200, [-99, 99], { especial: true, oculto: true });
+    this.etqFin = [nueva(`<div class="fin-ruta" style="background:#333"></div>`, 0, 0, 199, [-99, 99], { especial: true, oculto: true }), nueva(`<div class="fin-ruta" style="background:#c0392b"></div>`, 0, 0, 199, [-99, 99], { especial: true, oculto: true })];
+    this.etqMedida = [];
+    this.etq.sort((a, b) => b.pri - a.pri);
+    aplicarResaltado();
+  },
+  sobreHorizonte(p, c) {
+    // ¿la línea entre la cámara y el punto pasa por encima de la superficie?
+    const d = p.clone().sub(c), t = limitar(-c.dot(d) / d.lengthSq(), 0, 1);
+    return c.clone().addScaledVector(d, t).length() > 1.0;
+  },
+  etqFaccionVisibles() { const real = ESTILOS[estilo].real; this.etq.forEach((o) => { if (o.fac) o.apagada = real; }); this.sucio = true; },
+  actualizarEtiquetas() {
+    const cam = this.camera, cp = cam.position, W = innerWidth, H = innerHeight;
+    const alt = this.enVuelo ? FP.alt : this.altCamara(), z = this.enVuelo ? 7.5 : zoomDeAlt(alt);
+    const ocupados = [], v = new THREE.Vector3(), cpl2 = cp.lengthSq();
+    for (const o of this.etq) {
+      let mostrar = !o.oculto && !o.apagada;
+      if (mostrar && !o.especial) {
+        if (o.ciudad && !capas.ciudades) mostrar = false;
+        if ((o.fac || o.pais) && !capas.etiquetas) mostrar = false;
+        if (z < o.z[0] || z > o.z[1]) mostrar = false;
+        if (this.enVuelo && o.fac) mostrar = false;
+      }
+      let x = 0, y = 0;
+      const pv = this.enVuelo && o.vAlto ? o.vAlto : o.v;
+      if (mostrar) {
+        // visible si está por encima del horizonte visto desde la cámara
+        if ((this.enVuelo && o.vAlto ? !this.sobreHorizonte(pv, cp) : pv.dot(cp) <= pv.lengthSq() + 1e-6) || cpl2 < 1) mostrar = false;
+        else {
+          v.copy(pv).project(cam);
+          if (v.z > 1 || v.x < -1.2 || v.x > 1.2 || v.y < -1.2 || v.y > 1.2) mostrar = false;
+          x = (v.x + 1) / 2 * W; y = (1 - v.y) / 2 * H;
+          if (this.enVuelo && o.ciudad) { const d = o.v.distanceTo(cp) * RT; if (d > 2600) mostrar = false; else if (o.vis || mostrar) { const txt = " · " + fmtKm(d); if (o.dist.textContent !== txt) { o.dist.textContent = txt; o.w = 0; } } }
+          else if (o.dist && o.dist.textContent) { o.dist.textContent = ""; o.w = 0; }
+        }
+      }
+      if (mostrar && !o.especial) {
+        if (!o.w) { o.el.style.display = ""; o.w = o.el.firstChild.offsetWidth || 60; o.h = o.el.firstChild.offsetHeight || 14; o.el.style.display = "none"; o.vis = false; }
+        const r = o.centrado ? [x - o.w / 2, y - o.h / 2, x + o.w / 2, y + o.h / 2] : [x - 8, y - o.h / 2, x + o.w, y + o.h / 2];
+        if (ocupados.some((q) => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) mostrar = false;
+        else ocupados.push([r[0] - 4, r[1] - 2, r[2] + 4, r[3] + 2]);
+      }
+      if (mostrar !== o.vis) { o.el.style.display = mostrar ? "" : "none"; o.vis = mostrar; }
+      if (mostrar) o.el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;
+    }
+  },
+
+  /* ---------- Cámara ---------- */
+  inclinacion() {
+    if (!this.st.inclinar) return 0;
+    const a = this.st.alt, base = a >= 3500 ? 0 : a <= 250 ? 58 : 58 * (1 - (Math.log(a) - Math.log(250)) / (Math.log(3500) - Math.log(250)));
+    return limitar(base + this.st.inclExtra, 0, 72);
+  },
+  altCamara() { return (this.camera.position.length() - 1) * RT; },
+  colocarCamara() {
+    const s = this.st, cam = this.camera;
+    const { n, e, u } = this.marco(s.lat, s.lon), h = rad(s.rumbo);
+    const f = u.clone().multiplyScalar(Math.cos(h)).addScaledVector(e, Math.sin(h));
+    const t = rad(this.inclinacion()), d = s.alt / RT;
+    const P = n.clone();
+    const dir = n.clone().multiplyScalar(Math.cos(t)).addScaledVector(f, -Math.sin(t));
+    cam.position.copy(P).addScaledVector(dir, d);
+    cam.up.copy(f.clone().multiplyScalar(Math.cos(t)).addScaledVector(n, Math.sin(t)));
+    cam.lookAt(P);
+  },
+  colocarLuz() {
+    if (capas.sol && !this.enVuelo) {
+      const ahora = new Date(), inicio = Date.UTC(ahora.getUTCFullYear(), 0, 0), dia = (ahora - inicio) / 864e5;
+      const decl = -23.44 * Math.cos(2 * Math.PI / 365 * (dia + 10));
+      const horas = ahora.getUTCHours() + ahora.getUTCMinutes() / 60;
+      this.luz.position.copy(this.xyz(decl, normLon(-15 * (horas - 12)), 10)); this.amb.intensity = 0.16;
+    } else {
+      const c = this.camera, der = new THREE.Vector3().crossVectors(c.up, c.position).normalize();
+      this.luz.position.copy(c.position).normalize().multiplyScalar(10).addScaledVector(c.up, 5).addScaledVector(der, 5);
+      this.amb.intensity = this.enVuelo ? 0.34 : 0.42; this.luz.intensity = this.enVuelo ? 0.82 : 1.1;
+    }
+  },
+  ajustarOffset() {
+    const abierto = !$("#panel").hidden && !document.body.classList.contains("en-vuelo");
+    const tx = abierto && !esMovil() ? -204 : 0, ty = abierto && esMovil() ? innerHeight * 0.26 : 0;
+    const o = this.offset, dx = tx - o.x, dy = ty - o.y;
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) { if (o.x === tx && o.y === ty) return false; o.x = tx; o.y = ty; }
+    else { o.x += dx * 0.22; o.y += dy * 0.22; }
+    if (o.x === 0 && o.y === 0) this.camera.clearViewOffset();
+    else this.camera.setViewOffset(innerWidth, innerHeight, o.x, o.y, innerWidth, innerHeight);
+    return true;
+  },
+
+  tick(tms) {
+    const dt = Math.min(0.05, (tms - (this.tAnt || tms)) / 1000); this.tAnt = tms;
+    if (this.oculta) return;
+    let mov = false;
+    if (this.enVuelo) { FP.tick(dt); mov = true; }
+    else {
+      if (this.anim) { this.pasoAnim(tms); mov = true; }
+      else if (!this.arrastre && (Math.abs(this.vel.lat) > 1e-4 || Math.abs(this.vel.lon) > 1e-4)) {
+        this.st.lat = limitar(this.st.lat + this.vel.lat * dt * 60, -85, 85); this.st.lon = normLon(this.st.lon + this.vel.lon * dt * 60);
+        this.vel.lat *= 0.9; this.vel.lon *= 0.9; mov = true;
+      }
+    }
+    if (this.ajustarOffset()) mov = true;
+    if (!mov && !this.sucio) return;
+    this.sucio = false;
+    if (!this.enVuelo) this.colocarCamara();
+    this.colocarLuz();
+    const alt = this.enVuelo ? FP.alt : this.altCamara();
+    if (this.enVuelo) this.actualizarDetalle(FP.lat, FP.lon, alt, tms);
+    else { const c = this.pick(innerWidth / 2 + this.offset.x * -1, innerHeight / 2 - this.offset.y) || [this.st.lat, this.st.lon]; this.actualizarDetalle(c[0], c[1], alt, tms); }
+    // Líneas: más visibles de cerca
+    const k = limitar(1 - Math.log10(Math.max(alt, 50) / 300) / 2.2, 0.15, 1);
+    this.lineas.material.opacity = (ESTILOS[estilo].real || capas.fronteras ? 0.95 : 0.6) * (0.35 + 0.65 * k);
+    this.lineasEEUU.material.opacity = (capas.fronteras || ESTILOS[estilo].real ? 0.8 : 0.3) * k;
+    this.lineasEEUU.visible = alt < 7000 || capas.fronteras;
+    this.frentes.material.opacity = 0.95;
+    // Cielo en vuelo bajo, espacio desde lejos
+    const enAire = this.enVuelo && alt < 160;
+    const mezcla = this.enVuelo ? limitar((alt - 40) / 120, 0, 1) : 1;
+    const fondo = $("#globo");
+    if (this.enVuelo) {
+      const base = new THREE.Color(ESTILOS[estilo].cielo), espacio = new THREE.Color(0x02040a);
+      const horizonte = base.clone().lerp(new THREE.Color(0xffffff), 0.18).lerp(espacio, mezcla * 0.85);
+      const cenit = base.clone().lerp(new THREE.Color(0x24384a), 0.55).lerp(espacio, Math.min(1, mezcla * 1.3));
+      const hor = Math.sqrt(2 * RT * alt + alt * alt);
+      if (!this.scene.fog) this.scene.fog = new THREE.Fog(horizonte, 0.01, 1);
+      this.scene.fog.color.copy(horizonte); this.scene.fog.near = hor * 0.3 / RT; this.scene.fog.far = (hor * 1.15 + 60) / RT;
+      // altura del horizonte en pantalla para colocar el degradado del cielo
+      const { n } = this.marco(FP.lat, FP.lon), cp = this.camera.position, ang = Math.acos(1 / cp.length());
+      const dirH = new THREE.Vector3(); this.camera.getWorldDirection(dirH); dirH.addScaledVector(n, -dirH.dot(n)).normalize();
+      const ph = n.clone().multiplyScalar(Math.cos(ang)).addScaledVector(dirH, Math.sin(ang)).project(this.camera);
+      const yh = limitar((1 - ph.y) / 2 * 100, -50, 150);
+      fondo.style.background = `linear-gradient(to bottom, #${cenit.getHexString()} ${(yh - 60).toFixed(1)}%, #${horizonte.getHexString()} ${yh.toFixed(1)}%, #${horizonte.getHexString()} 100%)`;
+    } else { this.scene.fog = null; if (fondo.style.background) fondo.style.background = ""; }
+    this.estrellas.visible = !enAire || mezcla > 0.6;
+    this.atmos.visible = !this.enVuelo || alt > 90;
+    this.nubes.visible = capas.nubes && (this.enVuelo || alt > 1500);
+    this.nubes.material.opacity = this.enVuelo ? 0.92 : limitar((alt - 1500) / 6000, 0, 1) * 0.32;
+    if (this.enVuelo) this.nubes.rotation.y += dt * 0.0015;
+    this.faros.visible = capas.ciudades && (this.enVuelo || alt < 900);
+    this.renderer.render(this.scene, this.camera);
+    this.actualizarEtiquetas();
+    $("#brujula svg").style.transform = `rotate(${-this.st.rumbo}deg)`;
+  },
+
+  /* ---------- Animación de vuelo de cámara ---------- */
+  volarHacia(lat, lon, alt, { rumbo = this.st.rumbo, dur } = {}) {
+    const s = this.st, a = this.xyz(s.lat, s.lon).normalize(), b = this.xyz(lat, lon).normalize();
+    const ang = Math.acos(limitar(a.dot(b), -1, 1)), km = ang * RT;
+    const salto = Math.min(km * 0.7, 12000);
+    this.vel = { lat: 0, lon: 0 };
+    this.anim = { a, b, ang, alt0: s.alt, alt1: limitar(alt, 0.5, 42000), salto: Math.max(0, salto - Math.max(s.alt, alt) * 0.5), r0: s.rumbo, r1: rumbo, incl0: s.inclExtra,
+      t0: performance.now(), dur: dur || limitar(700 + km * 0.12, 800, 2600) };
+  },
+  pasoAnim(t) {
+    const A = this.anim, k = limitar((t - A.t0) / A.dur, 0, 1), e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+    let p;
+    if (A.ang < 1e-6) p = A.b.clone();
+    else { const s = Math.sin(A.ang); p = A.a.clone().multiplyScalar(Math.sin((1 - e) * A.ang) / s).addScaledVector(A.b, Math.sin(e * A.ang) / s); }
+    [this.st.lat, this.st.lon] = this.latlon(p);
+    this.st.lat = limitar(this.st.lat, -85, 85);
+    this.st.alt = Math.exp(Math.log(A.alt0) + (Math.log(A.alt1) - Math.log(A.alt0)) * e) + A.salto * Math.sin(Math.PI * e);
+    let dr = ((A.r1 - A.r0 + 540) % 360) - 180; this.st.rumbo = (A.r0 + dr * e + 360) % 360;
+    this.st.inclExtra = A.incl0 * (1 - e);
+    if (k >= 1) this.anim = null;
+  },
+  volarA(lat, lon, z) { this.volarHacia(lat, lon, Math.min(this.st.alt, altDeZoom(z))); },
+  encuadrar(pts, { maxZoom = 7 } = {}) {
+    const vs = pts.map((p) => this.xyz(p[0], p[1]).normalize());
+    const c = vs.reduce((a, v) => a.add(v), new THREE.Vector3()).normalize();
+    const ang = Math.max(...vs.map((v) => Math.acos(limitar(v.dot(c), -1, 1))));
+    const [lat, lon] = this.latlon(c);
+    const alt = limitar(ang * RT * 2.6 * (esMovil() ? 1.5 : 1.15), altDeZoom(maxZoom), 26000);
+    this.volarHacia(lat, lon, alt);
+  },
+  centro() { return { lat: this.st.lat, lon: this.st.lon, z: zoomDeAlt(this.st.alt) }; },
+  irA(c) { this.st.lat = limitar(c.lat, -85, 85); this.st.lon = c.lon; this.st.alt = altDeZoom(c.z); this.sucio = true; },
+  zoom(f) { this.volarHacia(this.st.lat, this.st.lon, limitar(this.st.alt * f, 0.5, 42000), { dur: 450 }); },
+  verMundo() { this.volarHacia(this.st.lat > 60 || this.st.lat < -60 ? 30 : this.st.lat, this.st.lon, 26000); },
+  norte() { this.volarHacia(this.st.lat, this.st.lon, this.st.alt, { rumbo: 0, dur: 600 }); this.st.inclExtra = 0; },
+
+  /* ---------- Escena: ruta, pin, medida ---------- */
+  dibujarRuta() {
+    if (!this.listo) return;
+    this.grupoRuta.clear(); this.etqFin.forEach((o) => (o.oculto = true));
+    const r = escena.ruta; this.sucio = true; if (!r) return;
+    const d = distancia(r.pts[0], r.pts[r.pts.length - 1]);
+    const alto = r.aire ? (r.modo === "cohete" ? 0.24 : 0.07) * d / RT : 0;
+    const g = this.arco(r.pts, alto, 1.0012);
+    this.grupoRuta.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: r.aire ? new THREE.Color(ESTILOS[estilo].frente) : 0x3d8bff, linewidth: 2 })));
+    const g2 = this.arco(r.pts, alto, 1.0016);
+    this.grupoRuta.add(new THREE.Line(g2, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 })));
+    [r.pts[0], r.pts[r.pts.length - 1]].forEach((p, i) => { this.etqFin[i].v = this.xyz(p[0], p[1], 1.001); this.etqFin[i].oculto = false; });
+  },
+  dibujarPin() { if (!this.listo) return; const p = escena.pin; this.etqPin.oculto = !p; if (p) this.etqPin.v = this.xyz(p[0], p[1], 1.0008); this.sucio = true; },
+  dibujarMedida() {
+    if (!this.listo) return;
+    this.grupoMedida.clear(); this.etqMedida.forEach((o) => { o.el.remove(); this.etq.splice(this.etq.indexOf(o), 1); }); this.etqMedida = [];
+    const pts = escena.medida;
+    for (let i = 1; i < pts.length; i++) this.grupoMedida.add(new THREE.Line(this.arco(granCirculo(pts[i - 1], pts[i], 64), 0, 1.0012), new THREE.LineBasicMaterial({ color: 0xffffff })));
+    for (const p of pts) {
+      const el = document.createElement("div"); el.className = "l3"; el.innerHTML = `<div class="punto-medida"></div>`; $("#etq3d").appendChild(el);
+      const o = { el, v: this.xyz(p[0], p[1], 1.001), pri: 198, z: [-99, 99], especial: true, vis: true }; this.etq.unshift(o); this.etqMedida.push(o);
+    }
+    this.sucio = true;
+  },
+  redibujar() { this.dibujarRuta(); this.dibujarPin(); this.dibujarMedida(); aplicarResaltado(); },
+
+  /* ---------- Entrada ---------- */
+  pick(x, y) {
+    const ndc = new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1);
+    const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, this.camera);
+    const o = ray.ray.origin, d = ray.ray.direction, b = o.dot(d), c = o.lengthSq() - 1, disc = b * b - c;
+    if (disc < 0) return null; const t = -b - Math.sqrt(disc); if (t < 0) return null;
+    return this.latlon(o.clone().addScaledVector(d, t));
+  },
+  alClicPantalla(x, y) { const p = this.pick(x, y); if (p) alClic(p[0], p[1]); },
+  conectarEventos() {
+    const el = this.renderer.domElement, punteros = new Map();
+    let ini = null, pinch = null, pulsacionLarga = null;
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+    el.addEventListener("pointerdown", (e) => {
+      if (this.enVuelo) return FP.pointerDown(e);
+      el.setPointerCapture(e.pointerId); punteros.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      this.anim = null; this.vel = { lat: 0, lon: 0 }; cerrarMenuCtx();
+      if (punteros.size === 1) {
+        ini = { x: e.clientX, y: e.clientY, t: performance.now(), boton: e.button, mod: e.shiftKey || e.ctrlKey || e.button === 2, movido: false, ult: { x: e.clientX, y: e.clientY, t: performance.now() } };
+        clearTimeout(pulsacionLarga);
+        if (e.pointerType === "touch") pulsacionLarga = setTimeout(() => { if (ini && !ini.movido) { const p = this.pick(ini.x, ini.y); if (p) abrirMenuCtx(p[0], p[1], ini.x, ini.y); ini = null; } }, 600);
+      } else if (punteros.size === 2) {
+        clearTimeout(pulsacionLarga); ini = null;
+        const [a, b] = [...punteros.values()];
+        pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x), alt: this.st.alt, rumbo: this.st.rumbo, my: (a.y + b.y) / 2, incl: this.st.inclExtra };
+      }
+      $("#globo").classList.add("arrastrando"); this.arrastre = true;
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (this.enVuelo) return FP.pointerMove(e);
+      if (!punteros.has(e.pointerId)) { const p = this.pick(e.clientX, e.clientY); if (p) alMover(p[0], p[1]); return; }
+      const prev = punteros.get(e.pointerId); punteros.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (punteros.size === 2 && pinch) {
+        const [a, b] = [...punteros.values()], d = Math.hypot(a.x - b.x, a.y - b.y), ang = Math.atan2(b.y - a.y, b.x - a.x);
+        this.st.alt = limitar(pinch.alt * pinch.d / d, 0.5, 42000);
+        this.st.rumbo = (pinch.rumbo - grados(ang - pinch.ang) + 360) % 360;
+        this.st.inclExtra = limitar(pinch.incl + ((a.y + b.y) / 2 - pinch.my) * -0.25, -60, 40);
+        this.sucio = true; return;
+      }
+      if (!ini) return;
+      const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+      if (Math.hypot(e.clientX - ini.x, e.clientY - ini.y) > 4) ini.movido = true;
+      if (ini.mod) { this.st.rumbo = (this.st.rumbo - dx * 0.3 + 360) % 360; this.st.inclExtra = limitar(this.st.inclExtra - dy * 0.25, -60, 40); this.sucio = true; return; }
+      const k = Math.min(0.6, this.st.alt * Math.tan(rad(22.5)) / (innerHeight / 2) / 111.2) * (1 + this.inclinacion() / 90);
+      const h = rad(this.st.rumbo), norte = k * (dx * Math.sin(h) + dy * Math.cos(h)), este = k * (-dx * Math.cos(h) + dy * Math.sin(h));
+      const dlat = norte, dlon = este / Math.max(0.15, Math.cos(rad(this.st.lat)));
+      this.st.lat = limitar(this.st.lat + dlat, -85, 85); this.st.lon = normLon(this.st.lon + dlon);
+      const ahora = performance.now(), dtt = Math.max(1, ahora - ini.ult.t);
+      this.vel = { lat: dlat * 16 / dtt, lon: dlon * 16 / dtt }; ini.ult = { x: e.clientX, y: e.clientY, t: ahora };
+      this.sucio = true;
+    });
+    const fin = (e) => {
+      if (this.enVuelo) return FP.pointerUp(e);
+      clearTimeout(pulsacionLarga);
+      punteros.delete(e.pointerId);
+      if (punteros.size < 2) pinch = null;
+      if (punteros.size === 0) {
+        $("#globo").classList.remove("arrastrando"); this.arrastre = false;
+        if (ini && performance.now() - ini.ult.t > 80) this.vel = { lat: 0, lon: 0 };
+        if (ini && !ini.movido && e.type === "pointerup") {
+          const p = this.pick(e.clientX, e.clientY);
+          if (ini.boton === 2) { if (p) abrirMenuCtx(p[0], p[1], e.clientX, e.clientY); }
+          else if (p) alClic(p[0], p[1]); else alClic(null, null);
+        }
+        ini = null;
+      }
+    };
+    el.addEventListener("pointerup", fin); el.addEventListener("pointercancel", fin);
+    el.addEventListener("wheel", (e) => { e.preventDefault(); if (this.enVuelo) return; this.anim = null; this.st.alt = limitar(this.st.alt * Math.exp(e.deltaY * (e.deltaMode ? 0.05 : 0.0016)), 0.5, 42000); this.sucio = true; }, { passive: false });
+    el.addEventListener("dblclick", (e) => { if (this.enVuelo) return; const p = this.pick(e.clientX, e.clientY); if (p) this.volarHacia(p[0], p[1], this.st.alt / 2.5, { dur: 600 }); });
+  },
+  redimensionar() {
+    if (!this.listo) return;
+    this.renderer.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight;
+    if (this.offset.x || this.offset.y) this.camera.setViewOffset(innerWidth, innerHeight, this.offset.x, this.offset.y, innerWidth, innerHeight);
+    this.camera.updateProjectionMatrix(); this.etq.forEach((o) => (o.w = 0)); this.sucio = true;
+  },
+  mostrar(on) { $("#globo").hidden = !on; $("#etq3d").hidden = !on; this.oculta = !on; this.sucio = true; if (on) this.redimensionar(); },
+};
+
+/* ================================================================
+   PRIMERA PERSONA — vuelo libre y viajes en cohete, avión, tren o coche
+   ================================================================ */
+const VELOCIDADES = [250, 600, 900, 2000, 4500, 9000, 20000, 45000];
+const FP = {
+  lat: 0, lon: 0, alt: 11, rumbo: 0, cabeceo: -9, iv: 4, mandos: {}, teclas: {}, piloto: null, facAnt: null, tTerr: 0,
+  get vel() { return VELOCIDADES[this.iv]; },
+  entrar({ lat, lon, alt = 11, rumbo = null, piloto = null } = {}) {
+    if (typeof THREE === "undefined" || !webglDisponible()) { aviso("Tu navegador no puede mostrar el vuelo en 3D."); return; }
+    if (vista !== "3d") cambiarVista("3d");
+    if (lat == null) { lat = V3.st.lat; lon = V3.st.lon; }
+    this.lat = lat; this.lon = lon; this.alt = alt; this.rumbo = rumbo == null ? V3.st.rumbo : rumbo; this.cabeceo = piloto ? -10 : -9; this.piloto = piloto; this.facAnt = null; this.tTerr = 0;
+    V3.enVuelo = true; V3.anim = null; document.body.classList.add("en-vuelo"); cerrarMenuCtx(); $("#capas").hidden = true;
+    if (midiendo) alternarMedir(false);
+    $("#hud").hidden = false; $("#hud-viaje").hidden = !piloto; $("#mandos").hidden = !!piloto; $("#ayuda-vuelo").hidden = !!piloto;
+    V3.camera.fov = 62; V3.camera.updateProjectionMatrix(); V3.offset = { x: 0, y: 0 }; V3.camera.clearViewOffset();
+    this.construirCinta(); this.actualizarHud(true);
+  },
+  salir(llegada) {
+    V3.enVuelo = false; this.piloto = null; document.body.classList.remove("en-vuelo"); $("#hud").hidden = true;
+    V3.camera.fov = 45; V3.camera.updateProjectionMatrix(); V3.scene.fog = null; V3.scene.background = null;
+    V3.st.lat = limitar(this.lat, -85, 85); V3.st.lon = this.lon; V3.st.rumbo = this.rumbo; V3.st.alt = Math.max(60, this.alt * 6); V3.st.inclExtra = 0;
+    V3.volarHacia(this.lat, this.lon, 900, { rumbo: this.rumbo, dur: 1400 });
+    V3.sucio = true;
+    if (llegada && llegada.lugar) setTimeout(() => abrirLugar(llegada.lugar, { volar: false }), 600);
+  },
+  tick(dt) {
+    const p = this.piloto;
+    if (p) {
+      const k = limitar((performance.now() - p.t0) / 1000 / p.dur, 0, 1);
+      const f = k * (p.pts.length - 1), i = Math.min(p.pts.length - 2, Math.floor(f)), r = f - i;
+      const a = p.pts[i], b = p.pts[i + 1];
+      this.lat = a[0] + (b[0] - a[0]) * r; this.lon = Math.abs(b[1] - a[1]) > 180 ? a[1] : a[1] + (b[1] - a[1]) * r;
+      const delante = p.pts[Math.min(p.pts.length - 1, i + 3)];
+      const objetivo = rumboEntre([this.lat, this.lon], delante); let dr = ((objetivo - this.rumbo + 540) % 360) - 180; this.rumbo = (this.rumbo + dr * Math.min(1, dt * 3) + 360) % 360;
+      this.alt = p.perfil(k); this.cabeceo = p.cabeceo(k);
+      $("#hud-barra i").style.width = (k * 100).toFixed(1) + "%";
+      $("#hud-viaje-s").textContent = `${Math.round(k * 100)} % · ${fmtKm(p.km * (1 - k))} restantes`;
+      this.velMostrada = p.velMostrada(k);
+      if (k >= 1) { aviso(`Has llegado a ${p.destino.n}`); this.salir({ lugar: p.destino.lugar }); return; }
+    } else {
+      const m = this.mandos, t = this.teclas;
+      const giro = (m.der || t.der ? 1 : 0) - (m.izq || t.izq ? 1 : 0);
+      const subir = (m.subir || t.subir ? 1 : 0) - (m.bajar || t.bajar ? 1 : 0);
+      this.rumbo = (this.rumbo + giro * 38 * dt + 360) % 360;
+      this.alt = limitar(this.alt + subir * Math.max(2, this.alt * 0.9) * dt, 2.5, 1200);
+      const km = this.vel / 3600 * dt * 60; // un segundo de pantalla = un minuto de vuelo
+      if (km > 1e-6) {
+        const [la, lo] = destino(this.lat, this.lon, this.rumbo, km);
+        const vuelta = rumboEntre([la, lo], [this.lat, this.lon]);   // el rumbo cambia al seguir el círculo máximo
+        if (isFinite(vuelta) && Math.abs(la) < 88) this.rumbo = (vuelta + 180) % 360;
+        this.lat = limitar(la, -88, 88); this.lon = lo;
+      }
+      this.velMostrada = this.vel;
+    }
+    this.colocar();
+    this.tTerr -= dt; if (this.tTerr <= 0) { this.tTerr = 0.35; this.actualizarHud(); }
+    this.actualizarRumbo();
+  },
+  colocar() {
+    const cam = V3.camera, P = V3.xyz(this.lat, this.lon, 1 + this.alt / RT), { n, e, u } = V3.marco(this.lat, this.lon), h = rad(this.rumbo), c = rad(this.cabeceo);
+    const f = u.clone().multiplyScalar(Math.cos(h)).addScaledVector(e, Math.sin(h));
+    const mira = f.clone().multiplyScalar(Math.cos(c)).addScaledVector(n, Math.sin(c));
+    cam.position.copy(P); cam.up.copy(n); cam.lookAt(P.clone().add(mira));
+  },
+  construirCinta() {
+    const c = $("#hud-cinta"); let html = "";
+    const nombres = { 0: "N", 45: "NE", 90: "E", 135: "SE", 180: "S", 225: "SO", 270: "O", 315: "NO" };
+    for (let v = -360; v <= 720; v += 15) { const g = (v + 360) % 360; html += `<span class="${nombres[g] ? "mayor" : ""}">${nombres[g] || (g % 30 === 0 ? g : "·")}</span>`; }
+    c.innerHTML = html;
+  },
+  actualizarRumbo() {
+    const px = 30 / 15; // 30 px cada 15°
+    $("#hud-cinta").style.transform = `translateX(${-(this.rumbo + 360) * px - 15}px)`;
+    $("#hud-grados").textContent = String(Math.round(this.rumbo) % 360).padStart(3, "0") + "°";
+    $("#hud-vel-v").textContent = Math.round(this.velMostrada || this.vel).toLocaleString("es-ES");
+    $("#hud-alt-v").textContent = this.alt < 100 ? this.alt.toFixed(1).replace(".", ",") : Math.round(this.alt).toLocaleString("es-ES");
+  },
+  actualizarHud(forzar) {
+    const t = territorioEn(this.lat, this.lon), f = t ? t.f : "mar";
+    $("#hud-sobre-t").textContent = t ? FACCIONES[t.f].n : "Aguas internacionales";
+    $("#hud-sobre-s").textContent = t ? `${t.n} · ${fmtCoord(this.lat, this.lon)}` : fmtCoord(this.lat, this.lon);
+    if (f !== this.facAnt) {
+      if (this.facAnt !== null || forzar) {
+        $("#hud-entrada-s").textContent = t ? (t.f === "X" ? "Entrando en territorio neutral" : "Entrando en espacio aéreo de") : "Saliendo a";
+        $("#hud-entrada-t").textContent = t ? (t.f === "X" ? t.n : FACCIONES[t.f].n) : "Aguas internacionales";
+        const el = $("#hud-entrada"); el.style.opacity = 1; clearTimeout(this.tEntrada); this.tEntrada = setTimeout(() => (el.style.opacity = 0), 2600);
+      }
+      this.facAnt = f;
+    }
+  },
+  pointerDown(e) { this.mirar = { x: e.clientX, y: e.clientY }; e.target.setPointerCapture(e.pointerId); },
+  pointerMove(e) {
+    if (!this.mirar) return; const dx = e.clientX - this.mirar.x, dy = e.clientY - this.mirar.y; this.mirar = { x: e.clientX, y: e.clientY };
+    if (!this.piloto) this.rumbo = (this.rumbo + dx * 0.18 + 360) % 360;
+    this.cabeceo = limitar(this.cabeceo - dy * 0.15, -70, 25);
+  },
+  pointerUp() { this.mirar = null; },
+};
+// Mandos táctiles y teclado del vuelo
+document.querySelectorAll("[data-mando]").forEach((b) => {
+  const k = b.dataset.mando;
+  const on = (e) => { e.preventDefault(); if (k === "mas") FP.iv = Math.min(VELOCIDADES.length - 1, FP.iv + 1); else if (k === "menos") FP.iv = Math.max(0, FP.iv - 1); else FP.mandos[k] = true; b.classList.add("pulsado"); };
+  const off = () => { FP.mandos[k] = false; b.classList.remove("pulsado"); };
+  b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointerleave", off); b.addEventListener("pointercancel", off);
+});
+$("#hud-salir").addEventListener("click", () => FP.salir());
+const TECLAS_VUELO = { ArrowLeft: "izq", a: "izq", A: "izq", ArrowRight: "der", d: "der", D: "der", ArrowUp: "subir", ArrowDown: "bajar", e: "subir", E: "subir", q: "bajar", Q: "bajar" };
+addEventListener("keydown", (e) => {
+  if (!V3.enVuelo) return;
+  if (TECLAS_VUELO[e.key]) { FP.teclas[TECLAS_VUELO[e.key]] = true; e.preventDefault(); }
+  if (e.key === "w" || e.key === "W" || e.key === "+") FP.iv = Math.min(VELOCIDADES.length - 1, FP.iv + 1);
+  if (e.key === "s" || e.key === "S" || e.key === "-") FP.iv = Math.max(0, FP.iv - 1);
+  if (e.key === "Escape") FP.salir();
+});
+addEventListener("keyup", (e) => { if (TECLAS_VUELO[e.key]) FP.teclas[TECLAS_VUELO[e.key]] = false; });
+
+function empezarViaje(a, b, modo) {
+  const km = distancia([a.lat, a.lon], [b.lat, b.lon]);
+  const pts = granCirculo([a.lat, a.lon], [b.lat, b.lon], 600);
+  const dur = limitar(14 + km / 450, 16, 46);
+  const perfiles = {
+    cohete: { perfil: (k) => 6 + 640 * Math.pow(Math.sin(Math.PI * k), 0.7), cabeceo: (k) => -14 - 10 * Math.sin(Math.PI * k), vel: (k) => 9000 * Math.min(1, Math.sin(Math.PI * k) * 3) + 400 },
+    avion: { perfil: (k) => 0.6 + 10.5 * Math.min(1, k * 8, (1 - k) * 8), cabeceo: () => -8, vel: (k) => 480 * Math.min(1, k * 10 + 0.3, (1 - k) * 10 + 0.3) },
+    tren: { perfil: () => 3.2, cabeceo: () => -6, vel: () => 90 },
+    coche: { perfil: () => 2.6, cabeceo: () => -6, vel: () => 70 },
+  }[modo];
+  const lugar = LUGARES.find((l) => Math.abs(l.lat - b.lat) < 1e-3 && Math.abs(l.lon - b.lon) < 1e-3);
+  cerrarPanel();
+  FP.entrar({ lat: a.lat, lon: a.lon, alt: perfiles.perfil(0), rumbo: rumboEntre([a.lat, a.lon], [b.lat, b.lon]),
+    piloto: { pts, km, dur, t0: performance.now(), perfil: perfiles.perfil, cabeceo: perfiles.cabeceo, velMostrada: perfiles.vel, destino: { n: b.n, lugar } } });
+  $("#hud-viaje-t").textContent = `${MODOS[modo].n}: ${a.n} → ${b.n}`;
+}
+
+/* ================================================================
+   VISTA 2D — mapa plano (Leaflet)
+   ================================================================ */
+const V2 = {
+  listo: false,
+  init() {
+    $("#mapa").hidden = false;
+    const m = this.mapa = L.map("mapa", { zoomControl: false, preferCanvas: true, minZoom: 2, maxZoom: 10, zoomSnap: 0.5, worldCopyJump: false,
+      maxBounds: [[-86, -230], [86, 230]], maxBoundsViscosity: 0.9, attributionControl: true, tapHold: true }).setView([30, -20], 2.5);
+    m.attributionControl.setPrefix(false).addAttribution("Fronteras: Natural Earth · Mapa de fans de la serie El hombre en el castillo");
+    L.control.scale({ metric: true, imperial: false, position: "bottomright", maxWidth: 110 }).addTo(m);
+    m.createPane("frentes").style.zIndex = 420; m.createPane("rutas").style.zIndex = 450;
+    m.createPane("etiquetas").style.zIndex = 600; m.getPane("etiquetas").style.pointerEvents = "none";
+    this.capaRuta = L.layerGroup().addTo(m); this.capaMedida = L.layerGroup().addTo(m); this.capaPin = L.layerGroup().addTo(m);
+    const hover = (f, capa) => {
+      capa.on("mouseover", () => { if (!modoElegir && !midiendo) capa.setStyle({ weight: 2.2, color: ESTILOS[estilo].frente, dashArray: null }); });
+      capa.on("mouseout", () => capa.setStyle(this.estiloT(f)));
+    };
+    this.capaMundo = L.geoJSON(MUNDO, { style: (f) => this.estiloT(f), onEachFeature: hover, smoothFactor: 0.6 }).addTo(m);
+    this.capaEEUU = L.geoJSON(EEUU, { style: (f) => this.estiloT(f), onEachFeature: hover, smoothFactor: 0.6 }).addTo(m);
+    const mf = topojson.mesh(DATOS.mundo, DATOS.mundo.objects.countries, (a, b) => a !== b && a.properties.f !== b.properties.f);
+    const mu = topojson.mesh(DATOS.eeuu, DATOS.eeuu.objects.states, (a, b) => a !== b && a.properties.f !== b.properties.f);
+    this.capaFrentes = L.geoJSON({ type: "FeatureCollection", features: [{ type: "Feature", geometry: mf }, { type: "Feature", geometry: mu }] },
+      { pane: "frentes", interactive: false, style: () => ({ color: ESTILOS[estilo].frente, weight: 1.6, opacity: 0.85, dashArray: "6 4" }) });
+    this.capaCuadricula = L.layerGroup();
+    for (let lat = -75; lat <= 75; lat += 15) this.capaCuadricula.addLayer(L.polyline([[lat, -180], [lat, 180]], { interactive: false, weight: lat === 0 ? 1.2 : 0.7 }));
+    for (let lon = -180; lon <= 180; lon += 15) this.capaCuadricula.addLayer(L.polyline([[-85, lon], [85, lon]], { interactive: false, weight: lon === 0 ? 1.2 : 0.7 }));
+    const icono = (html, cls) => L.divIcon({ className: "", html: `<div class="et ${cls}">${html}</div>`, iconSize: [0, 0] });
+    this.capaEtiquetas = L.layerGroup();
+    for (const e of ETIQ_FAC) { const mk = L.marker([e.lat, e.lon], { icon: icono(esc(e.t).replace("\n", "<br>"), "et-faccion" + (e.peq ? " peq" : "")), interactive: false, pane: "etiquetas", keyboard: false }); mk._z = [Math.max(2, e.z[0]), e.z[1]]; mk._fac = true; this.capaEtiquetas.addLayer(mk); }
+    for (const t of TERR) { if (t.n === "Estados Unidos") continue; const mk = L.marker(t.c, { icon: icono(esc(t.n), t.tipo === "estado" ? "et-estado" : "et-pais"), interactive: false, pane: "etiquetas", keyboard: false }); mk._z = [t.zmin, 99]; this.capaEtiquetas.addLayer(mk); }
+    this.capaCiudades = L.layerGroup();
+    for (const l of LUGARES) {
+      const mk = L.marker([l.lat, l.lon], { icon: L.divIcon({ className: "", html: htmlCiudad(l), iconSize: [0, 0] }), keyboard: true, title: l.n, riseOnHover: true });
+      mk._z = [Math.max(2, zCiudad(l)), 99];
+      mk.on("click", (e) => { L.DomEvent.stopPropagation(e); if (modoElegir || midiendo) return alClic(e.latlng.lat, e.latlng.lng); abrirLugar(l); });
+      this.capaCiudades.addLayer(mk);
+    }
+    this.capaCohetes = L.layerGroup();
+    for (const r of RUTAS_COHETE) { const a = porId[r.de], b = porId[r.a]; for (const seg of partirAntimeridiano(granCirculo([a.lat, a.lon], [b.lat, b.lon], 96))) this.capaCohetes.addLayer(L.polyline(seg, { pane: "rutas", weight: 1.6, dashArray: "2 6", lineCap: "round" }).bindTooltip(r.n, { sticky: true })); }
+    m.on("mousemove", (e) => alMover(e.latlng.lat, e.latlng.lng));
+    m.on("zoomend", () => this.actualizarZoom());
+    m.on("click", (e) => alClic(e.latlng.lat, normLon(e.latlng.lng)));
+    m.on("contextmenu", (e) => { e.originalEvent && e.originalEvent.preventDefault(); abrirMenuCtx(e.latlng.lat, normLon(e.latlng.lng), e.containerPoint.x, e.containerPoint.y); });
+    m.on("movestart", cerrarMenuCtx);
+    this.listo = true;
+    this.aplicarEstilo();
+  },
+  estiloT(f) {
+    const e = ESTILOS[estilo];
+    if (e.real) return { fillColor: e.tierra, fillOpacity: 1, color: e.lineaReal, weight: f.properties.us ? 0.5 : 0.8, opacity: 1 };
+    const fac = f.properties.f, b = capas.fronteras;
+    return { fillColor: e.fill[fac], fillOpacity: 1, color: b ? e.stroke[fac] : e.fill[fac], weight: b ? e.borde + 0.2 : 0.6, opacity: 1, dashArray: b && f.properties.us ? "3 3" : null };
+  },
+  alternar(capa, on) { if (on && !this.mapa.hasLayer(capa)) capa.addTo(this.mapa); if (!on && this.mapa.hasLayer(capa)) this.mapa.removeLayer(capa); },
+  aplicarEstilo() {
+    if (!this.listo) return;
+    const e = ESTILOS[estilo];
+    this.capaMundo.setStyle((f) => this.estiloT(f)); this.capaEEUU.setStyle((f) => this.estiloT(f));
+    this.capaFrentes.setStyle({ color: e.frente });
+    this.capaCuadricula.eachLayer((l) => l.setStyle({ color: e.grid }));
+    this.capaCohetes.eachLayer((l) => l.setStyle({ color: e.frente }));
+    this.alternar(this.capaFrentes, capas.frentes && !e.real); this.alternar(this.capaCuadricula, capas.cuadricula);
+    this.alternar(this.capaCiudades, capas.ciudades); this.alternar(this.capaEtiquetas, capas.etiquetas); this.alternar(this.capaCohetes, capas.cohetes && !e.real);
+    const cont = this.mapa.getContainer(); Object.keys(ESTILOS).forEach((k) => cont.classList.toggle("estilo-" + k, k === estilo));
+    this.actualizarZoom(); aplicarResaltado();
+  },
+  actualizarZoom() {
+    const z = this.mapa.getZoom(), real = ESTILOS[estilo].real;
+    for (const g of [this.capaEtiquetas, this.capaCiudades]) g.eachLayer((mk) => { const el = mk.getElement(); if (el) el.style.display = z >= mk._z[0] && z <= mk._z[1] && !(real && mk._fac) ? "" : "none"; });
+    aplicarResaltado();
+  },
+  opcionesEncuadre(maxZoom) { return { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0], paddingBottomRight: esMovil() ? [0, innerHeight * 0.45] : [0, 0], maxZoom }; },
+  volarA(lat, lon, z) {
+    const m = this.mapa; z = Math.max(m.getZoom(), z);
+    const p = m.project([lat, lon], z).add(esMovil() ? [0, innerHeight * 0.27] : [-204, 0]);
+    m.flyTo(m.unproject(p, z), z, { duration: 0.8 });
+  },
+  encuadrar(pts, { maxZoom = 7 } = {}) { this.mapa.flyToBounds(L.latLngBounds(pts).pad(0.2), this.opcionesEncuadre(maxZoom)); },
+  centro() { const c = this.mapa.getCenter(); return { lat: c.lat, lon: normLon(c.lng), z: this.mapa.getZoom() }; },
+  irA(c) { this.mapa.setView([limitar(c.lat, -80, 80), c.lon], limitar(Math.round(c.z * 2) / 2, 2, 7), { animate: false }); },
+  zoom(f) { f < 1 ? this.mapa.zoomIn() : this.mapa.zoomOut(); },
+  verMundo() { this.mapa.flyTo([30, -20], esMovil() ? 2 : 2.5, { duration: 0.8 }); },
+  norte() {},
+  dibujarRuta() {
+    if (!this.listo) return; this.capaRuta.clearLayers(); const r = escena.ruta; if (!r) return;
+    for (const seg of partirAntimeridiano(r.pts)) {
+      this.capaRuta.addLayer(L.polyline(seg, { pane: "rutas", color: "#ffffff", weight: 8, opacity: 0.9, interactive: false }));
+      this.capaRuta.addLayer(L.polyline(seg, { pane: "rutas", color: r.aire ? ESTILOS[estilo].frente : "#1a73e8", weight: 4.5, dashArray: r.aire ? "8 8" : null, interactive: false }));
+    }
+    const fin = (p, c) => L.circleMarker(p, { pane: "rutas", radius: 6, color: "#fff", weight: 2.5, fillColor: c, fillOpacity: 1 });
+    this.capaRuta.addLayer(fin(r.pts[0], "#333")); this.capaRuta.addLayer(fin(r.pts[r.pts.length - 1], "#c0392b"));
+  },
+  dibujarPin() {
+    if (!this.listo) return; this.capaPin.clearLayers(); const p = escena.pin; if (!p) return;
+    this.capaPin.addLayer(L.marker(p, { interactive: false, keyboard: false, icon: L.divIcon({ className: "", iconSize: [0, 0],
+      html: `<div class="pin"><svg viewBox="0 0 30 40"><path d="M15 0C6.7 0 0 6.6 0 14.8 0 26 15 40 15 40s15-14 15-25.2C30 6.6 23.3 0 15 0z" fill="#c0392b"/><circle cx="15" cy="14.5" r="5.5" fill="#6e1a12"/></svg></div>` }) }));
+  },
+  dibujarMedida() {
+    if (!this.listo) return; this.capaMedida.clearLayers(); const pts = escena.medida;
+    if (pts.length > 1) { this.capaMedida.addLayer(L.polyline(pts, { pane: "rutas", color: "#fff", weight: 6, opacity: 0.9, interactive: false })); this.capaMedida.addLayer(L.polyline(pts, { pane: "rutas", color: "#222", weight: 2.5, dashArray: "6 5", interactive: false })); }
+    pts.forEach((p) => this.capaMedida.addLayer(L.circleMarker(p, { pane: "rutas", radius: 5, color: "#222", weight: 2, fillColor: "#fff", fillOpacity: 1, interactive: false })));
+  },
+  redibujar() { this.dibujarRuta(); this.dibujarPin(); this.dibujarMedida(); aplicarResaltado(); },
+  redimensionar() { if (this.listo) this.mapa.invalidateSize(); },
+  mostrar(on) { $("#mapa").hidden = !on; if (on && this.listo) this.mapa.invalidateSize(); },
+};
+
+function cambiarVista(k) {
+  if (V3.enVuelo) FP.salir();
+  const antes = V ? V.centro() : null;
+  vista = k; almacen.guardar("vista", k);
+  const nueva = k === "3d" ? V3 : V2;
+  if (V && V !== nueva) V.mostrar(false);
+  if (!nueva.listo) nueva.init();
+  nueva.mostrar(true);
+  if (antes) nueva.irA(antes);
+  V = nueva; V.redibujar();
+  $("#btn-vista").textContent = k === "3d" ? "2D" : "3D";
+  $("#brujula").parentElement.hidden = k !== "3d";
+  document.querySelectorAll(".vista-op").forEach((b) => b.classList.toggle("on", b.dataset.vista === k));
+  variablesEstilo(); dibujarMiniaturas();
+}
+
+/* ================== Acciones sobre el mapa (comunes) ================== */
+function alMover(lat, lon) { $("#coords").textContent = fmtCoord(lat, normLon(lon)); }
+function alClic(lat, lon) {
+  cerrarMenuCtx();
+  if (lat == null) { if (!$("#panel").hidden && esMovil()) cerrarPanel(); return; }
+  lon = normLon(lon);
+  if (modoElegir) {
+    const t = territorioEn(lat, lon), k = modoElegir;
+    ruta[k] = { n: t ? `${t.n} (${lat.toFixed(2)}, ${lon.toFixed(2)})` : `${lat.toFixed(3)}, ${lon.toFixed(3)}`, lat: +lat.toFixed(4), lon: +lon.toFixed(4) };
+    terminarElegir(); abrirRuta(); return;
   }
+  if (midiendo) { escena.medida.push([lat, lon]); dibujarMedida(); return; }
+  const t = territorioEn(lat, lon);
+  if (t) abrirTerritorio(t, lat, lon);
+  else if (!$("#panel").hidden && esMovil()) cerrarPanel();
+  else abrirQueHay(lat, lon);
 }
 
-function actualizarZoom() {
-  const z = mapa.getZoom();
-  const visible = (m) => z >= m._z[0] && z <= m._z[1];
-  for (const grupo of [capaEtiquetas, capaCiudades]) {
-    if (!grupo) continue;
-    grupo.eachLayer((m) => { const el = m.getElement(); if (el) el.style.display = visible(m) ? "" : "none"; });
-  }
-  $("#btn-mas").disabled = z >= mapa.getMaxZoom(); $("#btn-menos").disabled = z <= mapa.getMinZoom();
-}
-
-function aplicarEstilo() {
-  const e = ESTILOS[estilo];
-  const raiz = document.documentElement.style;
-  raiz.setProperty("--oceano", e.oceano); raiz.setProperty("--halo", e.halo); raiz.setProperty("--halo-solido", e.haloS);
-  raiz.setProperty("--et-faccion", e.etF); raiz.setProperty("--et-pais", e.etP); raiz.setProperty("--et-ciudad", e.etC); raiz.setProperty("--pt", e.ciudad);
-  const cont = mapa.getContainer();
-  Object.keys(ESTILOS).forEach((k) => cont.classList.toggle("estilo-" + k, k === estilo));
-  capaMundo.setStyle(estiloTerritorio); capaEEUU.setStyle(estiloTerritorio);
-  capaFrentes.setStyle({ color: e.frente });
-  capaCuadricula.eachLayer((l) => l.setStyle({ color: e.grid }));
-  capaCohetes.eachLayer((l) => l.setStyle({ color: e.frente }));
-  alternar(capaFrentes, capas.frentes && !e.real);
-  alternar(capaCuadricula, capas.cuadricula);
-  alternar(capaCiudades, capas.ciudades);
-  alternar(capaEtiquetas, capas.etiquetas);
-  alternar(capaCohetes, capas.cohetes && !e.real);
-  capaEtiquetas.eachLayer((m) => { const el = m.getElement(); if (el && el.firstChild.classList.contains("et-faccion")) el.firstChild.style.visibility = e.real ? "hidden" : ""; });
-  actualizarZoom();
-  dibujarMiniaturas();
-}
-function alternar(capa, on) { if (on && !mapa.hasLayer(capa)) capa.addTo(mapa); if (!on && mapa.hasLayer(capa)) mapa.removeLayer(capa); }
-
-/* Miniaturas de estilo dibujadas con los colores reales del mapa */
+/* ================== Miniaturas de estilo ================== */
 function pintarMini(cv, k) {
   const e = ESTILOS[k], g = cv.getContext("2d"), W = cv.width, H = cv.height;
   g.fillStyle = e.oceano; g.fillRect(0, 0, W, H);
@@ -1274,55 +2179,44 @@ function pintarMini(cv, k) {
 function dibujarMiniaturas() {
   const cont = $("#estilos");
   if (!cont.children.length) {
-    cont.innerHTML = Object.entries(ESTILOS).map(([k, e]) => `<button class="estilo" data-estilo="${k}"><canvas width="128" height="104"></canvas>${esc(e.n)}</button>`).join("");
+    cont.innerHTML = Object.entries(ESTILOS).map(([k, e]) => `<button class="estilo" data-estilo="${k}"><canvas width="112" height="92"></canvas>${esc(e.n)}</button>`).join("");
     cont.querySelectorAll(".estilo").forEach((b) => b.addEventListener("click", () => { estilo = b.dataset.estilo; almacen.guardar("estilo", estilo); aplicarEstilo(); }));
   }
   cont.querySelectorAll(".estilo").forEach((b) => { pintarMini(b.querySelector("canvas"), b.dataset.estilo); b.classList.toggle("on", b.dataset.estilo === estilo); });
-  const siguiente = estilo === "mapa" ? "archivo" : "mapa";
-  pintarMini($("#capas-mini"), siguiente);
+  pintarMini($("#capas-mini"), estilo === "serie" ? "mapa" : "serie");
 }
+function aplicarEstilo() { variablesEstilo(); V3.aplicarEstilo(); V2.aplicarEstilo(); dibujarMiniaturas(); }
 
 /* ================== Panel ================== */
 const panel = $("#panel"), cuerpo = $("#panel-cuerpo");
 function abrirPanel(html, { alto = false } = {}) {
   cuerpo.innerHTML = html; cuerpo.scrollTop = 0;
   panel.hidden = false; panel.classList.toggle("alto", alto);
-  document.body.classList.add("con-panel");
-  document.body.classList.toggle("movil", esMovil());
-  $("#sugerencias").hidden = true;
+  document.body.classList.add("con-panel"); document.body.classList.toggle("movil", esMovil());
+  $("#sugerencias").hidden = true; V3.sucio = true;
 }
 function cerrarPanel() {
   panel.hidden = true; document.body.classList.remove("con-panel");
-  capaPin.clearLayers(); quitarResaltado();
-  document.querySelectorAll(".chip.on").forEach((c) => c.classList.remove("on"));
+  quitarPin(); resaltar([]);
+  document.querySelectorAll(".chip.on").forEach((c) => c.classList.remove("on")); V3.sucio = true;
 }
-$("#panel-cerrar").addEventListener("click", () => { cerrarPanel(); capaRuta.clearLayers(); });
+$("#panel-cerrar").addEventListener("click", () => { cerrarPanel(); quitarRuta(); });
 $("#panel-asa").addEventListener("click", () => panel.classList.toggle("alto"));
 
-function ponerPin(lat, lon) {
-  capaPin.clearLayers();
-  capaPin.addLayer(L.marker([lat, lon], { interactive: false, keyboard: false, icon: L.divIcon({ className: "", iconSize: [0, 0],
-    html: `<div class="pin"><svg viewBox="0 0 30 40"><path d="M15 0C6.7 0 0 6.6 0 14.8 0 26 15 40 15 40s15-14 15-25.2C30 6.6 23.3 0 15 0z" fill="#c0392b"/><circle cx="15" cy="14.5" r="5.5" fill="#6e1a12"/></svg></div>` }) }));
-}
-
 function cabecera(f, titulo, sello) {
-  const e = ESTILOS[estilo].real ? ESTILOS.archivo : ESTILOS[estilo];
+  const e = ESTILOS[estilo].real ? ESTILOS.serie : ESTILOS[estilo];
   const a = e.fill[f] || "#888", b = e.stroke[f] || "#555";
-  return `<div class="cabecera">
-    <div class="fondo" style="background:
-      repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 2px, transparent 2px 9px),
-      radial-gradient(120% 90% at 20% 0%, ${a}, ${b} 70%, #2a1d16 130%)"></div>
-    <div class="sello">${esc(sello)}</div>
-    <div class="exp">${esc(titulo)}</div></div>`;
+  return `<div class="cabecera"><div class="fondo" style="background: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 2px, transparent 2px 9px), radial-gradient(120% 90% at 20% 0%, ${a}, ${b} 70%, #1d1410 130%)"></div>
+    <div class="sello">${esc(sello)}</div><div class="exp">${esc(titulo)}</div></div>`;
 }
 const expediente = (lat, lon) => "Expediente " + String(Math.abs(Math.round(lat * 37 + lon * 91)) % 9000 + 1000) + "-62";
-const pastilla = (f) => `<span class="pastilla"><span class="punto" style="background:${(ESTILOS[estilo].fill || ESTILOS.mapa.fill)[f]}"></span>${esc(FACCIONES[f].n)}</span>`;
+const pastilla = (f) => `<span class="pastilla"><span class="punto" style="background:${(ESTILOS[estilo].fill || ESTILOS.serie.fill)[f]}"></span>${esc(FACCIONES[f].n)}</span>`;
 const estaGuardado = (lat, lon) => guardados.some((g) => Math.abs(g.lat - lat) < 1e-4 && Math.abs(g.lon - lon) < 1e-4);
-
 function botonesAccion(obj) {
   const g = estaGuardado(obj.lat, obj.lon);
   return `<div class="acciones">
-    <button class="accion primaria" data-acc="ruta">${'<span class="aro">' + ico("ruta") + "</span>"}Cómo llegar</button>
+    <button class="accion primaria" data-acc="ruta"><span class="aro">${ico("ruta")}</span>Cómo llegar</button>
+    <button class="accion" data-acc="volar"><span class="aro">${ico("avion")}</span>Volar aquí</button>
     <button class="accion" data-acc="guardar"><span class="aro">${ico(g ? "guardado" : "guardar")}</span>${g ? "Guardado" : "Guardar"}</button>
     <button class="accion" data-acc="cerca"><span class="aro">${ico("cerca")}</span>Cercanos</button>
     <button class="accion" data-acc="copiar"><span class="aro">${ico("copiar")}</span>Copiar</button>
@@ -1332,13 +2226,13 @@ function conectarAcciones(obj) {
   cuerpo.querySelectorAll("[data-acc]").forEach((b) => b.addEventListener("click", () => {
     const acc = b.dataset.acc;
     if (acc === "ruta") abrirRuta(null, obj);
+    if (acc === "volar") { cerrarPanel(); FP.entrar({ lat: obj.lat, lon: obj.lon, alt: 9, rumbo: V3.st.rumbo }); }
     if (acc === "guardar") { alternarGuardado(obj); const g = estaGuardado(obj.lat, obj.lon); b.innerHTML = `<span class="aro">${ico(g ? "guardado" : "guardar")}</span>${g ? "Guardado" : "Guardar"}`; }
     if (acc === "cerca") abrirCercanos(obj);
     if (acc === "copiar") copiar(`${obj.n} — ${fmtCoord(obj.lat, obj.lon)}`, "Coordenadas copiadas");
   }));
-  cuerpo.querySelectorAll("[data-lugar]").forEach((b) => b.addEventListener("click", () => abrirLugar(LUGARES.find((l) => l.id === b.dataset.lugar))));
+  cuerpo.querySelectorAll("[data-lugar]").forEach((b) => b.addEventListener("click", () => abrirLugar(porId[b.dataset.lugar])));
 }
-
 function abrirLugar(l, { volar = true } = {}) {
   if (!l) return;
   const tipo = { capital: "Capital", ciudad: "Ciudad", serie: "Lugar de la serie", base: "Base y puerto" }[l.t];
@@ -1352,57 +2246,42 @@ function abrirLugar(l, { volar = true } = {}) {
       ${t ? `<div class="dato">${ico("bandera")}<div class="v">${esc(t.n)}<small>Territorio (nombre de antes de la guerra)</small></div></div>` : ""}
       <div class="dato">${ico("info")}<div class="v">${esc(FACCIONES[l.f].d)}<small>${esc(FACCIONES[l.f].n)}</small></div></div>
     </div>`);
-  conectarAcciones(l);
-  resaltar([l.id]);
-  if (volar) volarA(l.lat, l.lon, 5);
+  conectarAcciones(l); quitarPin(); resaltar([l.id]);
+  if (volar) V.volarA(l.lat, l.lon, 6);
   try { history.replaceState(null, "", "#" + l.id); } catch (e) {}
 }
-
-function volarA(lat, lon, z) {
-  z = Math.max(mapa.getZoom(), z);
-  if (!esMovil()) {
-    const p = mapa.project([lat, lon], z).subtract([204, 0]);
-    return mapa.flyTo(mapa.unproject(p, z), z, { duration: 0.8 });
-  }
-  const p = mapa.project([lat, lon], z).add([0, innerHeight * 0.27]);
-  mapa.flyTo(mapa.unproject(p, z), z, { duration: 0.8 });
-}
-function lugaresEn(t) { return LUGARES.filter((l) => territorioEn(l.lat, l.lon) === t); }
-function abrirTerritorio(t, latlng) {
+function abrirTerritorio(t, lat, lon) {
   if (!t) return;
-  const fac = FACCIONES[t.f];
-  const lat = latlng ? latlng.lat : t.c[0], lon = latlng ? normLon(latlng.lng) : t.c[1];
-  const obj = { n: t.n, lat: +lat.toFixed(4), lon: +lon.toFixed(4), f: t.f };
-  const dentro = lugaresEn(t);
+  const fac = FACCIONES[t.f]; if (lat == null) { lat = t.c[0]; lon = t.c[1]; }
+  const obj = { n: t.n, lat: +lat.toFixed(4), lon: +normLon(lon).toFixed(4), f: t.f };
+  const dentro = LUGARES.filter((l) => territorioEn(l.lat, l.lon) === t);
   const estatus = t.tipo === "estado" ? `Antiguo estado de EE. UU. · hoy en ${fac.n}` : t.f === "X" ? "Estado independiente" : t.f === "U" ? "Sin soberanía" : `Territorio de ${fac.n}`;
   abrirPanel(`${cabecera(t.f, expediente(lat, lon), fac.c + " · territorio")}
     <div class="ficha"><h2>${esc(t.n)}</h2><div class="sub">${esc(estatus)}</div><div class="sub" style="margin-top:8px">${pastilla(t.f)}</div></div>
     ${botonesAccion(obj)}
     <div class="texto"><p>${esc(fac.d)}</p></div>
     <div class="datos"><div class="dato">${ico("pin")}<div class="v mono">${fmtCoord(lat, lon)}<small>Punto seleccionado</small></div></div></div>
-    ${dentro.length ? `<div class="seccion">Lugares en ${esc(t.n)}</div><div class="lista">${dentro.map(filaLugar).join("")}</div>` : ""}`);
-  conectarAcciones(obj);
-  ponerPin(lat, lon);
-  resaltar(dentro.map((l) => l.id));
+    ${dentro.length ? `<div class="seccion">Lugares en ${esc(t.n)}</div><div class="lista">${dentro.map((l) => filaLugar(l)).join("")}</div>` : ""}`);
+  conectarAcciones(obj); ponerPin(lat, lon); resaltar(dentro.map((l) => l.id));
 }
 function filaLugar(l, km) {
   return `<button class="fila" data-lugar="${l.id}"><span class="burbuja">${ico(l.t === "capital" ? "capital" : l.t === "serie" ? "pelicula" : l.t === "base" ? "cohete" : "pin", "icon sm")}</span>
     <span class="txt"><span class="t1">${esc(l.n)}</span><span class="t2">${esc(l.s)}</span></span>${km != null ? `<span class="km">${fmtKm(km)}</span>` : ""}</button>`;
 }
-
 function abrirCercanos(obj) {
   const lista = LUGARES.filter((l) => l.lat !== obj.lat || l.lon !== obj.lon).map((l) => [l, distancia([obj.lat, obj.lon], [l.lat, l.lon])]).sort((a, b) => a[1] - b[1]).slice(0, 8);
   abrirPanel(`<h2 class="titulo-vista">Cerca de ${esc(obj.n)}</h2><div class="nota">Distancia en línea recta.</div><div class="lista">${lista.map(([l, km]) => filaLugar(l, km)).join("")}</div>`);
-  conectarAcciones(obj);
-  resaltar(lista.map(([l]) => l.id));
-  mapa.flyToBounds(L.latLngBounds([[obj.lat, obj.lon], ...lista.slice(0, 5).map(([l]) => [l.lat, l.lon])]).pad(0.3), { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0] });
+  conectarAcciones(obj); resaltar(lista.map(([l]) => l.id));
+  V.encuadrar([[obj.lat, obj.lon], ...lista.slice(0, 5).map(([l]) => [l.lat, l.lon])]);
 }
-
-function resaltar(ids) {
-  const set = new Set(ids);
-  capaCiudades.eachLayer((m) => { const el = m.getElement(); if (!el) return; const c = el.firstChild; c.classList.toggle("resaltada", set.has(m._lugar.id)); c.classList.toggle("atenuada", ids.length > 1 && !set.has(m._lugar.id)); });
+function abrirQueHay(lat, lon) {
+  const t = territorioEn(lat, lon); if (t) return abrirTerritorio(t, lat, lon);
+  const cerca = LUGARES.map((l) => [l, distancia([lat, lon], [l.lat, l.lon])]).sort((a, b) => a[1] - b[1]).slice(0, 4);
+  const obj = { n: "Punto en el mar", lat: +lat.toFixed(4), lon: +lon.toFixed(4), f: "U" };
+  abrirPanel(`<div class="ficha"><h2>Aguas internacionales</h2><div class="sub mono">${fmtCoord(lat, lon)}</div></div>${botonesAccion(obj)}
+    <div class="seccion">Lugares más cercanos</div><div class="lista">${cerca.map(([l, km]) => filaLugar(l, km)).join("")}</div>`);
+  conectarAcciones(obj); ponerPin(lat, lon);
 }
-function quitarResaltado() { capaCiudades && capaCiudades.eachLayer((m) => { const el = m.getElement(); if (el) el.firstChild.classList.remove("resaltada", "atenuada"); }); }
 
 /* ================== Guardados ================== */
 function alternarGuardado(obj) {
@@ -1411,70 +2290,50 @@ function alternarGuardado(obj) {
   almacen.guardar("guardados", guardados);
 }
 function abrirGuardados() {
-  if (!guardados.length) {
-    abrirPanel(`<h2 class="titulo-vista">Guardados</h2><div class="vacio">Todavía no has guardado nada. Abre una ciudad o un territorio y pulsa <b>Guardar</b>; aparecerá aquí.</div>`);
-    return;
-  }
+  if (!guardados.length) { abrirPanel(`<h2 class="titulo-vista">Guardados</h2><div class="vacio">Todavía no has guardado nada. Abre una ciudad o un territorio y pulsa <b>Guardar</b>; aparecerá aquí.</div>`); return; }
   abrirPanel(`<h2 class="titulo-vista">Guardados</h2><div class="lista">${guardados.map((g, i) => `<button class="fila" data-g="${i}"><span class="burbuja" style="color:var(--accent)">${ico("guardado", "icon sm")}</span>
     <span class="txt"><span class="t1">${esc(g.n)}</span><span class="t2">${esc((FACCIONES[g.f] || FACCIONES.U).n)} · ${fmtCoord(g.lat, g.lon)}</span></span></button>`).join("")}</div>`);
   cuerpo.querySelectorAll("[data-g]").forEach((b) => b.addEventListener("click", () => {
-    const g = guardados[+b.dataset.g]; const l = g.id && LUGARES.find((x) => x.id === g.id);
-    if (l) return abrirLugar(l);
-    const t = territorioEn(g.lat, g.lon); volarA(g.lat, g.lon, 5);
-    if (t) abrirTerritorio(t, L.latLng(g.lat, g.lon)); else ponerPin(g.lat, g.lon);
+    const g = guardados[+b.dataset.g], l = g.id && porId[g.id]; if (l) return abrirLugar(l);
+    V.volarA(g.lat, g.lon, 6); abrirQueHay(g.lat, g.lon);
   }));
 }
 
 /* ================== Chips ================== */
 document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => {
+  const k = c.dataset.chip;
+  if (k === "vuelo") return FP.entrar({ alt: 11 });
   const ya = c.classList.contains("on");
   document.querySelectorAll(".chip").forEach((x) => x.classList.remove("on"));
   if (ya) return cerrarPanel();
-  const k = c.dataset.chip;
   if (k === "guardados") { abrirGuardados(); c.classList.add("on"); return; }
   const lista = k === "X" ? LUGARES.filter((l) => l.f === "X") : LUGARES.filter((l) => l.t === k);
   const titulo = { capital: "Capitales", serie: "Lugares de la serie", base: "Bases y puertos", X: "Países neutrales" }[k];
   abrirPanel(`<h2 class="titulo-vista">${titulo}</h2><div class="nota">${lista.length} resultados en el mapa.</div><div class="lista">${lista.map((l) => filaLugar(l)).join("")}</div>`);
-  c.classList.add("on");
-  conectarAcciones({});
-  resaltar(lista.map((l) => l.id));
-  mapa.flyToBounds(L.latLngBounds(lista.map((l) => [l.lat, l.lon])).pad(0.15), { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0], maxZoom: 5 });
+  c.classList.add("on"); conectarAcciones({}); resaltar(lista.map((l) => l.id));
+  V.encuadrar(lista.map((l) => [l.lat, l.lon]), { maxZoom: 5 });
 }));
 
 /* ================== Búsqueda ================== */
 function buscar(q, max = 8) {
   const n = norm(q); if (!n) return [];
   const m = n.match(/^(-?\d+(?:[.,]\d+)?)\s*[, ]\s*(-?\d+(?:[.,]\d+)?)$/);
-  if (m) {
-    const lat = parseFloat(m[1].replace(",", ".")), lon = parseFloat(m[2].replace(",", "."));
-    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) return [{ tipo: "coord", n: fmtCoord(lat, lon), s: "Coordenadas", lat, lon }];
-  }
+  if (m) { const lat = parseFloat(m[1].replace(",", ".")), lon = parseFloat(m[2].replace(",", ".")); if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) return [{ tipo: "coord", n: fmtCoord(lat, lon), s: "Coordenadas", lat, lon }]; }
   const puntua = (txt) => { const t = norm(txt); return t.startsWith(n) ? 3 : t.split(/[\s\-]/).some((w) => w.startsWith(n)) ? 2 : t.includes(n) ? 1 : 0; };
   const res = [];
   for (const l of LUGARES) { const p = puntua(l.n); if (p) res.push({ p: p + 0.5, tipo: "lugar", n: l.n, s: l.s, lat: l.lat, lon: l.lon, ref: l }); }
-  for (const [k, f] of Object.entries(FACCIONES)) { const p = puntua(f.n); if (p && k !== "U") res.push({ p: p + 0.4, tipo: "faccion", n: f.n, s: "Facción · " + TERR.filter((t) => t.f === k).length + " territorios", ref: k }); }
+  for (const [k, f] of Object.entries(FACCIONES)) { const p = puntua(f.n); if (p && k !== "U") res.push({ p: p + 0.4, tipo: "faccion", n: f.n, s: "Bloque · " + TERR.filter((t) => t.f === k).length + " territorios", ref: k }); }
   for (const t of TERR) { const p = puntua(t.n); if (p) res.push({ p, tipo: "territorio", n: t.n, s: (t.tipo === "estado" ? "Antiguo estado · " : "Territorio · ") + FACCIONES[t.f].n, lat: t.c[0], lon: t.c[1], ref: t }); }
   return res.sort((a, b) => b.p - a.p || a.n.localeCompare(b.n, "es")).slice(0, max);
 }
 const icoRes = (r) => r.tipo === "lugar" ? (r.ref.t === "capital" ? "capital" : r.ref.t === "serie" ? "pelicula" : r.ref.t === "base" ? "cohete" : "pin") : r.tipo === "faccion" ? "bandera" : r.tipo === "coord" ? "pin" : "globo";
-function htmlResultados(res) {
-  return res.map((r, i) => `<button class="fila" data-i="${i}"><span class="burbuja">${ico(icoRes(r), "icon sm")}</span><span class="txt"><span class="t1">${esc(r.n)}</span><span class="t2">${esc(r.s)}</span></span></button>`).join("");
-}
+const htmlResultados = (res) => res.map((r, i) => `<button class="fila" data-i="${i}"><span class="burbuja">${ico(icoRes(r), "icon sm")}</span><span class="txt"><span class="t1">${esc(r.n)}</span><span class="t2">${esc(r.s)}</span></span></button>`).join("");
 function elegirResultado(r) {
   $("#q").value = r.n; $("#sugerencias").hidden = true; $("#q").blur();
   if (r.tipo === "lugar") return abrirLugar(r.ref);
-  if (r.tipo === "territorio") {
-    const capa = (r.ref.tipo === "estado" ? capaEEUU : capaMundo).getLayers().find((c) => c.feature === r.ref.feat);
-    const b = r.ref.n === "Rusia" ? L.latLngBounds([[41, 27], [78, 180]]) : capa.getBounds();
-    mapa.flyToBounds(b, { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0], maxZoom: 6 });
-    return abrirTerritorio(r.ref, L.latLng(r.ref.c[0], r.ref.c[1]));
-  }
+  if (r.tipo === "territorio") { V.encuadrar(esquinas(r.ref), { maxZoom: 6 }); return abrirTerritorio(r.ref); }
   if (r.tipo === "faccion") return abrirFaccion(r.ref);
-  if (r.tipo === "coord") {
-    volarA(r.lat, r.lon, 6);
-    const t = territorioEn(r.lat, r.lon);
-    if (t) abrirTerritorio(t, L.latLng(r.lat, r.lon)); else { abrirQueHay(L.latLng(r.lat, r.lon)); }
-  }
+  if (r.tipo === "coord") { V.volarA(r.lat, r.lon, 6); abrirQueHay(r.lat, r.lon); }
 }
 function abrirFaccion(k) {
   const f = FACCIONES[k], ts = TERR.filter((t) => t.f === k).sort((a, b) => b.area - a.area), ls = LUGARES.filter((l) => l.f === k);
@@ -1483,14 +2342,10 @@ function abrirFaccion(k) {
     <div class="texto"><p>${esc(f.d)}</p></div>
     ${ls.length ? `<div class="seccion">Lugares</div><div class="lista">${ls.map((l) => filaLugar(l)).join("")}</div>` : ""}
     <div class="seccion">Territorios</div><div class="nota">${ts.map((t) => esc(t.n)).join(" · ")}</div>`);
-  conectarAcciones({});
-  resaltar(ls.map((l) => l.id));
-  const capasF = [...capaMundo.getLayers(), ...capaEEUU.getLayers()].filter((c) => c.feature.properties.f === k && c.feature.properties.n !== "Rusia" && c.feature.properties.n !== "Fiyi");
-  let b = L.latLngBounds([]); capasF.forEach((c) => b.extend(c.getBounds()));
-  if (k === "R") b = L.latLngBounds([[-35, -25], [72, 120]]);
-  if (b.isValid()) mapa.flyToBounds(b, { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0] });
+  conectarAcciones({}); resaltar(ls.map((l) => l.id));
+  const pts = k === "R" ? [[-34, -18], [71, 30], [55, 140], [10, 45]] : ts.filter((t) => t.area > 0.5 && t.n !== "Rusia" && t.n !== "Fiyi").flatMap((t) => [t.c]);
+  if (pts.length) V.encuadrar(pts, { maxZoom: 5 });
 }
-
 const q = $("#q"), sug = $("#sugerencias");
 let resActuales = [], activo = -1;
 function mostrarSugerencias() {
@@ -1504,13 +2359,9 @@ q.addEventListener("input", mostrarSugerencias);
 q.addEventListener("focus", () => { if (q.value.trim()) mostrarSugerencias(); });
 q.addEventListener("keydown", (e) => {
   const filas = sug.querySelectorAll("[data-i]");
-  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-    e.preventDefault(); if (!filas.length) return;
-    activo = (activo + (e.key === "ArrowDown" ? 1 : -1) + filas.length) % filas.length;
-    filas.forEach((f, i) => f.classList.toggle("activa", i === activo));
-  } else if (e.key === "Enter") {
-    const r = resActuales[activo >= 0 ? activo : 0]; if (r) elegirResultado(r);
-  } else if (e.key === "Escape") { sug.hidden = true; q.blur(); }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (!filas.length) return; activo = (activo + (e.key === "ArrowDown" ? 1 : -1) + filas.length) % filas.length; filas.forEach((f, i) => f.classList.toggle("activa", i === activo)); }
+  else if (e.key === "Enter") { const r = resActuales[activo >= 0 ? activo : 0]; if (r) elegirResultado(r); }
+  else if (e.key === "Escape") { sug.hidden = true; q.blur(); }
 });
 $("#btn-buscar").addEventListener("click", () => { const r = resActuales[0] || buscar(q.value)[0]; if (r) elegirResultado(r); else q.focus(); });
 document.addEventListener("click", (e) => { if (!e.target.closest("#buscador")) sug.hidden = true; });
@@ -1522,11 +2373,11 @@ const MODOS = {
   avion: { n: "Avión", i: "avion", v: 480, extra: 1 },
   cohete: { n: "Cohete", i: "cohete", v: 9000, extra: 1.5 },
 };
-const ruta = { origen: null, destino: null, modo: almacen.leer("modo", "coche") };
-function puntoDe(obj) { return obj ? { n: obj.n, lat: obj.lat, lon: obj.lon } : null; }
-function abrirRuta(origen, destino) {
+const ruta = { origen: null, destino: null, modo: almacen.leer("modo", "cohete") };
+const puntoDe = (o) => o ? { n: o.n, lat: o.lat, lon: o.lon } : null;
+function abrirRuta(origen, destinoP) {
   if (origen !== undefined) ruta.origen = puntoDe(origen);
-  if (destino !== undefined) ruta.destino = puntoDe(destino);
+  if (destinoP !== undefined) ruta.destino = puntoDe(destinoP);
   const campo = (k, ph, fin) => `<label class="campo"><span class="marca${fin ? " fin" : ""}"></span>
       <input id="r-${k}" autocomplete="off" placeholder="${ph}" value="${ruta[k] ? esc(ruta[k].n) : ""}" aria-label="${ph}">
       <button class="elegir" data-elegir="${k}" title="Elegir en el mapa" aria-label="Elegir ${ph.toLowerCase()} en el mapa">${ico("pin", "icon sm")}</button></label>`;
@@ -1542,9 +2393,7 @@ function abrirRuta(origen, destino) {
       const res = buscar(inp.value, 6).filter((r) => r.tipo !== "faccion");
       if (!inp.value.trim() || !res.length) { caja.hidden = true; return; }
       caja.innerHTML = htmlResultados(res); caja.hidden = false;
-      caja.querySelectorAll("[data-i]").forEach((b) => b.addEventListener("click", () => {
-        const r = res[+b.dataset.i]; ruta[k] = { n: r.n, lat: r.lat, lon: r.lon }; inp.value = r.n; caja.hidden = true; calcularRuta();
-      }));
+      caja.querySelectorAll("[data-i]").forEach((b) => b.addEventListener("click", () => { const r = res[+b.dataset.i]; ruta[k] = { n: r.n, lat: r.lat, lon: r.lon }; inp.value = r.n; caja.hidden = true; calcularRuta(); }));
     });
     inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { const r = buscar(inp.value, 1)[0]; if (r && r.tipo !== "faccion") { ruta[k] = { n: r.n, lat: r.lat, lon: r.lon }; inp.value = r.n; $("#r-sug").hidden = true; calcularRuta(); } } });
   }
@@ -1556,42 +2405,26 @@ function abrirRuta(origen, destino) {
 }
 function empezarElegir(k) {
   modoElegir = k; $("#elegir-aviso").hidden = false; $("#elegir-aviso").textContent = k === "origen" ? "Toca el mapa para elegir el punto de partida" : "Toca el mapa para elegir el destino";
-  mapa.getContainer().style.cursor = "crosshair";
-  if (esMovil()) panel.hidden = true;
+  document.body.style.cursor = "crosshair"; if (esMovil()) panel.hidden = true;
 }
-function terminarElegir() { modoElegir = null; $("#elegir-aviso").hidden = true; mapa.getContainer().style.cursor = ""; panel.hidden = false; }
-
+function terminarElegir() { modoElegir = null; $("#elegir-aviso").hidden = true; document.body.style.cursor = ""; panel.hidden = false; }
 function calcularRuta() {
   const res = $("#r-res"); if (!res) return;
-  capaRuta.clearLayers();
   const { origen: a, destino: b } = ruta, modo = MODOS[ruta.modo];
-  if (!a || !b) { res.innerHTML = `<div class="vacio">Elige un punto de partida y un destino: escribe una ciudad o un territorio, o toca ${ico("pin", "icon sm")} para marcarlo en el mapa.</div>`; return; }
+  if (!a || !b) { quitarRuta(); res.innerHTML = `<div class="vacio">Elige un punto de partida y un destino: escribe una ciudad o un territorio, o toca ${ico("pin", "icon sm")} para marcarlo en el mapa.</div>`; return; }
   const pts = granCirculo([a.lat, a.lon], [b.lat, b.lon], 200), km = distancia([a.lat, a.lon], [b.lat, b.lon]);
-  // Recorrido: facciones atravesadas y tramos de mar.
   const paso = km / 200; let mar = 0, peorMar = 0; const tramos = [];
-  for (const p of pts) {
-    const t = territorioEn(p[0], p[1]);
-    if (!t) { mar += paso; peorMar = Math.max(peorMar, mar); continue; }
-    mar = 0; if (tramos[tramos.length - 1] !== t.f) tramos.push(t.f);
-  }
+  for (const p of pts) { const t = territorioEn(p[0], p[1]); if (!t) { mar += paso; peorMar = Math.max(peorMar, mar); continue; } mar = 0; if (tramos[tramos.length - 1] !== t.f) tramos.push(t.f); }
   const cruces = Math.max(0, tramos.length - 1);
-  const e = ESTILOS[estilo];
-  for (const seg of partirAntimeridiano(pts)) {
-    capaRuta.addLayer(L.polyline(seg, { pane: "rutas", color: "#ffffff", weight: 8, opacity: 0.9, interactive: false }));
-    capaRuta.addLayer(L.polyline(seg, { pane: "rutas", color: ruta.modo === "cohete" || ruta.modo === "avion" ? e.frente : "#1a73e8", weight: 4.5, opacity: 1, dashArray: modo.tierra ? null : "8 8", interactive: false }));
-  }
-  const fin = (lat, lon, c) => L.circleMarker([lat, lon], { pane: "rutas", radius: 6, color: "#fff", weight: 2.5, fillColor: c, fillOpacity: 1 });
-  capaRuta.addLayer(fin(a.lat, a.lon, "#333")); capaRuta.addLayer(fin(b.lat, b.lon, "#c0392b"));
-  mapa.flyToBounds(L.latLngBounds(pts.map((p) => [p[0], p[1]])).pad(0.2), { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0], paddingBottomRight: esMovil() ? [0, innerHeight * 0.45] : [0, 0], maxZoom: 7 });
-
+  ponerRuta(pts, !modo.tierra, ruta.modo);
+  V.encuadrar([pts[0], pts[100], pts[200]], { maxZoom: 7 });
   const chipsTramos = tramos.length ? `<div class="tramos">${tramos.map((f) => pastilla(f)).join('<span class="flecha">→</span>')}</div>` : "";
   if (modo.tierra && peorMar > 250) {
     res.innerHTML = `<div class="resultado"><div class="aviso">${ico("aviso")}<div><b>No hay ruta por tierra.</b> El trayecto atraviesa unos ${fmtKm(peorMar)} de mar. Prueba en avión o en cohete.</div></div>
       <div class="nota" style="padding:0">Distancia en línea recta: ${fmtKm(km)}</div></div>`;
     return;
   }
-  const kmReal = km * (modo.factor || 1);
-  let horas = kmReal / modo.v + (modo.extra || 0) + (modo.tierra ? cruces * 1.5 : 0);
+  const kmReal = km * (modo.factor || 1), horas = kmReal / modo.v + (modo.extra || 0) + (modo.tierra ? cruces * 1.5 : 0);
   const avisos = [];
   if (cruces && modo.tierra) avisos.push(`Cruzas ${cruces} ${cruces === 1 ? "frontera" : "fronteras"} entre bloques. Se suma 1 h 30 min por cada control y necesitas salvoconducto.`);
   if (tramos.includes("N") && modo.tierra) avisos.push("La Zona Neutral no tiene policía de ninguna potencia, pero sí cazarrecompensas. Viaja de día.");
@@ -1604,84 +2437,67 @@ function calcularRuta() {
     <div class="grande">${fmtHoras(horas)}<small>${fmtKm(kmReal)}</small></div>
     <div class="nota" style="padding:0">${modo.tierra ? "Trazado aproximado por tierra." : "Ruta directa por el aire (ortodrómica)."} Velocidad media de 1962: ${modo.v.toLocaleString("es-ES")} km/h.</div>
     ${chipsTramos}
+    <button class="accion primaria" id="r-viaje" style="flex-direction:row;justify-content:center;gap:10px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:22px;padding:10px 16px;font-size:14px">${ico("avion", "icon sm")}Hacer el viaje en primera persona</button>
     ${avisos.map((t) => `<div class="aviso">${ico("aviso")}<div>${esc(t)}</div></div>`).join("")}
   </div>`;
+  $("#r-viaje").addEventListener("click", () => empezarViaje(a, b, ruta.modo));
 }
 
-/* ================== Clic en el mapa, medir, menú contextual ================== */
-function alHacerClicMapa(e) {
-  cerrarMenuCtx();
-  const ll = e.latlng, lon = normLon(ll.lng);
-  if (modoElegir) {
-    const t = territorioEn(ll.lat, lon), k = modoElegir;
-    ruta[k] = { n: t ? `${t.n} (${ll.lat.toFixed(2)}, ${lon.toFixed(2)})` : `${ll.lat.toFixed(3)}, ${lon.toFixed(3)}`, lat: +ll.lat.toFixed(4), lon: +lon.toFixed(4) };
-    terminarElegir(); abrirRuta(); return;
-  }
-  if (midiendo) { puntosMedida.push([ll.lat, ll.lng]); dibujarMedida(); return; }
-  if (!panel.hidden && esMovil()) cerrarPanel();
-}
+/* ================== Medir ================== */
 function alternarMedir(on = !midiendo, desde) {
   midiendo = on; $("#btn-medir").classList.toggle("on", on); $("#medida").hidden = !on;
-  puntosMedida = desde ? [desde] : []; capaMedida.clearLayers();
-  mapa.getContainer().style.cursor = on ? "crosshair" : "";
-  if (on) { if (esMovil()) cerrarPanel(); dibujarMedida(); }
+  escena.medida = desde ? [desde] : []; document.body.style.cursor = on ? "crosshair" : "";
+  if (on && esMovil()) cerrarPanel();
+  dibujarMedida();
 }
 function dibujarMedida() {
-  capaMedida.clearLayers(); let total = 0;
-  for (let i = 1; i < puntosMedida.length; i++) total += distancia(puntosMedida[i - 1], puntosMedida[i]);
-  if (puntosMedida.length > 1) {
-    capaMedida.addLayer(L.polyline(puntosMedida, { pane: "rutas", color: "#fff", weight: 6, opacity: 0.9, interactive: false }));
-    capaMedida.addLayer(L.polyline(puntosMedida, { pane: "rutas", color: "#222", weight: 2.5, dashArray: "6 5", interactive: false }));
-  }
-  puntosMedida.forEach((p) => capaMedida.addLayer(L.circleMarker(p, { pane: "rutas", radius: 5, color: "#222", weight: 2, fillColor: "#fff", fillOpacity: 1, interactive: false })));
+  V && V.dibujarMedida(); let total = 0; const p = escena.medida;
+  for (let i = 1; i < p.length; i++) total += distancia(p[i - 1], p[i]);
   $("#medida-total").textContent = fmtKm(total);
-  $("#medida-sub").textContent = puntosMedida.length < 2 ? "Toca el mapa para añadir puntos" : `${puntosMedida.length} puntos · ${(total / 1.852).toLocaleString("es-ES", { maximumFractionDigits: 0 })} millas náuticas`;
+  $("#medida-sub").textContent = p.length < 2 ? "Toca el mapa para añadir puntos" : `${p.length} puntos · ${(total / 1.852).toLocaleString("es-ES", { maximumFractionDigits: 0 })} millas náuticas`;
 }
 $("#btn-medir").addEventListener("click", () => alternarMedir());
 $("#medida-cerrar").addEventListener("click", () => alternarMedir(false));
-$("#medida-deshacer").addEventListener("click", () => { puntosMedida.pop(); dibujarMedida(); });
+$("#medida-deshacer").addEventListener("click", () => { escena.medida.pop(); dibujarMedida(); });
 
+/* ================== Menú contextual ================== */
 const menu = $("#menu-ctx");
-function abrirMenuCtx(e) {
+function abrirMenuCtx(lat, lon, x, y) {
   if (midiendo || modoElegir) return;
-  const ll = e.latlng, lat = +ll.lat.toFixed(4), lon = +normLon(ll.lng).toFixed(4), t = territorioEn(lat, lon);
-  const punto = { n: t ? t.n : "Punto en el mar", lat, lon, f: t ? t.f : "U" };
+  lat = +lat.toFixed(4); lon = +normLon(lon).toFixed(4);
+  const t = territorioEn(lat, lon), punto = { n: t ? t.n : "Punto en el mar", lat, lon, f: t ? t.f : "U" };
   menu.innerHTML = `<div class="cab"><div class="mono">${fmtCoord(lat, lon)}</div><div class="nota" style="padding:2px 0 0">${t ? esc(t.n) + " · " + esc(FACCIONES[t.f].n) : "Aguas internacionales"}</div></div>
     <button class="fila" data-m="que">${ico("info", "icon sm")}¿Qué hay aquí?</button>
+    <button class="fila" data-m="volar">${ico("avion", "icon sm")}Volar desde aquí</button>
     <button class="fila" data-m="desde">${ico("ruta", "icon sm")}Cómo llegar desde aquí</button>
     <button class="fila" data-m="hasta">${ico("pin", "icon sm")}Cómo llegar hasta aquí</button>
     <button class="fila" data-m="medir">${ico("regla", "icon sm")}Medir distancia</button>
     <button class="fila" data-m="guardar">${ico("guardar", "icon sm")}Guardar este punto</button>
     <button class="fila" data-m="copiar">${ico("copiar", "icon sm")}Copiar coordenadas</button>`;
   menu.hidden = false;
-  const p = e.containerPoint, w = menu.offsetWidth, h = menu.offsetHeight;
-  menu.style.left = Math.min(p.x, innerWidth - w - 12) + "px"; menu.style.top = Math.min(p.y, innerHeight - h - 12) + "px";
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  menu.style.left = Math.max(8, Math.min(x, innerWidth - w - 12)) + "px"; menu.style.top = Math.max(8, Math.min(y, innerHeight - h - 12)) + "px";
   menu.querySelectorAll("[data-m]").forEach((b) => b.addEventListener("click", () => {
-    cerrarMenuCtx();
-    const k = b.dataset.m;
-    if (k === "que") abrirQueHay(ll);
+    cerrarMenuCtx(); const k = b.dataset.m;
+    if (k === "que") abrirQueHay(lat, lon);
+    if (k === "volar") FP.entrar({ lat, lon, alt: 9 });
     if (k === "desde") abrirRuta(punto, undefined);
     if (k === "hasta") abrirRuta(undefined, punto);
-    if (k === "medir") alternarMedir(true, [ll.lat, ll.lng]);
+    if (k === "medir") alternarMedir(true, [lat, lon]);
     if (k === "guardar") alternarGuardado(punto);
     if (k === "copiar") copiar(`${lat}, ${lon}`, "Coordenadas copiadas");
   }));
 }
 function cerrarMenuCtx() { menu.hidden = true; }
-function abrirQueHay(ll) {
-  const lat = ll.lat, lon = normLon(ll.lng), t = territorioEn(lat, lon);
-  if (t) return abrirTerritorio(t, L.latLng(lat, lon));
-  const cerca = LUGARES.map((l) => [l, distancia([lat, lon], [l.lat, l.lon])]).sort((a, b) => a[1] - b[1]).slice(0, 4);
-  const obj = { n: "Punto en el mar", lat: +lat.toFixed(4), lon: +lon.toFixed(4), f: "U" };
-  abrirPanel(`<div class="ficha"><h2>Aguas internacionales</h2><div class="sub mono">${fmtCoord(lat, lon)}</div></div>${botonesAccion(obj)}
-    <div class="seccion">Lugares más cercanos</div><div class="lista">${cerca.map(([l, km]) => filaLugar(l, km)).join("")}</div>`);
-  conectarAcciones(obj); ponerPin(lat, lon);
-}
 
 /* ================== Controles ================== */
-$("#btn-mas").addEventListener("click", () => mapa.zoomIn());
-$("#btn-menos").addEventListener("click", () => mapa.zoomOut());
-$("#btn-mundo").addEventListener("click", () => mapa.flyTo([30, -20], esMovil() ? 2 : 2.5, { duration: 0.8 }));
+$("#btn-mas").addEventListener("click", () => V.zoom(0.5));
+$("#btn-menos").addEventListener("click", () => V.zoom(2));
+$("#btn-mundo").addEventListener("click", () => V.verMundo());
+$("#brujula").addEventListener("click", () => V.norte());
+$("#btn-vista").addEventListener("click", () => cambiarVista(vista === "3d" ? "2d" : "3d"));
+$("#btn-vuelo").addEventListener("click", () => FP.entrar({ alt: 11 }));
+document.querySelectorAll(".vista-op").forEach((b) => b.addEventListener("click", () => cambiarVista(b.dataset.vista)));
 $("#btn-pantalla").addEventListener("click", async () => {
   try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }
   catch (e) { aviso("Este visor no permite pantalla completa"); }
@@ -1690,33 +2506,44 @@ $("#btn-ruta").addEventListener("click", () => abrirRuta());
 const panelCapas = $("#capas");
 $("#capas-btn").addEventListener("click", (e) => { e.stopPropagation(); panelCapas.hidden = !panelCapas.hidden; });
 document.addEventListener("click", (e) => { if (!e.target.closest("#capas, #capas-btn")) panelCapas.hidden = true; if (!e.target.closest("#menu-ctx")) cerrarMenuCtx(); });
-for (const k of ["fronteras", "frentes", "ciudades", "etiquetas", "cohetes", "cuadricula"]) {
+for (const k of ["fronteras", "frentes", "ciudades", "etiquetas", "cohetes", "cuadricula", "sol", "grano", "nubes"]) {
   const c = $("#c-" + k); c.checked = !!capas[k];
-  c.addEventListener("change", () => { capas[k] = c.checked; almacen.guardar("capas", capas); aplicarEstilo(); });
+  c.addEventListener("change", () => { capas[k] = c.checked; almacen.guardar("capas", capas); if (k === "sol" || k === "ciudades" || k === "etiquetas" || k === "nubes") { V3.sucio = true; V2.aplicarEstilo(); variablesEstilo(); } else aplicarEstilo(); });
 }
 
 /* ================== Menú lateral ================== */
 const cajon = $("#cajon"), velo = $("#velo");
 function abrirCajon() {
   cajon.innerHTML = `<div class="marca-app"><b>Mapas del Castillo</b><small>El mundo de la serie en 1962</small></div>
+    <button class="fila" data-c="vuelo">${ico("avion")}Volar en primera persona</button>
+    <button class="fila" data-c="vista">${ico("globo")}${vista === "3d" ? "Ver mapa plano" : "Ver globo 3D"}</button>
     <button class="fila" data-c="guardados">${ico("guardar")}Guardados</button>
     <button class="fila" data-c="leyenda">${ico("leyenda")}Leyenda de bloques</button>
     <button class="fila" data-c="cronologia">${ico("cronologia")}Cronología</button>
     <button class="fila" data-c="ruta">${ico("ruta")}Cómo llegar</button>
     <button class="fila" data-c="medir">${ico("regla")}Medir distancia</button>
-    <button class="fila" data-c="atajos">${ico("teclado")}Atajos de teclado</button>
+    <button class="fila" data-c="atajos">${ico("teclado")}Controles y atajos</button>
     <button class="fila" data-c="acerca">${ico("info")}Acerca de este mapa</button>`;
   cajon.hidden = false; velo.hidden = false;
   cajon.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => {
     cerrarCajon(); const k = b.dataset.c;
+    if (k === "vuelo") FP.entrar({ alt: 11 });
+    if (k === "vista") cambiarVista(vista === "3d" ? "2d" : "3d");
     if (k === "guardados") abrirGuardados();
     if (k === "leyenda") abrirLeyenda();
     if (k === "cronologia") abrirCronologia();
     if (k === "ruta") abrirRuta();
     if (k === "medir") alternarMedir(true);
-    if (k === "atajos") abrirPanel(`<h2 class="titulo-vista">Atajos de teclado</h2><div class="lista leyenda">
-      ${[["/", "Ir al buscador"], ["+ / −", "Acercar o alejar"], ["Flechas", "Mover el mapa"], ["M", "Medir distancia"], ["R", "Cómo llegar"], ["L", "Leyenda"], ["Esc", "Cerrar panel o herramienta"], ["Clic derecho", "Menú del punto (mantén pulsado en móvil)"]]
-        .map(([k, v]) => `<div class="fila"><span class="mono" style="min-width:96px">${k}</span><span class="txt">${v}</span></div>`).join("")}</div>`);
+    if (k === "atajos") abrirPanel(`<h2 class="titulo-vista">Controles y atajos</h2>
+      <div class="seccion">Globo 3D</div><div class="lista leyenda">
+      ${[["Arrastrar", "Mover el globo"], ["Rueda / pellizco", "Acercar o alejar"], ["Mayús + arrastrar", "Girar e inclinar (dos dedos en el móvil)"], ["Doble clic", "Acercar a ese punto"], ["Clic derecho", "Menú del punto (mantén pulsado en el móvil)"]]
+        .map(([k, v]) => `<div class="fila"><span class="mono" style="min-width:128px">${k}</span><span class="txt">${v}</span></div>`).join("")}</div>
+      <div class="seccion">Primera persona</div><div class="lista leyenda">
+      ${[["W / S", "Más o menos velocidad"], ["A / D o ← / →", "Girar"], ["↑ / ↓", "Subir o bajar"], ["Arrastrar", "Mirar alrededor"], ["Esc", "Salir del vuelo"]]
+        .map(([k, v]) => `<div class="fila"><span class="mono" style="min-width:128px">${k}</span><span class="txt">${v}</span></div>`).join("")}</div>
+      <div class="seccion">Atajos</div><div class="lista leyenda">
+      ${[["/", "Ir al buscador"], ["V", "Volar en primera persona"], ["G", "Cambiar entre globo y mapa plano"], ["M", "Medir distancia"], ["R", "Cómo llegar"], ["L", "Leyenda"], ["Esc", "Cerrar panel o herramienta"]]
+        .map(([k, v]) => `<div class="fila"><span class="mono" style="min-width:128px">${k}</span><span class="txt">${v}</span></div>`).join("")}</div>`);
     if (k === "acerca") abrirPanel(`<h2 class="titulo-vista">Acerca de este mapa</h2><div class="texto">
       <p>Un mapa de fans del mundo de la serie <i>El hombre en el castillo</i> en 1962: el Gran Reich Nazi, el Imperio Japonés y la Zona Neutral que los separa en Norteamérica.</p>
       <p>Las fronteras entre bloques son una interpretación aproximada; la serie no muestra todos los límites con precisión. Los nombres de los territorios son los de antes de la guerra.</p>
@@ -1726,9 +2553,8 @@ function abrirCajon() {
 function cerrarCajon() { cajon.hidden = true; velo.hidden = true; }
 $("#btn-menu").addEventListener("click", abrirCajon);
 velo.addEventListener("click", cerrarCajon);
-
 function abrirLeyenda() {
-  const pal = ESTILOS[estilo].real ? ESTILOS.mapa : ESTILOS[estilo];
+  const pal = ESTILOS[estilo].real ? ESTILOS.serie : ESTILOS[estilo];
   abrirPanel(`<h2 class="titulo-vista">Leyenda de bloques</h2><div class="nota">Toca un bloque para ver sus territorios.</div><div class="lista">
     ${ORDEN_FAC.filter((k) => k !== "U").map((k) => `<button class="fila" data-fac="${k}" style="align-items:flex-start"><span class="muestra" style="background:${pal.fill[k]}"></span>
       <span class="txt"><span class="t1">${esc(FACCIONES[k].n)}</span><span class="t2" style="white-space:normal">${esc(FACCIONES[k].d)}</span></span></button>`).join("")}
@@ -1749,6 +2575,7 @@ function abrirCronologia() {
 
 /* ================== Teclado ================== */
 document.addEventListener("keydown", (e) => {
+  if (V3.enVuelo) return;
   const escribiendo = e.target.matches("input, textarea");
   if (e.key === "Escape") {
     if (!cajon.hidden) return cerrarCajon();
@@ -1763,20 +2590,28 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "m" || e.key === "M") alternarMedir();
   if (e.key === "r" || e.key === "R") abrirRuta();
   if (e.key === "l" || e.key === "L") abrirLeyenda();
+  if (e.key === "v" || e.key === "V") FP.entrar({ alt: 11 });
+  if (e.key === "g" || e.key === "G") cambiarVista(vista === "3d" ? "2d" : "3d");
+  if (vista === "3d" && (e.key === "+" || e.key === "=")) V3.zoom(0.5);
+  if (vista === "3d" && e.key === "-") V3.zoom(2);
 });
-addEventListener("resize", () => document.body.classList.toggle("movil", esMovil()));
+addEventListener("resize", () => { document.body.classList.toggle("movil", esMovil()); V3.redimensionar(); V2.redimensionar(); });
 
 /* ================== Arranque ================== */
-iniciarMapa();
+function webglDisponible() { try { const c = document.createElement("canvas"); return !!(window.WebGLRenderingContext && (c.getContext("webgl") || c.getContext("experimental-webgl"))); } catch (e) { return false; } }
 fetch("datos/mundo.json")
   .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then((datos) => {
-    construirTerritorios(datos);
-    const id = decodeURIComponent(location.hash.slice(1));
-    const l = LUGARES.find((x) => x.id === id);
+    prepararDatos(datos);
+    if (vista === "3d" && (typeof THREE === "undefined" || !webglDisponible())) { vista = "2d"; aviso("Tu navegador no puede mostrar el globo 3D; se abre el mapa plano."); }
+    if (vista === "2d") $("#globo").hidden = true;
+    cambiarVista(vista);
+    const l = porId[decodeURIComponent(location.hash.slice(1))];
     if (l) abrirLugar(l);
+    else if (vista === "3d") V3.volarHacia(36, -100, esMovil() ? 9500 : 7200, { dur: 2600 });
   })
-  .catch(() => aviso("No se pudieron cargar las fronteras del mundo. Abre el mapa desde un servidor web, no como archivo suelto."));
+  .catch((e) => { console.error(e); aviso("No se pudieron cargar las fronteras del mundo. Abre el mapa desde un servidor web, no como archivo suelto."); });
+
 </script>
 
 </body></html>
