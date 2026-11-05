@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Era Jurásica</title>
+<meta name="description" content="Explora el periodo Jurásico: sus dinosaurios, su clima y su línea de tiempo.">
+<style>
+  :root{
+    --bg:#0f1a12; --bg2:#15241a; --card:#1b2e21; --line:#2c4633;
+    --ink:#e9f0e3; --muted:#9fb5a2; --accent:#e8a33d; --accent2:#7fbf6a; --danger:#d9573b;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55;overflow-x:hidden}
+  a{color:inherit}
+  nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px;background:rgba(15,26,18,.75);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  nav .brand{font-weight:800;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+  nav .brand span{color:var(--accent)}
+  nav ul{list-style:none;display:flex;gap:18px;margin:0;padding:0;font-size:14px}
+  nav ul a{text-decoration:none;color:var(--muted)} nav ul a:hover{color:var(--ink)}
+  @media (max-width:640px){nav ul{display:none}}
+
+  /* HERO con parallax */
+  .hero{position:relative;height:100vh;min-height:560px;overflow:hidden;background:linear-gradient(#f2b45a 0%,#e07b3c 35%,#7a3b2e 62%,#2a1f1a 100%)}
+  .layer{position:absolute;left:-5%;right:-5%;bottom:0;width:110%;will-change:transform}
+  .sun{position:absolute;left:50%;top:24%;width:180px;height:180px;margin-left:-90px;border-radius:50%;background:radial-gradient(#fff4c8,#ffd27a 55%,rgba(255,200,100,0) 72%)}
+  .hero-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px;z-index:5;pointer-events:none}
+  .hero h1{font-size:clamp(40px,9vw,104px);line-height:.95;margin:0;letter-spacing:.04em;text-transform:uppercase;color:#fff7e6;text-shadow:0 4px 30px rgba(0,0,0,.45)}
+  .hero p{max-width:560px;margin:18px 0 0;font-size:clamp(15px,2.2vw,19px);color:#fff1d6;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+  .hero .cta{pointer-events:auto;margin-top:26px;display:inline-block;padding:12px 26px;border-radius:999px;background:var(--accent);color:#231507;font-weight:700;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  .scroll-hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:6;font-size:12px;letter-spacing:.2em;color:#d9c9b0;animation:bob 2s ease-in-out infinite}
+  @keyframes bob{50%{transform:translate(-50%,6px)}}
+
+  section{padding:96px 20px;max-width:1120px;margin:0 auto}
+  h2{font-size:clamp(28px,5vw,44px);margin:0 0 8px}
+  .kicker{color:var(--accent);text-transform:uppercase;letter-spacing:.18em;font-size:12px;font-weight:700}
+  .lead{color:var(--muted);max-width:640px}
+
+  /* Datos */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:36px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .stat b{display:block;font-size:34px;color:var(--accent)}
+  .stat small{color:var(--muted)}
+
+  /* Línea de tiempo */
+  .timeline{position:relative;margin-top:40px;padding-left:28px}
+  .timeline::before{content:"";position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:linear-gradient(var(--accent2),var(--accent))}
+  .tl-item{position:relative;margin-bottom:28px;opacity:0;transform:translateY(20px);transition:.6s}
+  .tl-item.show{opacity:1;transform:none}
+  .tl-item::before{content:"";position:absolute;left:-26px;top:6px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:3px solid var(--accent)}
+  .tl-item h3{margin:0;font-size:20px} .tl-item .ma{color:var(--accent);font-weight:700;font-size:14px}
+  .tl-item p{margin:6px 0 0;color:var(--muted)}
+
+  /* Dinosaurios */
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin:28px 0}
+  .filters button{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;font:inherit;font-size:14px}
+  .filters button.on{background:var(--accent);color:#231507;border-color:var(--accent);font-weight:700}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+  .dino{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer;transition:transform .25s,border-color .25s}
+  .dino:hover{transform:translateY(-4px);border-color:var(--accent)}
+  .dino .pic{height:150px;display:grid;place-items:center;background:radial-gradient(circle at 50% 120%,#2f5a3a,#16271b)}
+  .dino .pic svg{width:80%;height:80%}
+  .dino .body{padding:16px 18px 20px}
+  .dino h3{margin:0;font-size:19px}
+  .dino .sci{color:var(--muted);font-style:italic;font-size:13px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:999px;margin-top:10px}
+  .tag.carn{background:rgba(217,87,59,.18);color:#ff9a80}
+  .tag.herb{background:rgba(127,191,106,.18);color:#b4e5a2}
+  .tag.vol{background:rgba(120,170,230,.18);color:#a9cdf5}
+  .mini{display:flex;gap:14px;margin-top:12px;font-size:13px;color:var(--muted)}
+
+  /* Comparador */
+  .compare{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;margin-top:30px}
+  .compare select{background:var(--bg2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;width:100%;max-width:320px}
+  .stage{position:relative;height:280px;margin-top:22px;border-bottom:2px solid var(--line);display:flex;align-items:flex-end;gap:40px;padding:0 24px;overflow:hidden}
+  .figure svg{overflow:visible}
+  .figure{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:all .6s cubic-bezier(.2,.8,.2,1)}
+  .figure svg{width:100%;height:100%}
+  .figure .lbl{font-size:12px;color:var(--muted);margin-top:4px;white-space:nowrap;align-self:center}
+  .compare .read{margin-top:14px;color:var(--muted)}
+  .compare .read b{color:var(--accent)}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;z-index:100;background:rgba(5,10,6,.75);display:none;align-items:center;justify-content:center;padding:20px}
+  .modal.open{display:flex}
+  .modal .box{background:var(--bg2);border:1px solid var(--line);border-radius:22px;max-width:560px;width:100%;overflow:hidden;animation:pop .3s}
+  @keyframes pop{from{transform:scale(.94);opacity:0}}
+  .modal .pic{height:200px;display:grid;place-items:center;background:radial-gradient(circle at 50% 120%,#2f5a3a,#16271b)}
+  .modal .pic svg{width:70%;height:80%}
+  .modal .in{padding:22px 24px 26px}
+  .modal dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:16px 0 0;font-size:14px}
+  .modal dt{color:var(--muted)} .modal dd{margin:0}
+  .modal .x{float:right;background:none;border:0;color:var(--muted);font-size:26px;cursor:pointer;line-height:1}
+
+  /* Quiz */
+  .quiz{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;margin-top:30px}
+  .quiz .q{font-size:19px;font-weight:600}
+  .quiz .opts{display:grid;gap:10px;margin-top:16px}
+  .quiz .opts button{text-align:left;background:var(--bg2);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer}
+  .quiz .opts button.ok{border-color:var(--accent2);background:rgba(127,191,106,.15)}
+  .quiz .opts button.bad{border-color:var(--danger);background:rgba(217,87,59,.15)}
+  .quiz .foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;color:var(--muted);font-size:14px}
+  .quiz .next{background:var(--accent);color:#231507;border:0;border-radius:999px;padding:9px 20px;font-weight:700;cursor:pointer;font:inherit}
+
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:40px 20px 60px;border-top:1px solid var(--line)}
+  .reveal{opacity:0;transform:translateY(24px);transition:.7s}
+  .reveal.show{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">🦕 Era <span>Jurásica</span></div>
+  <ul>
+    <li><a href="#periodo">El periodo</a></li>
+    <li><a href="#linea">Línea de tiempo</a></li>
+    <li><a href="#dinos">Dinosaurios</a></li>
+    <li><a href="#tamano">Tamaños</a></li>
+    <li><a href="#quiz">Quiz</a></li>
+  </ul>
+</nav>
+
+<header class="hero" id="hero">
+  <div class="sun" data-depth="0.08"></div>
+  <!-- montañas lejanas -->
+  <svg class="layer" data-depth="0.15" viewBox="0 0 1200 400" preserveAspectRatio="none" style="height:62%">
+    <path fill="#a8553a" opacity=".55" d="M0 260 L120 150 L230 230 L360 90 L480 210 L600 120 L720 220 L860 80 L980 200 L1100 130 L1200 210 V400 H0Z"/>
+    <!-- volcán con humo -->
+    <path fill="#8a4430" opacity=".7" d="M820 400 L930 170 L960 170 L1080 400Z"/>
+    <g fill="#c9a28a" opacity=".35"><circle cx="945" cy="140" r="22"/><circle cx="965" cy="105" r="28"/><circle cx="990" cy="65" r="34"/></g>
+  </svg>
+  <!-- colinas medias con saurópodo -->
+  <svg class="layer" data-depth="0.3" viewBox="0 0 1200 400" preserveAspectRatio="none" style="height:48%">
+    <path fill="#5a2e24" d="M0 220 Q200 120 400 200 T800 180 T1200 200 V400 H0Z"/>
+    <g fill="#3d1f19" transform="translate(240 112) scale(1.1)">
+      <path d="M0 80 Q20 40 70 45 Q110 48 140 70 L190 70 Q205 72 215 85 L215 100 L200 100 L198 88 L180 90 L178 100 L165 100 L162 86 Q120 92 95 88 L92 100 L80 100 L78 86 L62 86 L60 100 L48 100 L46 82 Q20 85 0 80Z"/>
+      <path d="M60 50 Q40 10 20 -20 Q12 -32 0 -30 Q-8 -28 -4 -22 Q8 -18 14 -8 Q30 20 44 54Z"/>
+    </g>
+  </svg>
+  <!-- primer plano: helechos y terópodo -->
+  <svg class="layer" data-depth="0.55" viewBox="0 0 1200 400" preserveAspectRatio="none" style="height:36%">
+    <path fill="#22140f" d="M0 230 Q300 170 600 220 T1200 210 V400 H0Z"/>
+    <g fill="#140b08">
+      <path d="M80 240 Q60 150 20 110 Q70 140 90 230Z"/><path d="M95 240 Q110 140 160 100 Q120 160 110 240Z"/>
+      <path d="M1080 230 Q1050 120 1000 90 Q1070 120 1100 230Z"/><path d="M1100 230 Q1130 130 1180 110 Q1140 160 1120 230Z"/>
+      <g transform="translate(720 120)">
+        <path d="M0 60 Q30 40 70 45 L110 30 Q130 22 140 30 L150 40 L130 44 Q120 48 115 55 Q100 70 85 80 L90 112 L98 116 L78 116 L74 86 L60 88 L64 112 L72 116 L52 116 L48 86 Q20 80 -40 72 Q-70 70 -90 74 Q-60 60 0 60Z"/>
+      </g>
+    </g>
+  </svg>
+  <div class="hero-text">
+    <div class="kicker" style="color:#ffe2b0">Hace 201 – 145 millones de años</div>
+    <h1>Era Jurásica</h1>
+    <p>El tiempo en que los gigantes dominaron la Tierra. Explora sus criaturas, su mundo y su historia.</p>
+    <a class="cta" href="#dinos">Conocer a los dinosaurios</a>
+  </div>
+  <div class="scroll-hint">DESLIZA ↓</div>
+</header>
+
+<section id="periodo" class="reveal">
+  <div class="kicker">El periodo</div>
+  <h2>Un mundo cálido y verde</h2>
+  <p class="lead">El Jurásico fue el segundo periodo de la era Mesozoica. El supercontinente Pangea comenzó a dividirse, se abrieron nuevos océanos y un clima cálido y húmedo cubrió el planeta de coníferas, cícadas y helechos. Fue la época en que los dinosaurios se convirtieron en los animales terrestres dominantes y aparecieron las primeras aves.</p>
+  <div class="stats">
+    <div class="stat"><b data-count="56">0</b><small>millones de años de duración</small></div>
+    <div class="stat"><b data-count="1300" data-suffix=" ppm">0</b><small>CO₂ atmosférico aproximado (≈3× hoy)</small></div>
+    <div class="stat"><b data-count="5" data-prefix="+" data-suffix=" °C">0</b><small>más cálido que hoy, sin casquetes polares</small></div>
+    <div class="stat"><b data-count="40" data-suffix=" m">0</b><small>longitud de los saurópodos más grandes</small></div>
+  </div>
+</section>
+
+<section id="linea">
+  <div class="kicker">Línea de tiempo</div>
+  <h2>Tres capítulos de la historia</h2>
+  <div class="timeline">
+    <div class="tl-item"><span class="ma">201 Ma</span><h3>Extinción del Triásico-Jurásico</h3><p>Una gran extinción elimina a muchos competidores y abre el camino a los dinosaurios.</p></div>
+    <div class="tl-item"><span class="ma">201 – 174 Ma</span><h3>Jurásico Inferior</h3><p>Pangea empieza a fracturarse. Aparecen dinosaurios como <em>Dilophosaurus</em> y los primeros saurópodos grandes.</p></div>
+    <div class="tl-item"><span class="ma">174 – 163 Ma</span><h3>Jurásico Medio</h3><p>Se diversifican terópodos y saurópodos. Se abre el Atlántico Norte.</p></div>
+    <div class="tl-item"><span class="ma">163 – 145 Ma</span><h3>Jurásico Superior</h3><p>La edad de los gigantes: <em>Brachiosaurus</em>, <em>Diplodocus</em>, <em>Allosaurus</em>, <em>Stegosaurus</em> y la primera ave, <em>Archaeopteryx</em>.</p></div>
+    <div class="tl-item"><span class="ma">145 Ma</span><h3>Comienza el Cretácico</h3><p>El Jurásico cede el paso al último periodo de los dinosaurios no avianos.</p></div>
+  </div>
+</section>
+
+<section id="dinos">
+  <div class="kicker">Bestiario</div>
+  <h2>Criaturas del Jurásico</h2>
+  <p class="lead">Toca una tarjeta para ver su ficha completa.</p>
+  <div class="filters" id="filters">
+    <button class="on" data-f="all">Todos</button>
+    <button data-f="carn">Carnívoros</button>
+    <button data-f="herb">Herbívoros</button>
+    <button data-f="vol">Voladores</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section id="tamano">
+  <div class="kicker">Comparador</div>
+  <h2>¿Qué tan grandes eran?</h2>
+  <p class="lead">Elige una criatura y compárala con una persona de 1,75 m.</p>
+  <div class="compare">
+    <select id="pick"></select>
+    <div class="stage" id="stage"></div>
+    <div class="read" id="read"></div>
+  </div>
+</section>
+
+<section id="quiz">
+  <div class="kicker">Ponte a prueba</div>
+  <h2>Quiz jurásico</h2>
+  <div class="quiz" id="quizBox"></div>
+</section>
+
+<footer>Era Jurásica · Modelo web educativo · Datos aproximados basados en el registro fósil</footer>
+
+<div class="modal" id="modal"><div class="box">
+  <div class="pic" id="mPic"></div>
+  <div class="in">
+    <button class="x" id="mClose" aria-label="Cerrar">×</button>
+    <h2 id="mName" style="margin:0;font-size:28px"></h2>
+    <div class="sci" id="mSci" style="color:var(--muted);font-style:italic"></div>
+    <p id="mDesc" style="color:var(--muted)"></p>
+    <dl id="mData"></dl>
+  </div>
+</div></div>
+
+<script>
+// Siluetas originales simplificadas (viewBox 0 0 200 100)
+const SIL = {
+  sauropod:'<path d="M20 70 Q40 45 85 48 Q120 50 140 62 L185 66 Q192 68 196 72 Q180 72 150 74 L148 92 L138 92 L136 78 Q110 82 98 80 L96 92 L86 92 L84 78 L72 78 L70 92 L60 92 L58 74 Q35 76 20 70Z"/><path d="M78 56 Q55 25 40 8 Q34 2 26 4 Q20 6 24 10 Q32 12 38 20 Q48 36 56 62Z"/>',
+  theropod:'<path d="M10 52 Q50 38 90 42 L130 30 Q150 22 168 28 L182 36 Q176 42 160 42 L150 44 Q140 50 132 58 Q122 66 112 70 L118 92 L128 94 L104 94 L100 72 L88 74 L92 92 L102 94 L78 94 L76 72 Q60 66 40 60 Q22 58 10 52Z M128 54 L134 64 L128 64Z"/>',
+  stego:'<path d="M14 66 Q40 50 80 48 Q120 46 150 58 L176 62 Q186 64 188 70 L168 72 Q160 74 150 74 L148 92 L138 92 L136 78 L110 80 L108 92 L98 92 L96 80 L72 80 L70 92 L60 92 L58 78 Q36 76 14 66Z M4 64 L14 60 L12 70Z"/><path d="M50 50 L58 30 L66 48Z M70 47 L80 20 L90 46Z M94 46 L106 18 L116 47Z M120 48 L130 26 L138 52Z M142 55 L150 38 L156 58Z"/>',
+  bird:'<path d="M100 50 Q90 40 70 36 Q40 30 10 40 Q40 44 60 52 Q40 58 20 70 Q55 66 88 58 L100 62 Q112 70 130 70 L150 60 Q140 58 132 54 L150 44 Q160 38 170 40 L176 36 Q160 30 148 36 Q130 44 120 50Z"/>',
+  ptero:'<path d="M100 54 L60 40 Q30 34 4 46 Q36 46 56 56 L94 64 L100 70 L106 64 L144 56 Q164 46 196 46 Q170 34 140 40Z M100 54 L104 42 Q112 32 130 30 L150 28 L132 36 Q118 40 110 48Z"/>',
+  marine:'<path d="M20 50 Q60 30 110 36 Q150 40 180 48 L196 46 L190 54 L196 62 L180 58 Q150 66 110 66 Q70 68 40 60 Q28 58 20 50Z M70 62 L60 78 L80 66Z M120 64 L118 80 L132 64Z M50 40 Q30 30 8 34 Q24 38 40 46Z"/>',
+  human:'<circle cx="100" cy="12" r="9"/><path d="M90 24 H110 L114 58 H106 L104 96 H96 L94 58 H86Z"/>'
+};
+const DINOS = [
+  {n:'Brachiosaurus',s:'Brachiosaurus altithorax',t:'herb',sil:'sauropod',len:22,h:12,w:'≈ 40 t',when:'154–150 Ma',where:'Norteamérica',d:'Saurópodo de patas delanteras más largas que las traseras, lo que le daba una postura de jirafa para alcanzar copas altas.'},
+  {n:'Diplodocus',s:'Diplodocus carnegii',t:'herb',sil:'sauropod',len:26,h:5,w:'≈ 15 t',when:'154–152 Ma',where:'Norteamérica',d:'Cuello y cola enormemente largos; su cola pudo usarse como látigo para defenderse.'},
+  {n:'Allosaurus',s:'Allosaurus fragilis',t:'carn',sil:'theropod',len:9.5,h:3.5,w:'≈ 2 t',when:'155–145 Ma',where:'Norteamérica, Europa',d:'El gran depredador del Jurásico Superior, con crestas sobre los ojos y mandíbulas de dientes aserrados.'},
+  {n:'Stegosaurus',s:'Stegosaurus stenops',t:'herb',sil:'stego',len:9,h:4,w:'≈ 5 t',when:'155–150 Ma',where:'Norteamérica, Portugal',d:'Herbívoro con placas en el lomo y cuatro púas en la cola (el "thagomizer") para defenderse.'},
+  {n:'Dilophosaurus',s:'Dilophosaurus wetherilli',t:'carn',sil:'theropod',len:7,h:2.4,w:'≈ 400 kg',when:'≈193 Ma',where:'Norteamérica',d:'Terópodo del Jurásico Inferior con dos crestas finas sobre el cráneo, probablemente de exhibición.'},
+  {n:'Ceratosaurus',s:'Ceratosaurus nasicornis',t:'carn',sil:'theropod',len:6,h:2.2,w:'≈ 700 kg',when:'153–148 Ma',where:'Norteamérica, Portugal',d:'Depredador con un cuerno sobre el hocico y una fila de osteodermos en la espalda.'},
+  {n:'Archaeopteryx',s:'Archaeopteryx lithographica',t:'vol',sil:'bird',len:0.5,h:0.3,w:'≈ 1 kg',when:'≈150 Ma',where:'Alemania',d:'El famoso eslabón entre dinosaurios y aves: plumas y alas, pero también dientes y cola ósea.'},
+  {n:'Rhamphorhynchus',s:'Rhamphorhynchus muensteri',t:'vol',sil:'ptero',len:1.8,h:0.5,w:'≈ 1 kg',when:'≈150 Ma',where:'Europa',d:'Pterosaurio (no dinosaurio) de cola larga terminada en una paleta; cazaba peces en lagunas.'},
+  {n:'Ophthalmosaurus',s:'Ophthalmosaurus icenicus',t:'mar',sil:'marine',len:5,h:1.2,w:'≈ 900 kg',when:'165–145 Ma',where:'Océanos de todo el mundo',d:'Ictiosaurio marino (no dinosaurio) con ojos gigantes para cazar calamares en aguas profundas.',note:'Marino · piscívoro'}
+];
+
+const svg = (k,fill='#cfe0c4',vb='0 0 200 100') => `<svg viewBox="${vb}" fill="${fill}">${SIL[k]}</svg>`;
+const TAG = {carn:['carn','Carnívoro'],herb:['herb','Herbívoro'],vol:['vol','Volador'],mar:['vol','Marino']};
+
+// Tarjetas
+const grid = document.getElementById('grid');
+function render(f){
+  grid.innerHTML = DINOS.map((d,i)=> (f==='all'||d.t===f) ? `
+    <article class="dino" data-i="${i}">
+      <div class="pic">${svg(d.sil)}</div>
+      <div class="body">
+        <h3>${d.n}</h3><div class="sci">${d.s}</div>
+        <span class="tag ${TAG[d.t][0]}">${TAG[d.t][1]}</span>
+        <div class="mini"><span>📏 ${d.len} m</span><span>⚖️ ${d.w}</span></div>
+      </div>
+    </article>` : '').join('');
+}
+render('all');
+document.getElementById('filters').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#filters button').forEach(x=>x.classList.toggle('on',x===b));
+  render(b.dataset.f);
+});
+
+// Modal
+const modal=document.getElementById('modal');
+grid.addEventListener('click',e=>{
+  const c=e.target.closest('.dino'); if(!c) return;
+  const d=DINOS[c.dataset.i];
+  mPic.innerHTML=svg(d.sil); mName.textContent=d.n; mSci.textContent=d.s; mDesc.textContent=d.d;
+  mData.innerHTML=[['Tipo',d.note||TAG[d.t][1]],['Longitud',d.len+' m'],['Altura',d.h+' m'],['Peso',d.w],['Cuándo',d.when],['Dónde',d.where]]
+    .map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
+  modal.classList.add('open');
+});
+const close=()=>modal.classList.remove('open');
+mClose.onclick=close; modal.onclick=e=>{if(e.target===modal)close()};
+addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+
+// Comparador de tamaño
+const pick=document.getElementById('pick'), stage=document.getElementById('stage');
+pick.innerHTML=DINOS.map((d,i)=>`<option value="${i}">${d.n}</option>`).join('');
+function compare(){
+  const d=DINOS[pick.value], H=250, W=stage.clientWidth-60;
+  // escala: que quepa la longitud y la altura del animal
+  const scale=Math.min(H/Math.max(d.len/2,1.75), (W-40)/(d.len+0.8));
+  const hh=1.75*scale, hw=Math.max(hh*0.32,4);
+  const dw=d.len*scale, dh=dw/2; // silueta 2:1
+  stage.innerHTML=`
+    <div class="figure" style="width:${hw}px;height:${hh+18}px">${svg('human','#e8a33d','84 0 32 100')}<span class="lbl">1,75 m</span></div>
+    <div class="figure" style="width:${dw}px;height:${dh+18}px">${svg(d.sil)}<span class="lbl">${d.n} · ${d.len} m</span></div>`;
+  const r=d.len/1.75;
+  read.innerHTML = r>=1 ? `Un <b>${d.n}</b> medía unas <b>${r.toFixed(1)} veces</b> la estatura de una persona de largo.`
+                        : `Un <b>${d.n}</b> era más pequeño que una persona: unos <b>${Math.round(d.len*100)} cm</b>.`;
+}
+pick.onchange=compare; addEventListener('resize',compare); compare();
+
+// Quiz
+const Q=[
+  {q:'¿Hace cuántos millones de años empezó el Jurásico?',o:['66','145','201','252'],a:2},
+  {q:'¿Qué animal es considerado la primera ave conocida?',o:['Rhamphorhynchus','Archaeopteryx','Dilophosaurus','Ceratosaurus'],a:1},
+  {q:'¿Qué supercontinente empezó a dividirse en el Jurásico?',o:['Gondwana','Rodinia','Laurasia','Pangea'],a:3},
+  {q:'¿Para qué usaba Stegosaurus las púas de su cola?',o:['Para nadar','Para defenderse','Para trepar','Para cavar'],a:1},
+  {q:'¿Rhamphorhynchus era un dinosaurio?',o:['Sí, un terópodo','Sí, un saurópodo','No, era un pterosaurio','No, era un ictiosaurio'],a:2}
+];
+let qi=0, score=0;
+function showQ(){
+  if(qi>=Q.length){
+    quizBox.innerHTML=`<div class="q">¡Terminaste! Puntuación: ${score}/${Q.length} ${score===Q.length?'🦖🏆':'🦕'}</div>
+      <div class="foot"><span></span><button class="next" id="again">Jugar otra vez</button></div>`;
+    again.onclick=()=>{qi=0;score=0;showQ()}; return;
+  }
+  const c=Q[qi];
+  quizBox.innerHTML=`<div class="q">${c.q}</div><div class="opts">${c.o.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div>
+    <div class="foot"><span>Pregunta ${qi+1} de ${Q.length} · Aciertos: ${score}</span><button class="next" id="nx" style="visibility:hidden">Siguiente →</button></div>`;
+  quizBox.querySelector('.opts').onclick=e=>{
+    const b=e.target.closest('button'); if(!b||quizBox.dataset.done==='1') return;
+    quizBox.dataset.done='1';
+    const bs=quizBox.querySelectorAll('.opts button');
+    bs[c.a].classList.add('ok');
+    if(+b.dataset.i===c.a) score++; else b.classList.add('bad');
+    nx.style.visibility='visible';
+  };
+  quizBox.dataset.done='0';
+  nx.onclick=()=>{qi++;showQ()};
+}
+showQ();
+
+// Parallax del hero
+const layers=[...document.querySelectorAll('[data-depth]')];
+addEventListener('scroll',()=>{
+  const y=scrollY; if(y>innerHeight) return;
+  layers.forEach(l=>l.style.transform=`translateY(${y*l.dataset.depth}px)`);
+},{passive:true});
+
+// Aparición al hacer scroll + contadores
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting) return;
+  e.target.classList.add('show'); io.unobserve(e.target);
+  e.target.querySelectorAll('[data-count]').forEach(el=>{
+    const end=+el.dataset.count, t0=performance.now();
+    const tick=t=>{const p=Math.min((t-t0)/1400,1);el.textContent=(el.dataset.prefix||'')+Math.round(end*(1-Math.pow(1-p,3))).toLocaleString('es')+(el.dataset.suffix||'');if(p<1)requestAnimationFrame(tick)};
+    requestAnimationFrame(tick);
+  });
+}),{threshold:.2});
+document.querySelectorAll('.reveal,.tl-item').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
