@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cohete V2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: hoja de plano técnico. Cajetín arriba, visor 3D + ficha de componentes, tablas de etapas y secuencia abajo. */
+:root {
+  --paper: #e4e9ec; --sheet: #f3f6f7; --ink: #1b2833; --muted: #55656f; --rule: #b6c2ca;
+  --grid: rgba(27, 40, 51, .07);
+  --accent: #e0531f; --accent-text: #ad3e0e;
+  --s1: #2f6690; --s2: #7a5ea8; --pl: #2e8a6b; --lox: #7fb6e0; --rp1: #d9a441;
+  --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1822; --sheet: #12212e; --ink: #d6e2ea; --muted: #8ea2b1; --rule: #2a3f50;
+    --grid: rgba(150, 195, 230, .07);
+    --accent: #ff7a3d; --accent-text: #ff9a69;
+    --s1: #6fa8dc; --s2: #b39ae0; --pl: #5cc7a0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1822; --sheet: #12212e; --ink: #d6e2ea; --muted: #8ea2b1; --rule: #2a3f50;
+  --grid: rgba(150, 195, 230, .07);
+  --accent: #ff7a3d; --accent-text: #ff9a69;
+  --s1: #6fa8dc; --s2: #b39ae0; --pl: #5cc7a0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font: 15px/1.55 var(--f-body);
+}
+.wrap {
+  max-width: 1380px; margin: 0 auto;
+  padding-block: 20px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 16px;
+}
+.mono { font-family: var(--f-mono); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Cajetín */
+.titleblock { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 2fr); border: 1.5px solid var(--ink); background: var(--sheet); }
+.tb-name { padding: 14px 18px; border-right: 1px solid var(--ink); display: grid; gap: 6px; align-content: space-between; }
+.tb-name h1 { font: 800 clamp(44px, 6vw, 72px)/.88 var(--f-display); text-transform: uppercase; letter-spacing: .01em; margin: 0; }
+.tb-name h1 span { color: var(--accent); }
+.tb-name p { margin: 0; color: var(--muted); font-size: 14px; max-width: 46ch; }
+.tb-name .drw { font: 500 11px/1.4 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tb-specs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; }
+.tb-specs > div { padding: 12px 14px; border-left: 1px solid var(--rule); display: grid; align-content: space-between; gap: 8px; }
+.tb-specs > div:first-child { border-left: 0; }
+.tb-specs dt { font: 500 11px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tb-specs dd { margin: 0; font: 800 clamp(26px, 2.8vw, 36px)/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.tb-specs dd small { font: 500 13px var(--f-mono); color: var(--muted); margin-left: 3px; }
+.tb-specs dd em { display: block; font: 400 12px/1.3 var(--f-mono); color: var(--muted); font-style: normal; margin-top: 4px; }
+
+/* Principal */
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 16px; align-items: start; }
+.viewport { position: relative; height: clamp(480px, 78vh, 880px); border: 1.5px solid var(--ink); background: var(--sheet); overflow: hidden; }
+#stage { position: absolute; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; }
+.nogl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); margin: 0; }
+
+.tools { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px; max-width: calc(100% - 24px); z-index: 2; }
+.ctl, .btn {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 36px;
+  background: var(--sheet); color: var(--ink); border: 1px solid var(--ink);
+  padding: 6px 12px; font: 500 12px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase;
+}
+.btn { cursor: pointer; }
+.btn:hover { background: color-mix(in srgb, var(--ink) 8%, var(--sheet)); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+.ctl input[type="range"] { width: 120px; }
+.ctl input:disabled { opacity: .4; }
+.tag { position: absolute; top: 14px; right: 14px; z-index: 1; text-align: right; font: 500 11px/1.5 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
+.tip { position: absolute; z-index: 3; pointer-events: none; background: var(--ink); color: var(--sheet); font: 500 12px/1 var(--f-mono); padding: 6px 8px; transform: translate(14px, -50%); white-space: nowrap; }
+
+.flight {
+  position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 2;
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 14px;
+  background: var(--sheet); border: 1px solid var(--ink); padding: 8px 14px 8px 8px;
+}
+.play { min-width: 96px; justify-content: center; background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.play:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }
+.play svg { width: 12px; height: 12px; fill: currentColor; }
+.clock { font: 800 28px/1 var(--f-display); font-variant-numeric: tabular-nums; min-width: 4.6ch; }
+.track { display: grid; gap: 6px; min-width: 0; }
+.phase { font: 500 12px/1.2 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phase b { color: var(--ink); font-weight: 500; }
+.scrub { position: relative; }
+.ticks { position: absolute; left: 7px; right: 7px; top: -3px; height: 4px; pointer-events: none; }
+.ticks span { position: absolute; top: 0; width: 1px; height: 4px; background: var(--ink); }
+.reset { min-height: 36px; padding: 6px 10px; }
+
+/* Rangos */
+input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; height: 18px; margin: 0; width: 100%; cursor: pointer; --p: 0%; }
+input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(to right, var(--accent) var(--p), var(--rule) var(--p)); }
+input[type="range"]::-moz-range-track { height: 4px; background: var(--rule); }
+input[type="range"]::-moz-range-progress { height: 4px; background: var(--accent); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 50%; }
+input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 50%; }
+input[type="range"]:disabled { cursor: not-allowed; }
+
+/* Ficha */
+.panel { display: grid; gap: 16px; align-content: start; }
+.detail { border: 1.5px solid var(--ink); background: var(--sheet); padding: 16px 18px; display: grid; gap: 10px; }
+.detail-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 7px; font: 500 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+.chip::before { content: ""; width: 10px; height: 10px; background: var(--c, var(--ink)); }
+[data-stage="s1"] { --c: var(--s1); }
+[data-stage="s2"] { --c: var(--s2); }
+[data-stage="pl"] { --c: var(--pl); }
+.station { font: 400 12px/1 var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.detail h2 { font: 800 32px/.95 var(--f-display); text-transform: uppercase; margin: 0; text-wrap: balance; }
+.detail p { margin: 0; }
+.detail dl { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 7px 14px; margin: 2px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 14px; }
+.detail dt { color: var(--muted); font: 400 11.5px/1.7 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; }
+.detail dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.parts { border: 1px solid var(--rule); background: var(--sheet); padding-bottom: 6px; }
+.parts h3 { font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0; padding: 14px 14px 6px; }
+.parts ul { list-style: none; margin: 0; padding: 0; }
+.prt { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 7px 14px; background: none; border: 0; color: inherit; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.prt:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.prt[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 15%, transparent); font-weight: 600; }
+.prt .sw { width: 10px; height: 10px; background: var(--c); }
+.prt .st { font: 400 12px/1 var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Abajo */
+.lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.block { border: 1px solid var(--rule); background: var(--sheet); padding: 16px 18px; min-width: 0; }
+.block h2 { font: 800 26px/1 var(--f-display); text-transform: uppercase; margin: 0 0 4px; }
+.block > p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+thead th { font: 500 11px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1.5px solid var(--ink); }
+thead th .chip { color: var(--ink); }
+tbody th { font-weight: 500; color: var(--muted); white-space: nowrap; }
+td { font-variant-numeric: tabular-nums; }
+.events { list-style: none; margin: 0; padding: 0; }
+.events button { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 12px; align-items: start; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); padding: 9px 6px; color: inherit; font: inherit; cursor: pointer; }
+.events li:last-child button { border-bottom: 0; }
+.events button:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.events button[aria-current="step"] { background: color-mix(in srgb, var(--accent) 13%, transparent); }
+.events .tt { font: 500 13px/1.5 var(--f-mono); color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.events b { display: block; font-weight: 600; }
+.events .d { color: var(--muted); font-size: 14px; }
+.events .chip { padding-top: 4px; color: var(--muted); }
+.note { color: var(--muted); font-size: 13px; margin: 0; max-width: 90ch; }
+
+@media (max-width: 1040px) {
+  .titleblock { grid-template-columns: minmax(0, 1fr); }
+  .tb-name { border-right: 0; border-bottom: 1px solid var(--ink); }
+  .main, .lower { grid-template-columns: minmax(0, 1fr); }
+  .viewport { height: clamp(440px, 66vh, 680px); }
+}
+@media (max-width: 640px) {
+  .tb-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tb-specs > div { border-left: 0; border-top: 1px solid var(--rule); }
+  .tb-specs > div:nth-child(-n+2) { border-top: 0; }
+  .tb-specs > div:nth-child(even) { border-left: 1px solid var(--rule); }
+  .tb-specs > div:last-child { grid-column: 1 / -1; }
+  .tag { display: none; }
+  .flight { grid-template-columns: auto minmax(0, 1fr); gap: 10px; }
+  .flight .clock { grid-column: 2; grid-row: 1; }
+  .flight .track { grid-column: 1 / -1; }
+  .ctl input[type="range"] { width: 90px; }
+  .events button { grid-template-columns: 56px minmax(0, 1fr); }
+  .events .chip { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="titleblock">
+    <div class="tb-name">
+      <h1>Cohete <span>V2</span></h1>
+      <p>Vehículo de lanzamiento de dos etapas, oxígeno líquido y queroseno, con primera etapa reutilizable.</p>
+      <div class="drw">Plano CV2-000 · Rev. B · Cotas en metros</div>
+    </div>
+    <dl class="tb-specs">
+      <div><dt>Altura</dt><dd>68.0<small>m</small></dd></div>
+      <div><dt>Diámetro</dt><dd>3.7<small>m</small><em>Cofia 4.6 m</em></dd></div>
+      <div><dt>Masa al despegue</dt><dd>533<small>t</small></dd></div>
+      <div><dt>Empuje al despegue</dt><dd>5.95<small>MN</small><em>7 × 850 kN</em></dd></div>
+      <div><dt>Carga a órbita baja</dt><dd>18.5<small>t</small><em>GTO 6.2 t</em></dd></div>
+    </dl>
+  </header>
+
+  <div class="main">
+    <section class="viewport" aria-label="Modelo 3D del Cohete V2">
+      <div id="stage"></div>
+      <div class="tools">
+        <label class="ctl" for="explode">Despiece <input id="explode" type="range" min="0" max="100" value="0" style="--p:0%"></label>
+        <button class="btn" id="xray" type="button" aria-pressed="false">Rayos X</button>
+        <button class="btn" id="resetview" type="button">Vista inicial</button>
+      </div>
+      <div class="tag" aria-hidden="true">Vista isométrica<br>Arrastra para girar · rueda para acercar</div>
+      <div class="tip" id="tip" hidden></div>
+      <div class="flight">
+        <button class="btn play" id="play" type="button"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg><span class="lbl">Lanzar</span></button>
+        <div class="clock" id="clock" aria-live="off">T+00:00</div>
+        <div class="track">
+          <div class="phase" id="phase">En la plataforma de lanzamiento</div>
+          <div class="scrub">
+            <div class="ticks" id="ticks"></div>
+            <input id="timeline" type="range" min="0" max="600" step="1" value="0" aria-label="Tiempo de misión" style="--p:0%">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <section class="detail" aria-live="polite">
+        <div class="detail-head">
+          <span class="chip" id="d-chip" data-stage="s1">Etapa 1</span>
+          <span class="station" id="d-station"></span>
+        </div>
+        <h2 id="d-name">Componentes</h2>
+        <p id="d-desc">Toca una pieza en el modelo o en la lista para ver su ficha.</p>
+        <dl id="d-spec"></dl>
+      </section>
+      <nav class="parts" id="parts" aria-label="Componentes"></nav>
+    </aside>
+  </div>
+
+  <div class="lower">
+    <section class="block">
+      <h2>Etapas</h2>
+      <p>Ambas etapas queman oxígeno líquido (LOX) y queroseno RP-1.</p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th scope="col">Parámetro</th><th scope="col"><span class="chip" data-stage="s1">Etapa 1</span></th><th scope="col"><span class="chip" data-stage="s2">Etapa 2</span></th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Longitud</th><td>46.5 m con interetapa</td><td>15.2 m sin cofia</td></tr>
+            <tr><th scope="row">Motores</th><td>7 × Cóndor</td><td>1 × Cóndor-V</td></tr>
+            <tr><th scope="row">Empuje</th><td>5.95 MN a nivel del mar</td><td>960 kN en vacío</td></tr>
+            <tr><th scope="row">Impulso específico</th><td>284 s mar · 311 s vacío</td><td>345 s</td></tr>
+            <tr><th scope="row">LOX</th><td>285 t</td><td>68 t</td></tr>
+            <tr><th scope="row">RP-1</th><td>107 t</td><td>25 t</td></tr>
+            <tr><th scope="row">Masa en seco</th><td>23 t</td><td>4.1 t</td></tr>
+            <tr><th scope="row">Combustión</th><td>170 s</td><td>325 s</td></tr>
+            <tr><th scope="row">Recuperación</th><td>Aterriza en barcaza</td><td>Se desecha</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Secuencia de vuelo</h2>
+      <p>Toca un evento para llevar el modelo a ese momento de la misión.</p>
+      <ol class="events" id="events"></ol>
+    </section>
+  </div>
+
+  <p class="note">Diseño conceptual: las cifras son estimaciones coherentes entre sí, no datos de un vehículo real. Estación = altura en metros desde la salida de las toberas de la etapa 1. En Rayos X el azul es oxígeno líquido y el ámbar queroseno; su nivel baja durante la simulación.</p>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+const STAGES = { s1: 'Etapa 1', s2: 'Etapa 2', pl: 'Carga' };
+
+// y: estación inferior y superior (m). ex: desplazamiento en la vista de despiece.
+const PARTS = [
+  { id: 'cofia', name: 'Cofia', stage: 'pl', y: [56.8, 68.0], ex: 26,
+    desc: 'Protege la carga útil del calor y la presión del aire mientras el cohete cruza la atmósfera. A 112 km se abre en dos mitades y se desprende.',
+    spec: [['Material', 'Panal de aluminio con piel de fibra de carbono'], ['Masa', '1.7 t'], ['Tamaño', 'Ø 4.6 m × 11.2 m'], ['Separación', 'Pernos neumáticos, T+3:35']] },
+  { id: 'carga', name: 'Carga útil', stage: 'pl', y: [57.9, 61.4], ex: 22,
+    desc: 'Satélite de ejemplo dentro del volumen útil de la cofia, con los paneles solares plegados a los lados y la antena arriba.',
+    spec: [['Órbita baja', 'Hasta 18.5 t'], ['Transferencia geoestacionaria', 'Hasta 6.2 t'], ['Volumen útil', 'Ø 4.2 m × 9.0 m'], ['Aceleración máx.', '4.5 g']] },
+  { id: 'adaptador', name: 'Adaptador de carga', stage: 'pl', y: [56.8, 57.8], ex: 19,
+    desc: 'Une el satélite a la etapa 2. Una banda de sujeción se suelta y cuatro resortes empujan la carga sin hacerla girar.',
+    spec: [['Material', 'Aluminio 7075 mecanizado'], ['Masa', '210 kg'], ['Interfaz', 'Ø 1194 mm'], ['Separación', '0.5 m/s']] },
+  { id: 'avionica', name: 'Aviónica', stage: 's2', y: [56.0, 56.8], ex: 17,
+    desc: 'El cerebro del vehículo: computadoras de vuelo, navegación inercial con GPS, baterías, telemetría y el sistema de terminación de vuelo.',
+    spec: [['Computadoras', '3, votan por mayoría'], ['Navegación', 'Inercial + GPS'], ['Telemetría', 'Banda S, 2 Mbit/s'], ['Masa', '450 kg']] },
+  { id: 'lox2', name: 'Tanque LOX · etapa 2', stage: 's2', y: [49.9, 56.0], ex: 14.5,
+    desc: 'Oxígeno líquido a −183 °C. Un domo común lo separa del tanque de queroseno y ahorra longitud.',
+    spec: [['Material', 'Aleación aluminio-litio 2195'], ['Carga', '68 t de LOX'], ['Presión', '3.4 bar'], ['Masa en seco', '1.5 t']] },
+  { id: 'rp12', name: 'Tanque RP-1 · etapa 2', stage: 's2', y: [46.5, 49.9], ex: 12,
+    desc: 'Queroseno refinado. Se presuriza con helio para alimentar la turbobomba del motor.',
+    spec: [['Material', 'Aleación aluminio-litio 2195'], ['Carga', '25 t de RP-1'], ['Mezcla O/F', '2.7'], ['Masa en seco', '0.9 t']] },
+  { id: 'mvac', name: 'Motor Cóndor-V', stage: 's2', y: [41.6, 46.5], ex: 9,
+    desc: 'Versión de vacío del Cóndor con una tobera muy grande. Se puede reencender para dejar la carga en distintas órbitas.',
+    spec: [['Empuje', '960 kN en vacío'], ['Impulso específico', '345 s'], ['Expansión de tobera', '165 : 1'], ['Encendidos', 'Hasta 3'], ['Masa', '530 kg']] },
+  { id: 'interetapa', name: 'Interetapa', stage: 's1', y: [41.0, 46.5], ex: 5,
+    desc: 'Cubre la tobera del Cóndor-V y une las dos etapas. Lleva los empujadores de separación y los propulsores de nitrógeno que orientan la etapa 1 al regresar.',
+    spec: [['Material', 'Fibra de carbono con núcleo de aluminio'], ['Masa', '1.6 t'], ['Control de actitud', '8 propulsores de N₂'], ['Separación', '4 empujadores neumáticos']] },
+  { id: 'aletas', name: 'Aletas de rejilla', stage: 's1', y: [44.8, 46.3], ex: 5,
+    desc: 'Cuatro aletas plegadas durante el ascenso. Tras la separación se abren y guían la etapa 1 de vuelta hacia la barcaza.',
+    spec: [['Cantidad', '4'], ['Material', 'Titanio forjado'], ['Tamaño', '1.3 × 1.5 m'], ['Masa', '225 kg cada una']] },
+  { id: 'lox1', name: 'Tanque LOX · etapa 1', stage: 's1', y: [19.5, 41.0], ex: 2.5,
+    desc: 'El tanque más grande. Una tubería central lleva el oxígeno a través del tanque de queroseno hasta los motores.',
+    spec: [['Material', 'Aleación aluminio-litio 2195'], ['Carga', '285 t de LOX'], ['Longitud', '21.5 m'], ['Masa en seco', '5.6 t']] },
+  { id: 'rp11', name: 'Tanque RP-1 · etapa 1', stage: 's1', y: [6.0, 19.5], ex: -1,
+    desc: 'Queroseno para los siete motores. Se reserva un 10 % para los encendidos de regreso y aterrizaje.',
+    spec: [['Material', 'Aleación aluminio-litio 2195'], ['Carga', '107 t de RP-1'], ['Longitud', '13.5 m'], ['Masa en seco', '3.8 t']] },
+  { id: 'empuje', name: 'Sección de empuje', stage: 's1', y: [2.5, 6.0], ex: -4,
+    desc: 'Recibe la fuerza de los motores y la reparte al resto del cohete. Su escudo térmico protege las tuberías del calor de las llamas.',
+    spec: [['Material', 'Aluminio y acero inoxidable'], ['Carga máxima', '6.5 MN'], ['Escudo térmico', 'Manta cerámica'], ['Masa', '4.6 t']] },
+  { id: 'patas', name: 'Patas de aterrizaje', stage: 's1', y: [1.2, 10.2], ex: -4,
+    desc: 'Cuatro patas plegadas contra el cuerpo. Se abren segundos antes de tocar la barcaza.',
+    spec: [['Cantidad', '4'], ['Material', 'Fibra de carbono y panal de aluminio'], ['Envergadura abierta', '18 m'], ['Masa', '2.1 t en total']] },
+  { id: 'motores', name: 'Motores Cóndor ×7', stage: 's1', y: [0.0, 2.5], ex: -7,
+    desc: 'Siete motores de queroseno y oxígeno, uno central y seis en anillo. Regulan su empuje y giran sobre un cardán para dirigir el cohete.',
+    spec: [['Empuje', '850 kN cada uno, 5.95 MN en total'], ['Impulso específico', '284 s mar · 311 s vacío'], ['Ciclo', 'Generador de gas'], ['Regulación', '55–100 %'], ['Cardán', '±6°']] },
+];
+
+const EVENTS = [
+  { t: 0,   st: 's1', name: 'Ignición y despegue', d: 'Los siete motores llegan a empuje pleno y se sueltan los brazos de sujeción.' },
+  { t: 68,  st: 's1', name: 'Max-Q', d: 'Máxima presión aerodinámica, unos 32 kPa. Los motores bajan al 72 % para atravesarla.' },
+  { t: 170, st: 's1', name: 'Apagado de la etapa 1', d: 'MECO a 68 km de altura y 2.3 km/s.' },
+  { t: 173, st: 's1', name: 'Separación de etapas', d: 'Los empujadores neumáticos separan la etapa 2 y se abren las aletas de rejilla.' },
+  { t: 180, st: 's2', name: 'Ignición del Cóndor-V', d: 'Primer encendido de la etapa 2.' },
+  { t: 215, st: 'pl', name: 'Separación de la cofia', d: 'A 112 km ya casi no hay aire; las dos mitades se apartan.' },
+  { t: 370, st: 's1', name: 'Encendido de reentrada', d: 'Tres motores frenan la etapa 1 antes de entrar en la atmósfera densa.' },
+  { t: 485, st: 's1', name: 'Aterrizaje de la etapa 1', d: 'Último encendido con el motor central; las patas se abren y la etapa se posa en la barcaza.' },
+  { t: 505, st: 's2', name: 'Apagado de la etapa 2', d: 'SECO en órbita de aparcamiento a 210 km y 7.8 km/s.' },
+  { t: 580, st: 'pl', name: 'Despliegue de la carga', d: 'Se suelta la banda del adaptador y los resortes separan el satélite a 0.5 m/s.' },
+];
+
+const T_END = 600, SPEED = 30;                // 10 min de misión en 20 s
+const MECO = 170, TS = 173, IGN2 = 180, TF = 215, SECO = 505, TD = 580;
+const yOff = t => 0.0025 * t * t;             // ascenso estilizado del modelo
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const fmt = t => { const s = Math.max(0, Math.round(t)); return `T+${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+const fmtShort = t => `T+${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s => document.querySelector(s);
+const byId = Object.fromEntries(PARTS.map(p => [p.id, p]));
+
+let view = null;            // motor 3D, si carga
+let selected = null;
+let simT = 0, playing = false, explodeTarget = 0, explodeK = 0, xray = false;
+
+/* ---------- Lista de componentes ---------- */
+const partsEl = $('#parts');
+for (const [st, label] of [['pl', 'Carga y cofia'], ['s2', 'Etapa 2'], ['s1', 'Etapa 1']]) {
+  const h = document.createElement('h3'); h.textContent = label;
+  const ul = document.createElement('ul');
+  for (const p of PARTS.filter(p => p.stage === st)) {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'prt'; b.dataset.id = p.id; b.dataset.stage = p.stage;
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<span class="sw" aria-hidden="true"></span><span class="nm"></span><span class="st"></span>';
+    b.querySelector('.nm').textContent = p.name;
+    b.querySelector('.st').textContent = `${p.y[0].toFixed(1)}–${p.y[1].toFixed(1)} m`;
+    b.addEventListener('click', () => select(p.id));
+    li.append(b); ul.append(li);
+  }
+  partsEl.append(h, ul);
+}
+
+function select(id, fromHash = false) {
+  const p = byId[id]; if (!p) return;
+  selected = id;
+  const chip = $('#d-chip'); chip.textContent = STAGES[p.stage]; chip.dataset.stage = p.stage;
+  $('#d-station').textContent = `Estación ${p.y[0].toFixed(1)}–${p.y[1].toFixed(1)} m`;
+  $('#d-name').textContent = p.name;
+  $('#d-desc').textContent = p.desc;
+  $('#d-spec').replaceChildren(...p.spec.flatMap(([k, v]) => {
+    const dt = document.createElement('dt'); dt.textContent = k;
+    const dd = document.createElement('dd'); dd.textContent = v;
+    return [dt, dd];
+  }));
+  document.querySelectorAll('.prt').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === id)));
+  if (!fromHash) { try { history.replaceState(null, '', '#' + id); } catch (e) {} }
+  view?.highlight();
+}
+const fromHash = () => { const id = location.hash.slice(1); if (byId[id]) { select(id, true); return true; } return false; };
+if (!fromHash()) select('motores', true);
+addEventListener('hashchange', fromHash);
+
+/* ---------- Secuencia de vuelo ---------- */
+const evEl = $('#events');
+for (const e of EVENTS) {
+  const li = document.createElement('li');
+  const b = document.createElement('button');
+  b.type = 'button'; b.dataset.t = e.t;
+  b.innerHTML = '<span class="tt"></span><span><b></b><span class="d"></span></span><span class="chip"></span>';
+  b.querySelector('.tt').textContent = fmtShort(e.t);
+  b.querySelector('b').textContent = e.name;
+  b.querySelector('.d').textContent = e.d;
+  const chip = b.querySelector('.chip'); chip.dataset.stage = e.st; chip.textContent = STAGES[e.st];
+  b.addEventListener('click', () => {
+    playing = false; setT(e.t + 0.5); updatePlay();
+    $('.viewport').scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+  });
+  li.append(b); evEl.append(li);
+}
+const ticks = $('#ticks');
+for (const e of EVENTS) { const s = document.createElement('span'); s.style.left = (e.t / T_END * 100) + '%'; ticks.append(s); }
+
+const tl = $('#timeline'), clock = $('#clock'), phase = $('#phase'), playBtn = $('#play'), explodeIn = $('#explode');
+const evButtons = [...evEl.querySelectorAll('button')];
+function setT(t) { simT = Math.min(T_END, Math.max(0, t)); updateFlightUI(); }
+function updateFlightUI() {
+  tl.value = String(Math.round(simT));
+  tl.style.setProperty('--p', (simT / T_END * 100) + '%');
+  clock.textContent = fmt(simT);
+  let cur = null;
+  if (simT > 0 || playing) for (const e of EVENTS) if (e.t <= simT) cur = e;
+  phase.innerHTML = '';
+  if (cur) { const b = document.createElement('b'); b.textContent = cur.name; phase.append(b); }
+  else phase.textContent = 'En la plataforma de lanzamiento';
+  evButtons.forEach(b => { if (cur && +b.dataset.t === cur.t) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
+  explodeIn.disabled = simT > 0;
+}
+function updatePlay() {
+  const lbl = playing ? 'Pausa' : (simT > 0 && simT < T_END ? 'Seguir' : (simT >= T_END ? 'Repetir' : 'Lanzar'));
+  playBtn.querySelector('.lbl').textContent = lbl;
+  playBtn.querySelector('path').setAttribute('d', playing ? 'M2 1h3v10H2zM7 1h3v10H7z' : 'M2 1l9 5-9 5z');
+}
+playBtn.addEventListener('click', () => {
+  if (!playing && simT >= T_END) setT(0);
+  playing = !playing; updatePlay(); updateFlightUI();
+});
+tl.addEventListener('input', () => { playing = false; setT(+tl.value); updatePlay(); });
+explodeIn.addEventListener('input', () => { explodeTarget = +explodeIn.value / 100; explodeIn.style.setProperty('--p', explodeIn.value + '%'); });
+$('#xray').addEventListener('click', e => { xray = !xray; e.currentTarget.setAttribute('aria-pressed', String(xray)); view?.setXray(); });
+$('#resetview').addEventListener('click', () => {
+  playing = false; setT(0); updatePlay();
+  explodeIn.value = '0'; explodeTarget = 0; explodeIn.style.setProperty('--p', '0%');
+  view?.resetCamera();
+});
+updateFlightUI(); updatePlay();
+
+/* ---------- Bucle ---------- */
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (playing) {
+    simT += dt * SPEED;
+    if (simT >= T_END) { simT = T_END; playing = false; updatePlay(); }
+    updateFlightUI();
+  }
+  const target = simT > 0 ? 0 : explodeTarget;
+  explodeK += (target - explodeK) * (1 - Math.exp(-dt * 7));
+  view?.render(dt, explodeK, simT, simT > 0 || playing);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ---------- Modelo 3D ---------- */
+init3D();
+
+async function init3D() {
+  const host = $('#stage');
+  const fail = msg => { host.innerHTML = ''; const p = document.createElement('p'); p.className = 'nogl'; p.textContent = msg; host.append(p); };
+  let THREE, OrbitControls, RoomEnvironment, mergeGeometries;
+  try {
+    THREE = await import('three');
+    ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+    ({ RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js'));
+    ({ mergeGeometries } = await import('three/addons/utils/BufferGeometryUtils.js'));
+  } catch (e) { fail('No se pudo cargar el motor 3D. La ficha de componentes sigue disponible.'); return; }
+
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+  catch (e) { fail('Este navegador no tiene WebGL activado, así que el modelo 3D no se puede mostrar.'); return; }
+
+  try { await Promise.race([document.fonts.load('800 92px "Big Shoulders Display"'), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
+
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  host.append(renderer.domElement);
+  renderer.domElement.setAttribute('aria-hidden', 'true');
+
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8090a0, 0.5));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(60, 120, 80); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xcfe0ff, 0.5); rim.position.set(-80, 40, -60); scene.add(rim);
+
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 6000);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.enablePan = false;
+  controls.minDistance = 18; controls.maxDistance = 420;
+  controls.autoRotateSpeed = 0.5;
+  controls.addEventListener('start', () => { controls.autoRotate = false; });
+  const camDir = new THREE.Vector3(0.48, 0.16, 0.86).normalize();
+  function resetCamera() {
+    controls.target.set(0, 34.3 + 9.5 * explodeK, 0);
+    camera.position.copy(controls.target).addScaledVector(camDir, 175 * (1 + 0.45 * explodeK));
+    controls.autoRotate = !reduce;
+    controls.update();
+  }
+
+  const R = 1.85;
+  const C = { body: '#eef1f3', carbon: '#25282d', engine: '#4b5057', ext: '#868b92', alu: '#b9bfc6', gold: '#d6a63a', solar: '#1e3b6b', ti: '#8e949b', band: '#3a3f46', white: '#f4f5f6' };
+  const mat = (color, { m = 0.1, r = 0.55, side = THREE.FrontSide } = {}) => new THREE.MeshStandardMaterial({ color, metalness: m, roughness: r, side });
+  const cyl = (rt, rb, y0, y1, { seg = 64, open = false } = {}) => { const g = new THREE.CylinderGeometry(rt, rb, y1 - y0, seg, 1, open); g.translate(0, (y0 + y1) / 2, 0); return g; };
+  const box = (w, h, d, x, y, z) => { const b = new THREE.BoxGeometry(w, h, d); b.translate(x, y, z); return b; };
+
+  const inkC = new THREE.Color('#1b2833'), accC = new THREE.Color('#e0531f');
+  let ruleStr = '#b6c2ca';
+  const edgeBase = new THREE.LineBasicMaterial({ color: inkC, transparent: true, opacity: 0.45 });
+
+  const rocket = new THREE.Group(), s1G = new THREE.Group(), upG = new THREE.Group();
+  rocket.add(s1G, upG); scene.add(rocket);
+  const P = {}, pickables = [], skins = [], fluids = [];
+  const newPart = (id, parent) => { const g = new THREE.Group(); parent.add(g); return (P[id] = { id, g, meshes: [], edge: edgeBase.clone(), extra: {} }); };
+  function addMesh(p, geo, material, { parent = p.g, skin = false, edges = true, angle = 24 } = {}) {
+    const m = new THREE.Mesh(geo, material);
+    m.userData.part = p.id; m.userData.skin = skin;
+    parent.add(m); p.meshes.push(m); pickables.push(m);
+    if (edges) { const l = new THREE.LineSegments(new THREE.EdgesGeometry(geo, angle), p.edge); l.raycast = () => {}; m.add(l); }
+    if (skin) skins.push(m);
+    return m;
+  }
+  function fluid(p, y0, y1, color, stage) {
+    const h = y1 - y0 - 0.3;
+    const g = new THREE.CylinderGeometry(1.72, 1.72, h, 48); g.translate(0, h / 2, 0);
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0, transparent: true, opacity: 0.9 }));
+    m.position.y = y0 + 0.15; m.visible = false; m.userData.part = p.id;
+    p.g.add(m); pickables.push(m); fluids.push({ m, stage });
+  }
+
+  // Calcomanía del tanque LOX de la etapa 1
+  function decal() {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 1024;
+    const x = c.getContext('2d');
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, 512, 1024);
+    x.fillStyle = '#e0531f'; x.fillRect(0, 36, 512, 16);
+    x.save(); x.translate(256, 560); x.rotate(-Math.PI / 2);
+    x.fillStyle = '#1b2833'; x.font = '800 92px "Big Shoulders Display", Impact, sans-serif';
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('COHETE V2', 0, 0);
+    x.restore();
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    return t;
+  }
+
+  /* Etapa 1 */
+  {
+    const p = newPart('motores', s1G);
+    const exits = [[0, 0], ...Array.from({ length: 6 }, (_, i) => [Math.sin(i * Math.PI / 3) * 1.2, Math.cos(i * Math.PI / 3) * 1.2])];
+    const noz = [], rings = [];
+    for (const [x, z] of exits) {
+      const n = cyl(0.22, 0.46, 0, 2.3, { seg: 32, open: true }); n.translate(x, 0, z); noz.push(n);
+      const r = cyl(0.3, 0.3, 2.3, 2.5, { seg: 32 }); r.translate(x, 0, z); rings.push(r);
+    }
+    addMesh(p, mergeGeometries(noz), mat(C.engine, { m: 0.8, r: 0.35, side: THREE.DoubleSide }));
+    addMesh(p, mergeGeometries(rings), mat(C.carbon, { r: 0.6 }));
+    p.extra.exits = exits;
+  }
+  {
+    const p = newPart('empuje', s1G);
+    addMesh(p, cyl(R, R, 2.5, 6.0, { open: true }), mat(C.body, { side: THREE.DoubleSide }), { skin: true });
+    const sh = new THREE.CircleGeometry(R - 0.01, 64); sh.rotateX(Math.PI / 2); sh.translate(0, 2.5, 0);
+    addMesh(p, sh, mat(C.carbon, { r: 0.85, side: THREE.DoubleSide }), { edges: false });
+  }
+  {
+    const p = newPart('patas', s1G);
+    const g = mergeGeometries([box(0.42, 9, 0.22, 0, 4.5, 0.11), box(0.75, 0.4, 0.36, 0, 8.8, 0.18), box(0.2, 3.2, 0.12, 0, 2.0, 0.28)]);
+    p.extra.legs = [];
+    for (let i = 0; i < 4; i++) {
+      const a = Math.PI / 4 + i * Math.PI / 2;
+      const o = new THREE.Group(); o.rotation.y = a; o.position.set(Math.sin(a) * 1.86, 1.2, Math.cos(a) * 1.86);
+      const hinge = new THREE.Group(); o.add(hinge); p.g.add(o);
+      addMesh(p, g, mat(C.carbon, { r: 0.6 }), { parent: hinge });
+      p.extra.legs.push({ hinge });
+    }
+  }
+  {
+    const p = newPart('rp11', s1G);
+    addMesh(p, cyl(R, R, 6.0, 19.5), mat(C.body), { skin: true });
+    fluid(p, 6.0, 19.5, '#d9a441', 's1');
+  }
+  {
+    const p = newPart('lox1', s1G);
+    const m = mat(C.body); m.map = decal();
+    const mesh = addMesh(p, cyl(R, R, 19.5, 41.0), m, { skin: true });
+    mesh.rotation.y = Math.PI;
+    fluid(p, 19.5, 41.0, '#8ec3ea', 's1');
+  }
+  {
+    const p = newPart('interetapa', s1G);
+    addMesh(p, cyl(R, R, 41.0, 46.5, { open: true }), mat(C.carbon, { r: 0.7, side: THREE.DoubleSide }), { skin: true });
+  }
+  {
+    const p = newPart('aletas', s1G);
+    const W = 1.3, H = 1.5, D = 0.16, t = 0.07;
+    const bars = [box(W, t, D, 0, t / 2, D / 2), box(W, t, D, 0, H - t / 2, D / 2), box(t, H, D, -W / 2 + t / 2, H / 2, D / 2), box(t, H, D, W / 2 - t / 2, H / 2, D / 2)];
+    for (let i = 1; i < 4; i++) { bars.push(box(0.035, H, D, -W / 2 + i * W / 4, H / 2, D / 2)); bars.push(box(W, 0.035, D, 0, i * H / 4, D / 2)); }
+    const fg = mergeGeometries(bars);
+    p.extra.fins = [];
+    for (let i = 0; i < 4; i++) {
+      const a = i * Math.PI / 2;
+      const o = new THREE.Group(); o.rotation.y = a; o.position.set(Math.sin(a) * 1.87, 44.8, Math.cos(a) * 1.87);
+      const hinge = new THREE.Group(); o.add(hinge); p.g.add(o);
+      addMesh(p, fg, mat(C.ti, { m: 0.7, r: 0.4 }), { parent: hinge, angle: 30 });
+      p.extra.fins.push({ o, hinge, a });
+    }
+  }
+
+  /* Etapa 2 y carga */
+  {
+    const p = newPart('mvac', upG);
+    const pts = [];
+    for (let i = 0; i <= 24; i++) { const s = i / 24; pts.push(new THREE.Vector2(0.25 + 0.9 * Math.pow(1 - s, 0.6), s * 3.8)); }
+    const ext = new THREE.LatheGeometry(pts.slice(0, 15), 64); ext.translate(0, 41.6, 0);
+    const regen = new THREE.LatheGeometry(pts.slice(14), 64); regen.translate(0, 41.6, 0);
+    addMesh(p, ext, mat(C.ext, { m: 0.85, r: 0.3, side: THREE.DoubleSide }));
+    addMesh(p, regen, mat(C.engine, { m: 0.8, r: 0.35, side: THREE.DoubleSide }));
+    addMesh(p, cyl(0.45, 0.45, 45.4, 46.4, { seg: 32 }), mat(C.band, { m: 0.5, r: 0.45 }));
+    const tp = cyl(0.18, 0.18, 45.0, 46.2, { seg: 20 }); tp.translate(0.62, 0, 0);
+    addMesh(p, tp, mat(C.engine, { m: 0.7, r: 0.4 }));
+  }
+  {
+    const p = newPart('rp12', upG);
+    addMesh(p, cyl(R, R, 46.5, 49.9), mat(C.body), { skin: true });
+    fluid(p, 46.5, 49.9, '#d9a441', 's2');
+  }
+  {
+    const p = newPart('lox2', upG);
+    addMesh(p, cyl(R, R, 49.9, 56.0), mat(C.body), { skin: true });
+    fluid(p, 49.9, 56.0, '#8ec3ea', 's2');
+  }
+  {
+    const p = newPart('avionica', upG);
+    addMesh(p, cyl(R + 0.02, R + 0.02, 56.0, 56.8), mat(C.band, { r: 0.5 }));
+    for (const a of [0.6, 3.6]) {
+      const b = new THREE.BoxGeometry(0.26, 0.5, 0.14); b.translate(0, 56.4, 1.93); b.rotateY(a);
+      addMesh(p, b, mat(C.white, { r: 0.4 }));
+    }
+  }
+  {
+    const p = newPart('adaptador', upG);
+    addMesh(p, cyl(0.65, 1.5, 56.8, 57.8, { seg: 48, open: true }), mat(C.alu, { m: 0.8, r: 0.3, side: THREE.DoubleSide }));
+    const tor = new THREE.TorusGeometry(0.65, 0.05, 10, 48); tor.rotateX(Math.PI / 2); tor.translate(0, 57.8, 0);
+    addMesh(p, tor, mat(C.alu, { m: 0.8, r: 0.3 }), { edges: false });
+  }
+  {
+    const p = newPart('carga', upG);
+    addMesh(p, box(2, 3, 2, 0, 59.4, 0), mat(C.gold, { m: 0.9, r: 0.35 }));
+    for (const s of [1, -1]) addMesh(p, box(0.06, 2.8, 1.8, s * 1.04, 59.4, 0), mat(C.solar, { m: 0.4, r: 0.3 }));
+    const dp = []; for (let i = 0; i <= 10; i++) { const r = 0.75 * i / 10; dp.push(new THREE.Vector2(r, 0.35 * (i / 10) ** 2)); }
+    const dish = new THREE.LatheGeometry(dp, 40); dish.translate(0, 61.0, 0);
+    addMesh(p, dish, mat(C.white, { r: 0.5, side: THREE.DoubleSide }));
+    addMesh(p, cyl(0.05, 0.05, 60.9, 61.05, { seg: 12 }), mat(C.alu, { m: 0.8, r: 0.3 }), { edges: false });
+  }
+  {
+    const p = newPart('cofia', upG);
+    const Rb = 2.3, L = 4.8, rho = (Rb * Rb + L * L) / (2 * Rb);  // ojiva tangente
+    const pts = [new THREE.Vector2(1.86, 0), new THREE.Vector2(1.86, 0.3), new THREE.Vector2(Rb, 1.3), new THREE.Vector2(Rb, 6.4)];
+    for (let i = 1; i <= 28; i++) { const s = i / 28; pts.push(new THREE.Vector2(Math.max(0, Math.sqrt(rho * rho - (L * s) ** 2) + Rb - rho), 6.4 + s * L)); }
+    p.extra.halves = [];
+    for (const [k, phi] of [[1, 0], [-1, Math.PI]]) {
+      const hg = new THREE.Group(); hg.position.y = 56.8; p.g.add(hg);
+      addMesh(p, new THREE.LatheGeometry(pts, 48, phi, Math.PI), mat(C.body, { side: THREE.DoubleSide }), { parent: hg, skin: true, angle: 20 });
+      p.extra.halves.push({ hg, k });
+    }
+  }
+
+  /* Llamas */
+  const flameMat = new THREE.MeshBasicMaterial({ color: 0xffa640, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  const coreMat = new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  function flame(r, len, x, y, z, parent) {
+    const g = new THREE.Group();
+    const outer = new THREE.Mesh(new THREE.ConeGeometry(r, len, 24, 1, true), flameMat); outer.rotation.x = Math.PI; outer.position.y = -len / 2;
+    const inner = new THREE.Mesh(new THREE.ConeGeometry(r * 0.55, len * 0.6, 20, 1, true), coreMat); inner.rotation.x = Math.PI; inner.position.y = -len * 0.3;
+    g.add(outer, inner); g.position.set(x, y, z); g.visible = false; parent.add(g);
+    return g;
+  }
+  const flames1 = P.motores.extra.exits.map(([x, z]) => flame(0.42, 7, x, 0, z, P.motores.g));
+  const flame2 = flame(1.05, 10, 0, 41.6, 0, P.mvac.g);
+
+  /* Suelo */
+  let grid = null;
+  function makeGrid() {
+    if (grid) { scene.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
+    grid = new THREE.GridHelper(80, 40, inkC, new THREE.Color(ruleStr));
+    grid.position.y = -0.3; grid.material.transparent = true; grid.material.opacity = 0.7;
+    scene.add(grid);
+  }
+
+  /* Resaltado, rayos X y tema */
+  let hovered = null;
+  function highlight() {
+    for (const p of Object.values(P)) {
+      const s = p.id === selected, h = p.id === hovered && !s;
+      for (const m of p.meshes) { m.material.emissive.copy(accC); m.material.emissiveIntensity = s ? 0.55 : h ? 0.22 : 0; }
+      p.edge.color.copy(s ? accC : inkC);
+      p.edge.opacity = s ? 1 : (xray ? 0.75 : 0.45);
+    }
+  }
+  function setXray() {
+    for (const m of skins) { m.material.transparent = xray; m.material.opacity = xray ? 0.1 : 1; m.material.depthWrite = !xray; m.material.needsUpdate = true; }
+    for (const f of fluids) f.m.visible = xray;
+    highlight();
+  }
+  function theme() {
+    const cs = getComputedStyle(document.documentElement);
+    inkC.set(cs.getPropertyValue('--ink').trim() || '#1b2833');
+    accC.set(cs.getPropertyValue('--accent').trim() || '#e0531f');
+    ruleStr = cs.getPropertyValue('--rule').trim() || '#b6c2ca';
+    makeGrid(); highlight();
+  }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', theme);
+  new MutationObserver(theme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* Selección con el puntero */
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const tip = $('#tip'), vp = $('.viewport');
+  const shown = o => { for (let n = o; n; n = n.parent) if (!n.visible) return false; return true; };
+  function pick(ev) {
+    const r = renderer.domElement.getBoundingClientRect();
+    ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    for (const h of ray.intersectObjects(pickables, false)) {
+      if (!shown(h.object)) continue;
+      if (xray && h.object.userData.skin) continue;
+      return h.object.userData.part;
+    }
+    return null;
+  }
+  let down = null;
+  const cv = renderer.domElement;
+  cv.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
+  cv.addEventListener('pointerup', e => {
+    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const id = pick(e); if (id) select(id); }
+    down = null;
+  });
+  cv.addEventListener('pointermove', e => {
+    if (e.buttons || e.pointerType === 'touch') { tip.hidden = true; return; }
+    const id = pick(e);
+    if (id !== hovered) { hovered = id; highlight(); }
+    cv.style.cursor = id ? 'pointer' : 'grab';
+    if (id) {
+      const vr = vp.getBoundingClientRect();
+      tip.textContent = byId[id].name; tip.hidden = false;
+      tip.style.left = (e.clientX - vr.left) + 'px'; tip.style.top = (e.clientY - vr.top) + 'px';
+    } else tip.hidden = true;
+  });
+  cv.addEventListener('pointerleave', () => { tip.hidden = true; if (hovered) { hovered = null; highlight(); } });
+
+  new ResizeObserver(() => {
+    const w = host.clientWidth, h = host.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }).observe(host);
+
+  /* Estado por fotograma */
+  function apply(k, t, flying) {
+    for (const d of PARTS) P[d.id].g.position.set(0, d.ex * k, 0);
+    const finD = clamp01((t - TS - 2) / 6);
+    for (const f of P.aletas.extra.fins) {
+      const r = 1.87 + k * 1.0;
+      f.o.position.x = Math.sin(f.a) * r; f.o.position.z = Math.cos(f.a) * r;
+      f.hinge.rotation.x = finD * Math.PI / 2;
+    }
+    for (const l of P.patas.extra.legs) l.hinge.rotation.x = k * 0.28;
+
+    rocket.position.y = yOff(t);
+    if (t > TS) {
+      const dt = t - TS;
+      s1G.position.set(dt * 0.04, -0.25 * dt - 0.0325 * dt * dt, 0);
+      s1G.rotation.z = dt * 0.005; s1G.visible = dt < 120;
+    } else { s1G.position.set(0, 0, 0); s1G.rotation.z = 0; s1G.visible = true; }
+
+    let fx = 0, fy = 0, ang = 0, fvis = true;
+    if (t > TF) { const d = t - TF; fx = d * 0.12; fy = -0.15 * d - 0.0325 * d * d; ang = Math.min(1, d / 6) * 0.7; fvis = d < 80; }
+    for (const h of P.cofia.extra.halves) {
+      h.hg.position.x = h.k * (3 * k + fx); h.hg.position.y = 56.8 + fy;
+      h.hg.rotation.z = -h.k * ang; h.hg.visible = fvis;
+    }
+    if (t > TD) { const d = t - TD; P.carga.g.position.y += d * 0.05; P.carga.g.rotation.y = d * 0.015; }
+    else P.carga.g.rotation.y = 0;
+
+    for (const f of fluids) {
+      const fill = f.stage === 's1' ? 1 - 0.9 * clamp01(t / MECO) : 1 - 0.98 * clamp01((t - IGN2) / (SECO - IGN2));
+      f.m.scale.y = Math.max(fill, 0.002);
+    }
+
+    const on1 = flying && t < MECO, on2 = t >= IGN2 && t < SECO;
+    const fl = reduce ? 1 : 1 + (Math.random() - 0.5) * 0.14;
+    for (const g of flames1) { g.visible = on1; g.scale.set(1, fl, 1); }
+    flame2.visible = on2; flame2.scale.set(1 + (fl - 1) * 0.5, fl, 1 + (fl - 1) * 0.5);
+
+    return t > TS ? rocket.position.y + 54.8 : rocket.position.y + 34.3 + 9.5 * k;
+  }
+
+  let lastK = 0;
+  const camOff = new THREE.Vector3();
+  function render(dt, k, t, flying) {
+    const desired = apply(k, t, flying);
+    // Al despiezar, la cámara se aleja en proporción para que quepa la pila completa.
+    if (k !== lastK) {
+      camOff.subVectors(camera.position, controls.target).multiplyScalar((1 + 0.45 * k) / (1 + 0.45 * lastK));
+      camera.position.copy(controls.target).add(camOff);
+      lastK = k;
+    }
+    const dy = desired - controls.target.y;
+    const f = 1 - Math.exp(-dt * (flying ? 10 : 4));
+    controls.target.y += dy * f; camera.position.y += dy * f;
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  resetCamera();
+  theme();
+  setXray();
+  view = { render, highlight, setXray, resetCamera };
+}
+</script>
+</body>
+</html>
