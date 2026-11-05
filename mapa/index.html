@@ -1,0 +1,1782 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
+<title>Mapas del Castillo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Special+Elite&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Leaflet 1.9.4 (BSD-2) */
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+.leaflet-tile::selection {
+	background: transparent;
+}
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+.leaflet-container img.leaflet-tile {
+	mix-blend-mode: plus-lighter;
+}
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+.leaflet-pane         { z-index: 400; }
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; 
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; 
+	pointer-events: auto;
+	}
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+.leaflet-default-icon-path { 
+	background-image: url(images/marker-icon.png);
+	}
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+	margin: -10px auto 0;
+	pointer-events: auto;
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+@media print {
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+</style>
+<style>
+/* Layout: mapa a pantalla completa; buscador flotante arriba a la izquierda, panel lateral (escritorio) u hoja inferior (móvil), controles a la derecha. */
+:root {
+  --surface: #ffffff;
+  --surface-2: #f4f1ec;
+  --ink: #1e1b18;
+  --ink-2: #625a52;
+  --line: #e4ddd3;
+  --accent: #9e3326;
+  --accent-ink: #ffffff;
+  --shadow: 0 1px 2px rgba(40,25,10,.18), 0 2px 8px rgba(40,25,10,.14);
+  --font-ui: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sello: "Special Elite", "Courier New", Courier, monospace;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --surface: #1e2024; --surface-2: #282b31; --ink: #ecebe7; --ink-2: #a9a49c; --line: #393c43;
+  --accent: #e2806d; --accent-ink: #1b0e0b; --shadow: 0 1px 2px rgba(0,0,0,.5), 0 2px 10px rgba(0,0,0,.45); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --surface: #1e2024; --surface-2: #282b31; --ink: #ecebe7; --ink-2: #a9a49c; --line: #393c43;
+  --accent: #e2806d; --accent-ink: #1b0e0b; --shadow: 0 1px 2px rgba(0,0,0,.5), 0 2px 10px rgba(0,0,0,.45); color-scheme: dark; }
+
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--surface-2); color: var(--ink); font-family: var(--font-ui); font-size: 14px; overflow: hidden; }
+button { font: inherit; color: inherit; }
+#mapa { position: fixed; inset: 0; z-index: 0; }
+.leaflet-container { font-family: var(--font-ui); background: var(--oceano, #b5d2e5); outline: none; }
+.icon { width: 22px; height: 22px; fill: currentColor; flex: none; display: block; }
+.icon.sm { width: 18px; height: 18px; }
+
+/* ---------- Buscador ---------- */
+#buscador { position: fixed; z-index: 30; top: calc(12px + env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); max-width: 392px; }
+.caja { display: flex; align-items: center; gap: 2px; background: var(--surface); border-radius: 24px; box-shadow: var(--shadow); height: 48px; padding: 0 4px; }
+.caja input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font: 500 15px var(--font-ui); padding: 0 6px; height: 100%; }
+.caja input::placeholder { color: var(--ink-2); font-weight: 400; }
+.btn-ico { width: 40px; height: 40px; border: 0; background: transparent; border-radius: 50%; display: grid; place-items: center; cursor: pointer; color: var(--ink-2); flex: none; }
+.btn-ico:hover { background: var(--surface-2); color: var(--ink); }
+.btn-ico:focus-visible, .chip:focus-visible, .accion:focus-visible, .ctrl:focus-visible, .fila:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn-ico.acento { color: var(--accent); }
+.sep { width: 1px; height: 24px; background: var(--line); flex: none; }
+#sugerencias { margin-top: 6px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; max-height: min(60vh, 420px); overflow-y: auto; }
+.fila { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; border: 0; background: transparent; width: 100%; text-align: left; }
+.fila:hover, .fila.activa { background: var(--surface-2); }
+.fila .txt { min-width: 0; flex: 1; }
+.fila .t1 { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fila .t2 { color: var(--ink-2); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fila .km { color: var(--ink-2); font: 12px var(--font-mono); flex: none; }
+.burbuja { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--surface-2); color: var(--ink-2); }
+
+#chips { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+#chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px 0 10px; border-radius: 17px; border: 0; background: var(--surface); box-shadow: var(--shadow); cursor: pointer; font-weight: 500; font-size: 13.5px; white-space: nowrap; }
+.chip:hover { background: var(--surface-2); }
+.chip.on { background: var(--accent); color: var(--accent-ink); }
+.chip .icon { width: 18px; height: 18px; }
+
+/* ---------- Panel (lateral / hoja inferior) ---------- */
+#panel { position: fixed; z-index: 20; background: var(--surface); box-shadow: var(--shadow); display: flex; flex-direction: column;
+  left: 0; right: 0; bottom: 0; max-height: 58%; border-radius: 16px 16px 0 0; transition: transform .25s ease; }
+#panel.alto { max-height: calc(100% - 76px - env(safe-area-inset-top, 0px)); }
+#panel .asa { border: 0; background: transparent; padding: 8px 0 2px; cursor: pointer; display: grid; place-items: center; flex: none; }
+#panel .asa span { width: 36px; height: 4px; border-radius: 2px; background: var(--line); display: block; }
+#panel-cuerpo { overflow-y: auto; padding: 0 0 calc(16px + env(safe-area-inset-bottom, 0px)); min-height: 0; flex: 1; }
+#panel-cerrar { position: absolute; top: 8px; right: 8px; z-index: 2; background: var(--surface); }
+@media (min-width: 760px) {
+  #panel { top: 0; bottom: 0; right: auto; width: 408px; max-height: none; border-radius: 0; padding-top: calc(76px + env(safe-area-inset-top, 0px)); }
+  #panel.alto { max-height: none; }
+  #panel .asa { display: none; }
+  #panel-cerrar { top: calc(80px + env(safe-area-inset-top, 0px)); }
+  body.con-panel #chips { display: none; }
+  #buscador { left: max(16px, env(safe-area-inset-left, 0px)); top: calc(14px + env(safe-area-inset-top, 0px)); }
+}
+
+.cabecera { position: relative; height: 150px; overflow: hidden; display: flex; align-items: flex-end; padding: 14px 18px; color: #fff; }
+.cabecera .fondo { position: absolute; inset: 0; }
+.cabecera .sello { position: absolute; right: 18px; top: 18px; width: 86px; height: 86px; border: 3px double rgba(255,255,255,.85); border-radius: 50%;
+  display: grid; place-items: center; text-align: center; font: 11px/1.2 var(--font-sello); letter-spacing: .08em; transform: rotate(-12deg); color: rgba(255,255,255,.92); padding: 8px; }
+.cabecera .exp { position: relative; font: 12px var(--font-sello); letter-spacing: .12em; text-transform: uppercase; opacity: .92; }
+.ficha { padding: 16px 18px 6px; }
+.ficha h2 { margin: 0; font-size: 22px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+.ficha .sub { color: var(--ink-2); margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pastilla { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 6px; border-radius: 12px; background: var(--surface-2); font-size: 12.5px; font-weight: 500; color: var(--ink); }
+.punto { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+.acciones { display: flex; gap: 6px; padding: 12px 12px 14px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.accion { flex: 1 0 64px; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: transparent; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--accent); padding: 4px 2px; border-radius: 10px; }
+.accion .aro { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; }
+.accion.primaria .aro { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.accion:hover .aro { background: var(--surface-2); }
+.accion.primaria:hover .aro { filter: brightness(1.08); background: var(--accent); }
+.texto { padding: 14px 18px; line-height: 1.55; max-width: 62ch; }
+.texto p { margin: 0 0 10px; }
+.datos { padding: 4px 0 8px; border-bottom: 1px solid var(--line); }
+.dato { display: flex; gap: 16px; align-items: flex-start; padding: 9px 18px; }
+.dato .icon { color: var(--accent); margin-top: 1px; }
+.dato .v { min-width: 0; }
+.dato .v small { display: block; color: var(--ink-2); font-size: 12px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; }
+.seccion { padding: 14px 18px 4px; font-weight: 600; font-size: 15px; }
+.lista { padding-bottom: 6px; }
+.lista .fila { padding: 9px 18px; }
+.titulo-vista { padding: 18px 56px 8px 18px; font-size: 20px; font-weight: 600; margin: 0; }
+.nota { color: var(--ink-2); font-size: 12.5px; padding: 6px 18px 12px; line-height: 1.5; }
+.vacio { padding: 18px; color: var(--ink-2); line-height: 1.5; }
+
+/* Cómo llegar */
+.ruta-campos { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 14px 6px 18px; align-items: center; }
+.ruta-campos .col { display: grid; gap: 8px; min-width: 0; }
+.campo { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 10px; padding: 0 6px 0 10px; height: 42px; border: 1px solid transparent; position: relative; }
+.campo:focus-within { border-color: var(--accent); }
+.campo input { flex: 1; min-width: 0; border: 0; background: transparent; outline: 0; color: var(--ink); font: 14px var(--font-ui); }
+.campo .marca { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--ink-2); flex: none; }
+.campo .marca.fin { border-radius: 2px; background: var(--accent); border-color: var(--accent); }
+.campo .elegir { border: 0; background: transparent; color: var(--accent); cursor: pointer; padding: 4px; display: grid; place-items: center; border-radius: 6px; }
+.ruta-sug { margin: 0 14px 0 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.modos { display: flex; gap: 6px; padding: 8px 18px 12px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.modo { flex: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: transparent; border-radius: 18px; height: 34px; padding: 0 12px 0 10px; cursor: pointer; font-weight: 500; }
+.modo.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.resultado { padding: 14px 18px; display: grid; gap: 10px; }
+.resultado .grande { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.resultado .grande small { font-size: 15px; color: var(--ink-2); font-weight: 500; margin-left: 6px; }
+.aviso { display: flex; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); line-height: 1.45; font-size: 13.5px; }
+.aviso .icon { color: var(--accent); }
+.tramos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tramos .flecha { color: var(--ink-2); }
+
+/* Leyenda */
+.leyenda .fila { cursor: default; align-items: flex-start; }
+.muestra { width: 28px; height: 20px; border-radius: 4px; flex: none; margin-top: 2px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+.cronologia { padding: 4px 18px 12px; display: grid; gap: 12px; }
+.hito { display: grid; grid-template-columns: 56px 1fr; gap: 12px; line-height: 1.5; }
+.hito b { font: 15px var(--font-sello); color: var(--accent); }
+
+/* ---------- Controles del mapa ---------- */
+#controles { position: fixed; z-index: 15; right: calc(12px + env(safe-area-inset-right, 0px)); bottom: calc(34px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; justify-items: end; }
+.grupo { background: var(--surface); border-radius: 8px; box-shadow: var(--shadow); display: grid; overflow: hidden; }
+.ctrl { width: 40px; height: 40px; border: 0; background: var(--surface); display: grid; place-items: center; cursor: pointer; color: var(--ink-2); }
+.ctrl:hover { color: var(--ink); background: var(--surface-2); }
+.ctrl.on { color: var(--accent); }
+.grupo .ctrl + .ctrl { border-top: 1px solid var(--line); }
+body.con-panel.movil #controles { display: none; }
+
+#capas-btn { position: fixed; z-index: 15; left: calc(16px + env(safe-area-inset-left, 0px)); bottom: calc(34px + env(safe-area-inset-bottom, 0px));
+  width: 72px; height: 72px; border-radius: 10px; border: 2px solid var(--surface); box-shadow: var(--shadow); cursor: pointer; padding: 0; overflow: hidden; background: var(--surface); }
+#capas-btn canvas { width: 100%; height: 100%; display: block; }
+#capas-btn span { position: absolute; left: 0; right: 0; bottom: 0; color: #fff; font-size: 12px; font-weight: 600; padding: 14px 4px 4px; background: linear-gradient(transparent, rgba(0,0,0,.65)); display: flex; align-items: center; justify-content: center; gap: 4px; }
+body.con-panel #capas-btn { left: calc(424px + env(safe-area-inset-left, 0px)); }
+@media (max-width: 759px) {
+  #capas-btn { left: auto; right: calc(12px + env(safe-area-inset-right, 0px)); bottom: auto; top: calc(116px + env(safe-area-inset-top, 0px)); width: 48px; height: 48px; border-radius: 50%; }
+  #capas-btn span { display: none; }
+  body.con-panel #capas-btn { left: auto; display: none; }
+}
+#capas { position: fixed; z-index: 35; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 14px; width: min(340px, calc(100% - 32px));
+  left: calc(16px + env(safe-area-inset-left, 0px)); bottom: calc(116px + env(safe-area-inset-bottom, 0px)); }
+body.con-panel #capas { left: calc(424px + env(safe-area-inset-left, 0px)); }
+@media (max-width: 759px) { #capas, body.con-panel #capas { left: auto; right: calc(12px + env(safe-area-inset-right, 0px)); bottom: auto; top: calc(172px + env(safe-area-inset-top, 0px)); } }
+#capas h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; }
+.estilos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.estilo { border: 0; background: transparent; cursor: pointer; display: grid; gap: 4px; justify-items: center; font-size: 12px; padding: 0; color: var(--ink); }
+.estilo canvas { width: 64px; height: 52px; max-width: 100%; border-radius: 8px; border: 2px solid transparent; }
+.estilo.on canvas { border-color: var(--accent); }
+.estilo.on { color: var(--accent); font-weight: 600; }
+.opcion { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; cursor: pointer; }
+.opcion input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+#info { position: fixed; z-index: 14; right: calc(60px + env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: center; pointer-events: none; }
+#coords { font: 11.5px var(--font-mono); background: var(--surface); color: var(--ink-2); padding: 2px 6px; border-radius: 4px; box-shadow: var(--shadow); font-variant-numeric: tabular-nums; }
+@media (max-width: 759px) { #coords { display: none; } }
+.leaflet-control-scale { margin: 0 !important; }
+.leaflet-bottom.leaflet-right { right: calc(60px + env(safe-area-inset-right, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px)); }
+.leaflet-bottom.leaflet-left { left: env(safe-area-inset-left, 0px); bottom: env(safe-area-inset-bottom, 0px); }
+.leaflet-control-scale-line { background: var(--surface) !important; color: var(--ink) !important; border-color: var(--ink-2) !important; font-family: var(--font-mono); }
+.leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 80%, transparent) !important; color: var(--ink-2) !important; font-size: 10.5px !important; }
+
+/* Menú contextual, medición, aviso */
+#menu-ctx { position: fixed; z-index: 40; background: var(--surface); border-radius: 8px; box-shadow: var(--shadow); padding: 6px 0; min-width: 230px; max-width: calc(100% - 24px); }
+#menu-ctx .fila { padding: 9px 16px; gap: 12px; }
+#menu-ctx .cab { padding: 6px 16px 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+#medida { position: fixed; z-index: 25; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 12px 8px 12px 16px; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px); }
+#medida b { font-size: 18px; font-variant-numeric: tabular-nums; }
+#medida small { display: block; color: var(--ink-2); }
+#aviso { position: fixed; z-index: 50; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom, 0px)); background: #2b2724; color: #f6f2ec; padding: 10px 16px; border-radius: 6px; box-shadow: var(--shadow); max-width: calc(100% - 32px); font-size: 13.5px; }
+#elegir-aviso { position: fixed; z-index: 26; top: calc(70px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--accent-ink); padding: 8px 14px; border-radius: 18px; box-shadow: var(--shadow); font-weight: 500; white-space: nowrap; }
+
+/* Cajón del menú */
+#velo { position: fixed; inset: 0; z-index: 44; background: rgba(0,0,0,.35); }
+#cajon { position: fixed; z-index: 45; top: 0; bottom: 0; left: 0; width: min(320px, 86%); background: var(--surface); box-shadow: var(--shadow); overflow-y: auto;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 0 calc(14px + env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px); }
+#cajon .marca-app { padding: 8px 20px 16px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+#cajon .marca-app b { font: 20px var(--font-sello); color: var(--accent); display: block; letter-spacing: .02em; }
+#cajon .marca-app small { color: var(--ink-2); }
+#cajon .fila { padding: 12px 20px; gap: 18px; font-weight: 500; }
+#cajon .fila .icon { color: var(--ink-2); }
+
+/* Etiquetas sobre el mapa */
+.et { pointer-events: none; white-space: nowrap; transform: translate(-50%, -50%); position: absolute; text-align: center; }
+.et-faccion { font: 600 13px/1.1 var(--font-ui); letter-spacing: .22em; text-transform: uppercase; color: var(--et-faccion); text-shadow: 0 0 3px var(--halo), 0 0 6px var(--halo); }
+.et-faccion.peq { font-size: 10.5px; letter-spacing: .18em; }
+.et-pais { font: 500 11px var(--font-ui); color: var(--et-pais); text-shadow: 0 0 2px var(--halo), 0 0 4px var(--halo); }
+.et-estado { font: 500 10px var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--et-pais); opacity: .8; text-shadow: 0 0 2px var(--halo), 0 0 4px var(--halo); }
+.ciudad { position: absolute; display: flex; align-items: center; gap: 5px; transform: translate(-6px, -50%); white-space: nowrap; cursor: pointer; }
+.ciudad .pt { width: 8px; height: 8px; border-radius: 50%; background: var(--pt); border: 2px solid var(--halo-solido); box-shadow: 0 0 0 1px rgba(0,0,0,.25); flex: none; }
+.ciudad.capital .pt { width: 11px; height: 11px; border-radius: 2px; transform: rotate(45deg); }
+.ciudad.serie .pt { background: var(--accent); width: 10px; height: 10px; }
+.ciudad.base .pt { border-radius: 0; }
+.ciudad .nm { font: 600 12px var(--font-ui); color: var(--et-ciudad); text-shadow: 0 0 2px var(--halo), 0 0 3px var(--halo), 0 0 5px var(--halo); }
+.ciudad.capital .nm { font-size: 13px; }
+.ciudad:hover .nm { text-decoration: underline; }
+.ciudad.atenuada { opacity: .25; }
+.ciudad.resaltada .pt { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent); }
+.pin { position: absolute; transform: translate(-50%, -100%); filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); pointer-events: none; }
+.pin svg { width: 30px; height: 40px; display: block; }
+.estilo-archivo .et-faccion, .estilo-archivo .ciudad .nm, .estilo-archivo .et-pais { font-family: var(--font-sello); font-weight: 400; }
+.estilo-archivo .et-faccion { letter-spacing: .16em; }
+.leaflet-interactive:focus { outline: none; }
+
+@media (prefers-reduced-motion: reduce) { #panel { transition: none; } }
+</style>
+
+<div id="mapa" role="application" aria-label="Mapa del mundo de la serie El hombre en el castillo"></div>
+
+<div id="buscador">
+  <div class="caja">
+    <button class="btn-ico" id="btn-menu" aria-label="Menú"><svg class="icon"><use href="#i-menu"/></svg></button>
+    <input id="q" type="search" autocomplete="off" placeholder="Busca en el mundo de 1962" aria-label="Buscar lugares, territorios o facciones">
+    <button class="btn-ico" id="btn-buscar" aria-label="Buscar"><svg class="icon"><use href="#i-buscar"/></svg></button>
+    <span class="sep"></span>
+    <button class="btn-ico acento" id="btn-ruta" aria-label="Cómo llegar"><svg class="icon"><use href="#i-ruta"/></svg></button>
+  </div>
+  <div id="sugerencias" hidden></div>
+  <div id="chips">
+    <button class="chip" data-chip="capital"><svg class="icon"><use href="#i-capital"/></svg>Capitales</button>
+    <button class="chip" data-chip="serie"><svg class="icon"><use href="#i-pelicula"/></svg>Lugares de la serie</button>
+    <button class="chip" data-chip="base"><svg class="icon"><use href="#i-cohete"/></svg>Bases y puertos</button>
+    <button class="chip" data-chip="X"><svg class="icon"><use href="#i-bandera"/></svg>Neutrales</button>
+    <button class="chip" data-chip="guardados"><svg class="icon"><use href="#i-guardar"/></svg>Guardados</button>
+  </div>
+</div>
+
+<section id="panel" hidden aria-live="polite">
+  <button class="asa" id="panel-asa" aria-label="Ampliar o reducir panel"><span></span></button>
+  <button class="btn-ico" id="panel-cerrar" aria-label="Cerrar panel"><svg class="icon"><use href="#i-cerrar"/></svg></button>
+  <div id="panel-cuerpo"></div>
+</section>
+
+<div id="controles">
+  <div class="grupo"><button class="ctrl" id="btn-pantalla" aria-label="Pantalla completa" title="Pantalla completa"><svg class="icon"><use href="#i-pantalla"/></svg></button></div>
+  <div class="grupo"><button class="ctrl" id="btn-medir" aria-label="Medir distancia" title="Medir distancia"><svg class="icon"><use href="#i-regla"/></svg></button></div>
+  <div class="grupo"><button class="ctrl" id="btn-mundo" aria-label="Ver el mundo entero" title="Ver el mundo entero"><svg class="icon"><use href="#i-globo"/></svg></button></div>
+  <div class="grupo">
+    <button class="ctrl" id="btn-mas" aria-label="Acercar" title="Acercar"><svg class="icon"><use href="#i-mas"/></svg></button>
+    <button class="ctrl" id="btn-menos" aria-label="Alejar" title="Alejar"><svg class="icon"><use href="#i-menos"/></svg></button>
+  </div>
+</div>
+
+<button id="capas-btn" aria-label="Capas del mapa"><canvas id="capas-mini" width="144" height="144"></canvas><span><svg class="icon sm"><use href="#i-capas"/></svg>Capas</span></button>
+<div id="capas" hidden role="dialog" aria-label="Capas del mapa">
+  <h3>Tipo de mapa</h3>
+  <div class="estilos" id="estilos"></div>
+  <h3>Detalles del mapa</h3>
+  <label class="opcion">Fronteras de antes de la guerra <input type="checkbox" id="c-fronteras"></label>
+  <label class="opcion">Frentes entre potencias <input type="checkbox" id="c-frentes"></label>
+  <label class="opcion">Ciudades y lugares <input type="checkbox" id="c-ciudades"></label>
+  <label class="opcion">Nombres de territorios <input type="checkbox" id="c-etiquetas"></label>
+  <label class="opcion">Rutas de cohete y vuelo <input type="checkbox" id="c-cohetes"></label>
+  <label class="opcion">Meridianos y paralelos <input type="checkbox" id="c-cuadricula"></label>
+</div>
+
+<div id="info"><span id="coords">—</span></div>
+<div id="menu-ctx" hidden role="menu"></div>
+<div id="medida" hidden><div><b id="medida-total">0 km</b><small id="medida-sub">Toca el mapa para añadir puntos</small></div><button class="btn-ico" id="medida-deshacer" aria-label="Quitar último punto"><svg class="icon"><use href="#i-deshacer"/></svg></button><button class="btn-ico" id="medida-cerrar" aria-label="Terminar medición"><svg class="icon"><use href="#i-cerrar"/></svg></button></div>
+<div id="elegir-aviso" hidden>Toca el mapa para elegir el punto</div>
+<div id="aviso" hidden role="status"></div>
+<div id="velo" hidden></div>
+<nav id="cajon" hidden aria-label="Menú principal"></nav>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></symbol>
+  <symbol id="i-buscar" viewBox="0 0 24 24"><path d="M15.5 14h-.8l-.3-.3A6.5 6.5 0 1 0 9.5 16a6.5 6.5 0 0 0 4.2-1.6l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></symbol>
+  <symbol id="i-ruta" viewBox="0 0 24 24"><path d="M21.7 11.3l-9-9a1 1 0 0 0-1.4 0l-9 9a1 1 0 0 0 0 1.4l9 9a1 1 0 0 0 1.4 0l9-9a1 1 0 0 0 0-1.4zM14 14.5V12h-4v3H8v-4a1 1 0 0 1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/></symbol>
+  <symbol id="i-cerrar" viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></symbol>
+  <symbol id="i-mas" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></symbol>
+  <symbol id="i-menos" viewBox="0 0 24 24"><path d="M19 13H5v-2h14z"/></symbol>
+  <symbol id="i-capas" viewBox="0 0 24 24"><path d="M12 16.5l-7.4-5.7L3 12l9 7 9-7-1.6-1.2zM12 14l7.4-5.7L21 7l-9-7-9 7 1.6 1.3z" transform="translate(0 2.5)"/></symbol>
+  <symbol id="i-regla" viewBox="0 0 24 24"><path d="M21 6H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1zm-1 10H4V8h2v4h2V8h2v4h2V8h2v4h2V8h2v4h2z"/></symbol>
+  <symbol id="i-globo" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.9 6h-2.9a15.7 15.7 0 0 0-1.4-3.6A8 8 0 0 1 18.9 8zM12 4a14 14 0 0 1 1.9 4h-3.8A14 14 0 0 1 12 4zM4.3 14a8 8 0 0 1 0-4h3.4a16.5 16.5 0 0 0 0 4zm.8 2h2.9a15.7 15.7 0 0 0 1.4 3.6A8 8 0 0 1 5.1 16zM8 8H5.1a8 8 0 0 1 4.3-3.6A15.7 15.7 0 0 0 8 8zm4 12a14 14 0 0 1-1.9-4h3.8A14 14 0 0 1 12 20zm2.3-6H9.7a14.7 14.7 0 0 1 0-4h4.6a14.7 14.7 0 0 1 0 4zm.3 5.6a15.7 15.7 0 0 0 1.4-3.6h2.9a8 8 0 0 1-4.3 3.6zm1.7-5.6a16.5 16.5 0 0 0 0-4h3.4a8 8 0 0 1 0 4z"/></symbol>
+  <symbol id="i-pantalla" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7zm-2-4h2V7h3V5H5zm12 7h-3v2h5v-5h-2zM14 5v2h3v3h2V5z"/></symbol>
+  <symbol id="i-guardar" viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2zm0 15l-5-2.2L7 18V5h10z"/></symbol>
+  <symbol id="i-guardado" viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2z"/></symbol>
+  <symbol id="i-cerca" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm9 3h-2.1A7 7 0 0 0 13 5.1V3h-2v2.1A7 7 0 0 0 5.1 11H3v2h2.1a7 7 0 0 0 5.9 5.9V21h2v-2.1a7 7 0 0 0 5.9-5.9H21zm-9 6a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></symbol>
+  <symbol id="i-copiar" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></symbol>
+  <symbol id="i-capital" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></symbol>
+  <symbol id="i-pelicula" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V4z"/></symbol>
+  <symbol id="i-cohete" viewBox="0 0 24 24"><path d="M12 2c3 2.4 4.5 5.6 4.5 9.5V15l2.5 2.5V20l-4-1.5h-6L5 20v-2.5L7.5 15v-3.5C7.5 7.6 9 4.4 12 2zm0 7a1.8 1.8 0 1 0 0 3.6A1.8 1.8 0 0 0 12 9zm-1.5 10.5h3L12 22z"/></symbol>
+  <symbol id="i-bandera" viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></symbol>
+  <symbol id="i-coche" viewBox="0 0 24 24"><path d="M18.9 6a1.5 1.5 0 0 0-1.4-1h-11a1.5 1.5 0 0 0-1.4 1L3 12v8a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h12v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-8zM6.5 16a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm11 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM5 11l1.5-4.5h11L19 11z"/></symbol>
+  <symbol id="i-tren" viewBox="0 0 24 24"><path d="M12 2c-4 0-8 .5-8 4v9.5A3.5 3.5 0 0 0 7.5 19L6 20.5v.5h2.2l2-2h3.6l2 2H18v-.5L16.5 19a3.5 3.5 0 0 0 3.5-3.5V6c0-3.5-4-4-8-4zM7.5 17a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3.5-7H6V6h5zm5.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1.5-7h-5V6h5z"/></symbol>
+  <symbol id="i-avion" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></symbol>
+  <symbol id="i-cambiar" viewBox="0 0 24 24"><path d="M16 17v-7h-2v7h-3l4 4 4-4zM9 3L5 7h3v7h2V7h3z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></symbol>
+  <symbol id="i-aviso" viewBox="0 0 24 24"><path d="M1 21h22L12 2zm12-3h-2v-2h2zm0-4h-2v-4h2z"/></symbol>
+  <symbol id="i-reloj" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7z"/></symbol>
+  <symbol id="i-leyenda" viewBox="0 0 24 24"><path d="M3 5h4v4H3zm6 1h12v2H9zM3 10h4v4H3zm6 1h12v2H9zm-6 4h4v4H3zm6 1h12v2H9z"/></symbol>
+  <symbol id="i-teclado" viewBox="0 0 24 24"><path d="M20 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm-9 3h2v2h-2zm0 3h2v2h-2zM8 8h2v2H8zm0 3h2v2H8zm-1 2H5v-2h2zm0-3H5V8h2zm9 7H8v-2h8zm0-4h-2v-2h2zm0-3h-2V8h2zm3 3h-2v-2h2zm0-3h-2V8h2z"/></symbol>
+  <symbol id="i-deshacer" viewBox="0 0 24 24"><path d="M12.5 8c-2.7 0-5.1 1-7 2.6L2 7v9h9l-3.6-3.6A8 8 0 0 1 20.5 16l2.4-.8A10.5 10.5 0 0 0 12.5 8z"/></symbol>
+  <symbol id="i-cronologia" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l4 4 4-4H6a7 7 0 1 1 2 4.9l-1.4 1.4A9 9 0 1 0 13 3zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8z"/></symbol>
+</svg>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+"use strict";
+/* ================== Datos de la línea temporal (serie, 1962) ================== */
+const FACCIONES = {
+  R:  { n: "Gran Reich Nazi", c: "Reich", d: "La potencia que domina Europa, África y Oriente Medio desde Berlín. Gobierna los territorios conquistados como provincias y comisariados del Reich." },
+  RA: { n: "Reich Americano", c: "Reich Am.", d: "Los antiguos Estados Unidos al este de las Montañas Rocosas, junto con Canadá. Se gobiernan desde Nueva York como parte del Gran Reich Nazi." },
+  JP: { n: "Estados Japoneses del Pacífico", c: "EJP", d: "La costa oeste de Norteamérica, Alaska y Hawái bajo administración japonesa. Capital: San Francisco." },
+  N:  { n: "Zona Neutral", c: "Z. Neutral", d: "La franja de las Montañas Rocosas que separa a las dos potencias en Norteamérica. No tiene ocupación militar y sirve de refugio a fugitivos, contrabandistas y resistentes." },
+  J:  { n: "Imperio Japonés", c: "Japón", d: "Gobierna desde Tokio la Esfera de Coprosperidad de la Gran Asia Oriental: China, el sudeste asiático, la India y Oceanía." },
+  I:  { n: "Imperio Italiano", c: "Italia", d: "Socio menor del Reich. Controla Italia, Grecia, los Balcanes del sur, Libia y el Cuerno de África." },
+  X:  { n: "Estados neutrales", c: "Neutral", d: "Países que conservan su independencia formal entre los dos bloques: Suiza, Suecia, España, Portugal, Irlanda, Turquía, México y Sudamérica." },
+  U:  { n: "Sin reclamar", c: "—", d: "Territorio sin soberanía efectiva." },
+};
+const ORDEN_FAC = ["R", "RA", "I", "J", "JP", "N", "X", "U"];
+
+// t: capital | ciudad | serie | base. Coordenadas [lat, lon].
+const LUGARES = [
+  { id: "berlin", n: "Berlín", lat: 52.52, lon: 13.405, f: "R", t: "capital", s: "Capital del Gran Reich Nazi", d: "Corazón del Reich y sede de la Cancillería. Desde aquí se decide la política hacia Japón y hacia los territorios de Norteamérica." },
+  { id: "nueva-york", n: "Nueva York", lat: 40.7128, lon: -74.006, f: "RA", t: "capital", s: "Sede del Reich Americano", d: "Centro administrativo del Reich en Norteamérica. Aquí está el mando de las SS americanas y aquí se celebra cada año el Día de la Victoria sobre América." },
+  { id: "washington", n: "Washington D. C. (ruinas)", lat: 38.9072, lon: -77.0369, f: "RA", t: "serie", s: "Destruida al final de la guerra", d: "La antigua capital de Estados Unidos fue arrasada por la bomba atómica alemana que puso fin a la guerra en América. Sus ruinas son zona prohibida." },
+  { id: "san-francisco", n: "San Francisco", lat: 37.7749, lon: -122.4194, f: "JP", t: "capital", s: "Capital de los Estados Japoneses del Pacífico", d: "Sede del gobierno japonés en América, del Ministerio de Comercio y de la Kempeitai. Gran parte de la historia de la serie transcurre en sus calles." },
+  { id: "los-angeles", n: "Los Ángeles", lat: 34.0522, lon: -118.2437, f: "JP", t: "ciudad", s: "Estados Japoneses del Pacífico", d: "Gran puerto del sur de los Estados del Pacífico." },
+  { id: "sacramento", n: "Sacramento", lat: 38.5816, lon: -121.4944, f: "JP", t: "ciudad", s: "Estados Japoneses del Pacífico", d: "Ciudad del valle central, en la ruta hacia la Zona Neutral." },
+  { id: "seattle", n: "Seattle", lat: 47.6062, lon: -122.3321, f: "JP", t: "ciudad", s: "Estados Japoneses del Pacífico", d: "Puerto del norte de los Estados del Pacífico, frente a Alaska." },
+  { id: "honolulu", n: "Honolulu", lat: 21.3069, lon: -157.8583, f: "JP", t: "base", s: "Base naval japonesa", d: "Puerto de la flota imperial en el Pacífico central, a medio camino entre Tokio y San Francisco." },
+  { id: "anchorage", n: "Anchorage", lat: 61.2181, lon: -149.9003, f: "JP", t: "ciudad", s: "Alaska japonesa", d: "Puesto avanzado japonés en el norte de América." },
+  { id: "canon-city", n: "Cañon City", lat: 38.4409, lon: -105.2425, f: "N", t: "serie", s: "Pueblo de la Zona Neutral", d: "Pueblo de Colorado donde llegan quienes escapan de los dos imperios. Aquí se cruzan fugitivos, cazarrecompensas y la Resistencia." },
+  { id: "denver", n: "Denver", lat: 39.7392, lon: -104.9903, f: "N", t: "capital", s: "Principal ciudad de la Zona Neutral", d: "La mayor ciudad de la franja neutral de las Montañas Rocosas." },
+  { id: "castillo", n: "El castillo alto", lat: 38.9, lon: -107.6, f: "N", t: "serie", s: "Ubicación secreta en la Zona Neutral (aproximada)", d: "Refugio del Hombre en el Castillo, el custodio de las películas que muestran otro mundo: uno en el que los Aliados ganaron la guerra. Ambos imperios lo buscan." },
+  { id: "chicago", n: "Chicago", lat: 41.8781, lon: -87.6298, f: "RA", t: "ciudad", s: "Reich Americano", d: "Gran ciudad industrial del Medio Oeste bajo el Reich." },
+  { id: "filadelfia", n: "Filadelfia", lat: 39.9526, lon: -75.1652, f: "RA", t: "ciudad", s: "Reich Americano", d: "Ciudad de la costa este bajo el Reich." },
+  { id: "toronto", n: "Toronto", lat: 43.6532, lon: -79.3832, f: "RA", t: "ciudad", s: "Canadá bajo el Reich", d: "Principal ciudad de Canadá, gobernada dentro del Reich Americano." },
+  { id: "tokio", n: "Tokio", lat: 35.6762, lon: 139.6503, f: "J", t: "capital", s: "Capital del Imperio Japonés", d: "Sede del Emperador y del gobierno imperial. Desde Tokio se dirige la Esfera de Coprosperidad y la política hacia los Estados del Pacífico." },
+  { id: "pekin", n: "Pekín", lat: 39.9042, lon: 116.4074, f: "J", t: "ciudad", s: "China ocupada", d: "Antigua capital china bajo dominio japonés." },
+  { id: "shanghai", n: "Shanghái", lat: 31.2304, lon: 121.4737, f: "J", t: "ciudad", s: "China ocupada", d: "Gran puerto comercial del Imperio en el continente." },
+  { id: "manila", n: "Manila", lat: 14.5995, lon: 120.9842, f: "J", t: "ciudad", s: "Filipinas japonesas", d: "Capital de las Filipinas dentro del Imperio." },
+  { id: "singapur", n: "Singapur", lat: 1.3521, lon: 103.8198, f: "J", t: "base", s: "Base naval japonesa", d: "Fortaleza que controla el estrecho de Malaca, la llave entre el Índico y el Pacífico." },
+  { id: "nueva-delhi", n: "Nueva Delhi", lat: 28.6139, lon: 77.209, f: "J", t: "ciudad", s: "India japonesa", d: "Límite occidental del Imperio en Asia, frente a los territorios del Reich." },
+  { id: "sidney", n: "Sídney", lat: -33.8688, lon: 151.2093, f: "J", t: "ciudad", s: "Australia japonesa", d: "Principal puerto de Australia dentro del Imperio." },
+  { id: "londres", n: "Londres", lat: 51.5074, lon: -0.1278, f: "R", t: "ciudad", s: "Gran Bretaña ocupada", d: "Capital británica bajo ocupación del Reich." },
+  { id: "paris", n: "París", lat: 48.8566, lon: 2.3522, f: "R", t: "ciudad", s: "Francia ocupada", d: "Capital francesa bajo el Reich." },
+  { id: "moscu", n: "Moscú", lat: 55.7558, lon: 37.6173, f: "R", t: "ciudad", s: "Rusia ocupada", d: "Antigua capital soviética, administrada por el Reich." },
+  { id: "varsovia", n: "Varsovia", lat: 52.2297, lon: 21.0122, f: "R", t: "ciudad", s: "Gran Reich Nazi", d: "Ciudad del este del Reich." },
+  { id: "viena", n: "Viena", lat: 48.2082, lon: 16.3738, f: "R", t: "ciudad", s: "Gran Reich Nazi", d: "Ciudad del Reich en el Danubio." },
+  { id: "peenemunde", n: "Peenemünde", lat: 54.14, lon: 13.77, f: "R", t: "base", s: "Centro de cohetes del Reich", d: "Centro de investigación de cohetes en el Báltico. El Reich vuela en cohete entre Europa y Nueva York en un par de horas." },
+  { id: "berchtesgaden", n: "Berchtesgaden", lat: 47.6314, lon: 13.0026, f: "R", t: "serie", s: "Residencia alpina del Führer", d: "Refugio de montaña de la cúpula del Reich en los Alpes bávaros." },
+  { id: "roma", n: "Roma", lat: 41.9028, lon: 12.4964, f: "I", t: "capital", s: "Capital del Imperio Italiano", d: "Capital del aliado menor del Reich en el Mediterráneo." },
+  { id: "atenas", n: "Atenas", lat: 37.9838, lon: 23.7275, f: "I", t: "ciudad", s: "Imperio Italiano", d: "Ciudad griega bajo administración italiana." },
+  { id: "tripoli", n: "Trípoli", lat: 32.8872, lon: 13.1913, f: "I", t: "ciudad", s: "Libia italiana", d: "Puerto italiano en el norte de África." },
+  { id: "el-cairo", n: "El Cairo", lat: 30.0444, lon: 31.2357, f: "R", t: "ciudad", s: "Egipto bajo el Reich", d: "Control del canal de Suez, la ruta entre Europa y Asia." },
+  { id: "ciudad-del-cabo", n: "Ciudad del Cabo", lat: -33.9249, lon: 18.4241, f: "R", t: "ciudad", s: "África del Reich", d: "Extremo sur de los dominios africanos del Reich." },
+  { id: "berna", n: "Berna", lat: 46.948, lon: 7.4474, f: "X", t: "capital", s: "Suiza neutral", d: "Capital de la Suiza neutral, rodeada por el Reich y el Imperio Italiano. Terreno de diplomáticos y espías de ambos bloques." },
+  { id: "estocolmo", n: "Estocolmo", lat: 59.3293, lon: 18.0686, f: "X", t: "ciudad", s: "Suecia neutral", d: "Capital de una de las pocas naciones europeas que conserva su neutralidad." },
+  { id: "madrid", n: "Madrid", lat: 40.4168, lon: -3.7038, f: "X", t: "ciudad", s: "España neutral", d: "Capital de una España formalmente neutral y próxima al Reich." },
+  { id: "lisboa", n: "Lisboa", lat: 38.7223, lon: -9.1393, f: "X", t: "ciudad", s: "Portugal neutral", d: "Puerto neutral del Atlántico." },
+  { id: "ciudad-de-mexico", n: "Ciudad de México", lat: 19.4326, lon: -99.1332, f: "X", t: "capital", s: "México independiente", d: "México conserva su independencia entre el Reich Americano y los Estados Japoneses del Pacífico, y es salida para muchos fugitivos." },
+  { id: "buenos-aires", n: "Buenos Aires", lat: -34.6037, lon: -58.3816, f: "X", t: "ciudad", s: "Argentina neutral", d: "Gran capital sudamericana fuera de los dos imperios." },
+  { id: "rio", n: "Río de Janeiro", lat: -22.9068, lon: -43.1729, f: "X", t: "ciudad", s: "Brasil neutral", d: "Puerto atlántico de Sudamérica." },
+];
+const RUTAS_COHETE = [
+  { de: "berlin", a: "nueva-york", n: "Cohete Berlín – Nueva York" },
+  { de: "peenemunde", a: "nueva-york", n: "Cohete Peenemünde – Nueva York" },
+  { de: "tokio", a: "san-francisco", n: "Vuelo Tokio – San Francisco" },
+  { de: "tokio", a: "honolulu", n: "Vuelo Tokio – Honolulu" },
+  { de: "berlin", a: "roma", n: "Vuelo Berlín – Roma" },
+];
+const ETIQ_FAC = [
+  { t: "Gran Reich Nazi", lat: 56, lon: 52, z: [2, 5] },
+  { t: "África del Reich", lat: 6, lon: 22, z: [2, 4], peq: 1 },
+  { t: "Reich Americano", lat: 37.5, lon: -88, z: [2, 5] },
+  { t: "Canadá del Reich", lat: 58, lon: -100, z: [3, 5], peq: 1 },
+  { t: "Estados Japoneses\ndel Pacífico", lat: 41.5, lon: -119.8, z: [3, 6], peq: 1 },
+  { t: "EJP", lat: 44.5, lon: -120.5, z: [2, 2.5], peq: 1 },
+  { t: "Zona Neutral", lat: 41.5, lon: -108.5, z: [3, 6], peq: 1 },
+  { t: "Imperio Japonés", lat: 33, lon: 104, z: [2, 5] },
+  { t: "Australia japonesa", lat: -24, lon: 134, z: [3, 5], peq: 1 },
+  { t: "Imperio Italiano", lat: 27, lon: 17, z: [3, 5], peq: 1 },
+  { t: "Iberoamérica neutral", lat: -10, lon: -60, z: [2, 4], peq: 1 },
+];
+
+/* ================== Estilos del mapa ================== */
+const ESTILOS = {
+  mapa: { n: "Mapa", oceano: "#b4d3e8", halo: "rgba(255,255,255,.95)", haloS: "#fff", etF: "#5b2a20", etP: "#4a4038", etC: "#2a2420", frente: "#6d2a1f", borde: 0.55,
+    fill: { R: "#e8aa9d", RA: "#efc4b9", I: "#d9bfe0", J: "#f2d488", JP: "#f7e4b0", N: "#bcd8b2", X: "#e9e6de", U: "#fbfbf9" },
+    stroke: { R: "#c98576", RA: "#d6a296", I: "#b99bc2", J: "#d4b45f", JP: "#dcc68b", N: "#97b78b", X: "#c8c3b8", U: "#ddd" }, ciudad: "#3b342e", grid: "rgba(40,70,100,.25)" },
+  archivo: { n: "Archivo", oceano: "#d7cdb3", halo: "rgba(244,236,214,.95)", haloS: "#f3ead3", etF: "#4a1d14", etP: "#4b3b2a", etC: "#2e2418", frente: "#3d1810", borde: 0.6,
+    fill: { R: "#b9665a", RA: "#c99183", I: "#a58aa2", J: "#cfa856", JP: "#dcc289", N: "#90a684", X: "#ece3cc", U: "#f4eee0" },
+    stroke: { R: "#8a4136", RA: "#9c6a5e", I: "#7e6479", J: "#9e7d34", JP: "#ae955f", N: "#68805d", X: "#b8ab8c", U: "#cfc5ad" }, ciudad: "#2e2418", grid: "rgba(70,50,30,.35)" },
+  noche: { n: "Noche", oceano: "#0e1724", halo: "rgba(10,14,20,.9)", haloS: "#0e1724", etF: "#f1b6a8", etP: "#c6cdd8", etC: "#eef1f5", frente: "#ff8c74", borde: 0.5,
+    fill: { R: "#5b2c29", RA: "#6c3c35", I: "#4c3854", J: "#5f4d20", JP: "#6c5c33", N: "#2e4a37", X: "#2a3039", U: "#3a4250" },
+    stroke: { R: "#7d413b", RA: "#8a544c", I: "#6a5175", J: "#86702f", JP: "#8f7b46", N: "#43674f", X: "#3c4450", U: "#4c5566" }, ciudad: "#f3d9a4", grid: "rgba(160,190,230,.18)" },
+  real: { n: "Real 1962", oceano: "#aad3df", halo: "rgba(255,255,255,.95)", haloS: "#fff", etF: "#666", etP: "#3d3d3d", etC: "#222", frente: "#666", borde: 0.7, real: true,
+    tierra: "#f2efe9", lineaReal: "#b4a59a", ciudad: "#333", grid: "rgba(40,70,100,.25)" },
+};
+
+/* ================== Utilidades ================== */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const norm = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+const ico = (id, cls = "icon") => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
+const almacen = {
+  leer(k, d) { try { const v = localStorage.getItem("mapa-castillo:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  guardar(k, v) { try { localStorage.setItem("mapa-castillo:" + k, JSON.stringify(v)); } catch (e) {} },
+};
+const RT = 6371, rad = (d) => d * Math.PI / 180, grados = (r) => r * 180 / Math.PI;
+function distancia(a, b) {
+  const h = Math.sin(rad(b[0] - a[0]) / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(rad(b[1] - a[1]) / 2) ** 2;
+  return 2 * RT * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+function granCirculo(a, b, n = 128) {
+  const p1 = rad(a[0]), l1 = rad(a[1]), p2 = rad(b[0]), l2 = rad(b[1]);
+  const d = distancia(a, b) / RT; if (d < 1e-9) return [a, b];
+  const out = [];
+  for (let i = 0; i <= n; i++) {
+    const f = i / n, A = Math.sin((1 - f) * d) / Math.sin(d), B = Math.sin(f * d) / Math.sin(d);
+    const x = A * Math.cos(p1) * Math.cos(l1) + B * Math.cos(p2) * Math.cos(l2);
+    const y = A * Math.cos(p1) * Math.sin(l1) + B * Math.cos(p2) * Math.sin(l2);
+    const z = A * Math.sin(p1) + B * Math.sin(p2);
+    out.push([grados(Math.atan2(z, Math.hypot(x, y))), grados(Math.atan2(y, x))]);
+  }
+  return out;
+}
+function partirAntimeridiano(pts) {
+  const segs = [[pts[0]]];
+  for (let i = 1; i < pts.length; i++) {
+    const q = pts[i - 1], p = pts[i];
+    if (Math.abs(p[1] - q[1]) > 180) {
+      const s = q[1] > 0 ? 1 : -1, p2 = p[1] + 360 * s, t = (180 * s - q[1]) / (p2 - q[1]), lat = q[0] + t * (p[0] - q[0]);
+      segs[segs.length - 1].push([lat, 180 * s]); segs.push([[lat, -180 * s]]);
+    }
+    segs[segs.length - 1].push(p);
+  }
+  return segs;
+}
+const fmtKm = (km) => km < 1 ? Math.round(km * 1000) + " m" : km < 100 ? km.toFixed(1).replace(".", ",") + " km" : Math.round(km).toLocaleString("es-ES") + " km";
+function fmtHoras(h) {
+  if (h < 1) return Math.max(1, Math.round(h * 60)) + " min";
+  const d = Math.floor(h / 24), hh = Math.floor(h % 24), m = Math.round((h - Math.floor(h)) * 60);
+  if (d) return `${d} d ${hh} h`;
+  return m ? `${hh} h ${m} min` : `${hh} h`;
+}
+function fmtCoord(lat, lon) {
+  const f = (v, p, n) => `${Math.abs(v).toFixed(4).replace(".", ",")}° ${v >= 0 ? p : n}`;
+  return `${f(lat, "N", "S")}, ${f(lon, "E", "O")}`;
+}
+const normLon = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
+function aviso(msg) {
+  const el = $("#aviso"); el.textContent = msg; el.hidden = false;
+  clearTimeout(aviso.t); aviso.t = setTimeout(() => (el.hidden = true), 2600);
+}
+async function copiar(texto, ok = "Copiado") {
+  try { await navigator.clipboard.writeText(texto); aviso(ok); }
+  catch (e) { aviso(texto); }
+}
+
+/* ================== Geometría de territorios ================== */
+const TERR = [];       // { id, n, f, feat, bb, area, c:[lat,lon], tipo }
+function enAnillo(x, y, r) {
+  let d = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const xi = r[i][0], yi = r[i][1], xj = r[j][0], yj = r[j][1];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) d = !d;
+  }
+  return d;
+}
+const poligonos = (g) => g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : [];
+function territorioEn(lat, lon) {
+  lon = normLon(lon);
+  for (const t of TERR) {
+    for (const x of [lon, lon + 360, lon - 360]) {
+      if (x < t.bb[0] || x > t.bb[2] || lat < t.bb[1] || lat > t.bb[3]) continue;
+      for (const p of poligonos(t.feat.geometry)) {
+        if (enAnillo(x, lat, p[0]) && !p.slice(1).some((h) => enAnillo(x, lat, h))) return t;
+      }
+    }
+  }
+  return null;
+}
+function analizar(feat, tipo) {
+  let bb = [180, 90, -180, -90], mejor = null, total = 0;
+  for (const p of poligonos(feat.geometry)) {
+    const r = p[0]; let a = 0, cx = 0, cy = 0;
+    for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+      const [x0, y0] = r[j], [x1, y1] = r[i], k = x0 * y1 - x1 * y0;
+      a += k; cx += (x0 + x1) * k; cy += (y0 + y1) * k;
+      if (x1 < bb[0]) bb[0] = x1; if (x1 > bb[2]) bb[2] = x1; if (y1 < bb[1]) bb[1] = y1; if (y1 > bb[3]) bb[3] = y1;
+    }
+    a /= 2; const A = Math.abs(a); total += A;
+    if (!mejor || A > mejor.a && A > 0) mejor = { a: A, c: a ? [cy / (6 * a), cx / (6 * a)] : [r[0][1], r[0][0]] };
+  }
+  return { bb, area: total, c: mejor ? mejor.c : [0, 0], tipo };
+}
+
+/* ================== Estado ================== */
+let estilo = almacen.leer("estilo", null) || (matchMedia("(prefers-color-scheme: dark)").matches ? "noche" : "mapa");
+if (!ESTILOS[estilo]) estilo = "mapa";
+const capas = Object.assign({ fronteras: false, frentes: true, ciudades: true, etiquetas: true, cohetes: true, cuadricula: false }, almacen.leer("capas", {}));
+let guardados = almacen.leer("guardados", []);
+let mapa, capaMundo, capaEEUU, capaFrentes, capaCuadricula, capaCiudades, capaEtiquetas, capaCohetes, capaRuta, capaMedida, capaPin;
+const marcadoresLugar = new Map();
+let modoElegir = null, midiendo = false, puntosMedida = [];
+const esMovil = () => matchMedia("(max-width: 759px)").matches;
+
+/* ================== Mapa ================== */
+function iniciarMapa() {
+  mapa = L.map("mapa", {
+    zoomControl: false, preferCanvas: true, minZoom: 2, maxZoom: 10, zoomSnap: 0.5, worldCopyJump: false,
+    maxBounds: [[-86, -230], [86, 230]], maxBoundsViscosity: 0.9, attributionControl: true, tapHold: true,
+  }).setView([30, -20], 2.5);
+  mapa.attributionControl.setPrefix(false).addAttribution("Fronteras: Natural Earth · Mapa de fans de la serie El hombre en el castillo");
+  L.control.scale({ metric: true, imperial: false, position: "bottomright", maxWidth: 110 }).addTo(mapa);
+  mapa.createPane("frentes").style.zIndex = 420;
+  mapa.createPane("rutas").style.zIndex = 450;
+  mapa.createPane("etiquetas").style.zIndex = 600;
+  mapa.getPane("etiquetas").style.pointerEvents = "none";
+  capaRuta = L.layerGroup().addTo(mapa);
+  capaMedida = L.layerGroup().addTo(mapa);
+  capaPin = L.layerGroup().addTo(mapa);
+
+  mapa.on("mousemove", (e) => { $("#coords").textContent = fmtCoord(e.latlng.lat, normLon(e.latlng.lng)); });
+  mapa.on("zoomend", actualizarZoom);
+  mapa.on("click", alHacerClicMapa);
+  mapa.on("contextmenu", (e) => { e.originalEvent && e.originalEvent.preventDefault(); abrirMenuCtx(e); });
+  mapa.on("movestart", cerrarMenuCtx);
+  actualizarZoom();
+}
+
+function estiloTerritorio(f) {
+  const e = ESTILOS[estilo];
+  if (e.real) return { fillColor: e.tierra, fillOpacity: 1, color: e.lineaReal, weight: f.properties.us ? 0.5 : 0.8, opacity: 1 };
+  const fac = f.properties.f;
+  const mostrar = capas.fronteras;
+  return { fillColor: e.fill[fac], fillOpacity: 1, color: mostrar ? e.stroke[fac] : e.fill[fac], weight: mostrar ? e.borde + 0.2 : 0.6, opacity: 1, dashArray: mostrar && f.properties.us ? "3 3" : null };
+}
+
+// Une los anillos cortados en ±180° para que no se dibujen franjas de lado a lado del mapa.
+function desenrollar(feat) {
+  for (const p of poligonos(feat.geometry)) {
+    for (const r of p) {
+      let off = 0; const nuevo = [r[0].slice()];
+      for (let i = 1; i < r.length; i++) {
+        const d = r[i][0] - r[i - 1][0];
+        if (d > 180) off -= 360; else if (d < -180) off += 360;
+        nuevo.push([r[i][0] + off, r[i][1]]);
+      }
+      if (off !== 0) continue; // anillo que rodea un polo (Antártida): se deja como está
+      let media = 0; nuevo.forEach((c) => (media += c[0])); media /= nuevo.length;
+      const ajuste = media > 180 ? -360 : media < -180 ? 360 : 0;
+      nuevo.forEach((c, i) => { r[i][0] = c[0] + ajuste; });
+    }
+  }
+}
+function construirTerritorios(datos) {
+  const mundo = topojson.feature(datos.mundo, datos.mundo.objects.countries).features;
+  mundo.forEach(desenrollar);
+  const eeuu = topojson.feature(datos.eeuu, datos.eeuu.objects.states).features;
+  eeuu.forEach((f) => (f.properties.us = true));
+  const alAtravesar = (f, capa) => {
+    capa.on("mouseover", () => { if (!modoElegir && !midiendo) capa.setStyle({ weight: 2.2, color: ESTILOS[estilo].frente, dashArray: null }); });
+    capa.on("mouseout", () => capa.setStyle(estiloTerritorio(f)));
+    capa.on("click", (e) => {
+      if (modoElegir || midiendo) return;
+      L.DomEvent.stopPropagation(e);
+      cerrarMenuCtx();
+      abrirTerritorio(TERR.find((t) => t.feat === f), e.latlng);
+    });
+  };
+  capaMundo = L.geoJSON(mundo, { style: estiloTerritorio, onEachFeature: alAtravesar, smoothFactor: 0.6 }).addTo(mapa);
+  capaEEUU = L.geoJSON(eeuu, { style: estiloTerritorio, onEachFeature: alAtravesar, smoothFactor: 0.6 }).addTo(mapa);
+  eeuu.forEach((f, i) => TERR.push({ id: "us-" + i, n: f.properties.n, f: f.properties.f, feat: f, ...analizar(f, "estado") }));
+  mundo.forEach((f, i) => TERR.push({ id: "w-" + i, n: f.properties.n, f: f.properties.f, feat: f, ...analizar(f, "pais") }));
+  // Ajustes de etiqueta para territorios cuyo centro cae lejos.
+  const fijo = { "Estados Unidos": null, "Francia": [46.6, 2.4], "Noruega": [61.5, 9], "Rusia": [61, 95], "Canadá": [57, -100], "Chile": [-31, -71], "Indonesia": [-1.5, 114] };
+  TERR.forEach((t) => { if (fijo[t.n]) t.c = fijo[t.n]; });
+
+  const meshW = topojson.mesh(datos.mundo, datos.mundo.objects.countries, (a, b) => a !== b && a.properties.f !== b.properties.f);
+  const meshU = topojson.mesh(datos.eeuu, datos.eeuu.objects.states, (a, b) => a !== b && a.properties.f !== b.properties.f);
+  capaFrentes = L.geoJSON({ type: "FeatureCollection", features: [{ type: "Feature", geometry: meshW }, { type: "Feature", geometry: meshU }] },
+    { pane: "frentes", interactive: false, style: () => ({ color: ESTILOS[estilo].frente, weight: 1.6, opacity: 0.85, dashArray: "6 4" }) });
+
+  capaCuadricula = L.layerGroup();
+  for (let lat = -75; lat <= 75; lat += 15) capaCuadricula.addLayer(L.polyline([[lat, -180], [lat, 180]], { interactive: false, weight: lat === 0 ? 1.2 : 0.7 }));
+  for (let lon = -180; lon <= 180; lon += 15) capaCuadricula.addLayer(L.polyline([[-85, lon], [85, lon]], { interactive: false, weight: lon === 0 ? 1.2 : 0.7 }));
+
+  construirEtiquetas();
+  construirCiudades();
+  construirCohetes();
+  aplicarEstilo();
+}
+
+function construirEtiquetas() {
+  capaEtiquetas = L.layerGroup();
+  const icono = (html, cls) => L.divIcon({ className: "", html: `<div class="et ${cls}">${html}</div>`, iconSize: [0, 0] });
+  for (const e of ETIQ_FAC) {
+    const m = L.marker([e.lat, e.lon], { icon: icono(esc(e.t).replace("\n", "<br>"), "et-faccion" + (e.peq ? " peq" : "")), interactive: false, pane: "etiquetas", keyboard: false });
+    m._z = e.z; capaEtiquetas.addLayer(m);
+  }
+  for (const t of TERR) {
+    const a = t.area;
+    let min = a > 900 ? 3 : a > 200 ? 4 : a > 40 ? 5 : a > 6 ? 6 : a > 0.8 ? 7 : 8;
+    if (t.tipo === "estado") min = Math.max(5, min);
+    if (t.n === "Estados Unidos") continue;
+    const m = L.marker(t.c, { icon: icono(esc(t.n), t.tipo === "estado" ? "et-estado" : "et-pais"), interactive: false, pane: "etiquetas", keyboard: false });
+    m._z = [min, 99]; capaEtiquetas.addLayer(m);
+  }
+}
+
+function construirCiudades() {
+  capaCiudades = L.layerGroup();
+  for (const l of LUGARES) {
+    const min = l.t === "capital" ? 2 : l.t === "serie" ? 3 : l.t === "base" ? 4 : 4;
+    const m = L.marker([l.lat, l.lon], {
+      icon: L.divIcon({ className: "", html: `<div class="ciudad ${l.t}" data-id="${l.id}"><span class="pt"></span><span class="nm">${esc(l.n)}</span></div>`, iconSize: [0, 0] }),
+      keyboard: true, title: l.n, riseOnHover: true,
+    });
+    m._z = [min, 99]; m._lugar = l;
+    m.on("click", (e) => { if (modoElegir || midiendo) return alHacerClicMapa(e); L.DomEvent.stopPropagation(e); abrirLugar(l); });
+    capaCiudades.addLayer(m); marcadoresLugar.set(l.id, m);
+  }
+}
+
+function construirCohetes() {
+  capaCohetes = L.layerGroup();
+  const porId = Object.fromEntries(LUGARES.map((l) => [l.id, l]));
+  for (const r of RUTAS_COHETE) {
+    const a = porId[r.de], b = porId[r.a];
+    for (const seg of partirAntimeridiano(granCirculo([a.lat, a.lon], [b.lat, b.lon], 96))) {
+      capaCohetes.addLayer(L.polyline(seg, { pane: "rutas", weight: 1.6, dashArray: "2 6", lineCap: "round", interactive: true }).bindTooltip(r.n, { sticky: true }));
+    }
+  }
+}
+
+function actualizarZoom() {
+  const z = mapa.getZoom();
+  const visible = (m) => z >= m._z[0] && z <= m._z[1];
+  for (const grupo of [capaEtiquetas, capaCiudades]) {
+    if (!grupo) continue;
+    grupo.eachLayer((m) => { const el = m.getElement(); if (el) el.style.display = visible(m) ? "" : "none"; });
+  }
+  $("#btn-mas").disabled = z >= mapa.getMaxZoom(); $("#btn-menos").disabled = z <= mapa.getMinZoom();
+}
+
+function aplicarEstilo() {
+  const e = ESTILOS[estilo];
+  const raiz = document.documentElement.style;
+  raiz.setProperty("--oceano", e.oceano); raiz.setProperty("--halo", e.halo); raiz.setProperty("--halo-solido", e.haloS);
+  raiz.setProperty("--et-faccion", e.etF); raiz.setProperty("--et-pais", e.etP); raiz.setProperty("--et-ciudad", e.etC); raiz.setProperty("--pt", e.ciudad);
+  const cont = mapa.getContainer();
+  Object.keys(ESTILOS).forEach((k) => cont.classList.toggle("estilo-" + k, k === estilo));
+  capaMundo.setStyle(estiloTerritorio); capaEEUU.setStyle(estiloTerritorio);
+  capaFrentes.setStyle({ color: e.frente });
+  capaCuadricula.eachLayer((l) => l.setStyle({ color: e.grid }));
+  capaCohetes.eachLayer((l) => l.setStyle({ color: e.frente }));
+  alternar(capaFrentes, capas.frentes && !e.real);
+  alternar(capaCuadricula, capas.cuadricula);
+  alternar(capaCiudades, capas.ciudades);
+  alternar(capaEtiquetas, capas.etiquetas);
+  alternar(capaCohetes, capas.cohetes && !e.real);
+  capaEtiquetas.eachLayer((m) => { const el = m.getElement(); if (el && el.firstChild.classList.contains("et-faccion")) el.firstChild.style.visibility = e.real ? "hidden" : ""; });
+  actualizarZoom();
+  dibujarMiniaturas();
+}
+function alternar(capa, on) { if (on && !mapa.hasLayer(capa)) capa.addTo(mapa); if (!on && mapa.hasLayer(capa)) mapa.removeLayer(capa); }
+
+/* Miniaturas de estilo dibujadas con los colores reales del mapa */
+function pintarMini(cv, k) {
+  const e = ESTILOS[k], g = cv.getContext("2d"), W = cv.width, H = cv.height;
+  g.fillStyle = e.oceano; g.fillRect(0, 0, W, H);
+  const zonas = [["RA", [[.05, .2], [.42, .12], [.48, .55], [.3, .7], [.12, .6]]], ["JP", [[.02, .25], [.13, .22], [.16, .62], [.06, .66]]], ["N", [[.13, .22], [.24, .2], [.26, .62], [.16, .62]]],
+    ["R", [[.55, .1], [.98, .08], [.98, .45], [.7, .5], [.58, .42]]], ["R", [[.55, .52], [.72, .5], [.75, .92], [.6, .95]]], ["J", [[.78, .48], [.98, .46], [.98, .72], [.82, .7]]], ["X", [[.25, .72], [.42, .74], [.36, .98], [.28, .95]]]];
+  for (const [f, pts] of zonas) {
+    g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x * W, y * H) : g.moveTo(x * W, y * H))); g.closePath();
+    g.fillStyle = e.real ? e.tierra : e.fill[f]; g.fill(); g.strokeStyle = e.real ? e.lineaReal : e.stroke[f]; g.lineWidth = 2; g.stroke();
+  }
+}
+function dibujarMiniaturas() {
+  const cont = $("#estilos");
+  if (!cont.children.length) {
+    cont.innerHTML = Object.entries(ESTILOS).map(([k, e]) => `<button class="estilo" data-estilo="${k}"><canvas width="128" height="104"></canvas>${esc(e.n)}</button>`).join("");
+    cont.querySelectorAll(".estilo").forEach((b) => b.addEventListener("click", () => { estilo = b.dataset.estilo; almacen.guardar("estilo", estilo); aplicarEstilo(); }));
+  }
+  cont.querySelectorAll(".estilo").forEach((b) => { pintarMini(b.querySelector("canvas"), b.dataset.estilo); b.classList.toggle("on", b.dataset.estilo === estilo); });
+  const siguiente = estilo === "mapa" ? "archivo" : "mapa";
+  pintarMini($("#capas-mini"), siguiente);
+}
+
+/* ================== Panel ================== */
+const panel = $("#panel"), cuerpo = $("#panel-cuerpo");
+function abrirPanel(html, { alto = false } = {}) {
+  cuerpo.innerHTML = html; cuerpo.scrollTop = 0;
+  panel.hidden = false; panel.classList.toggle("alto", alto);
+  document.body.classList.add("con-panel");
+  document.body.classList.toggle("movil", esMovil());
+  $("#sugerencias").hidden = true;
+}
+function cerrarPanel() {
+  panel.hidden = true; document.body.classList.remove("con-panel");
+  capaPin.clearLayers(); quitarResaltado();
+  document.querySelectorAll(".chip.on").forEach((c) => c.classList.remove("on"));
+}
+$("#panel-cerrar").addEventListener("click", () => { cerrarPanel(); capaRuta.clearLayers(); });
+$("#panel-asa").addEventListener("click", () => panel.classList.toggle("alto"));
+
+function ponerPin(lat, lon) {
+  capaPin.clearLayers();
+  capaPin.addLayer(L.marker([lat, lon], { interactive: false, keyboard: false, icon: L.divIcon({ className: "", iconSize: [0, 0],
+    html: `<div class="pin"><svg viewBox="0 0 30 40"><path d="M15 0C6.7 0 0 6.6 0 14.8 0 26 15 40 15 40s15-14 15-25.2C30 6.6 23.3 0 15 0z" fill="#c0392b"/><circle cx="15" cy="14.5" r="5.5" fill="#6e1a12"/></svg></div>` }) }));
+}
+
+function cabecera(f, titulo, sello) {
+  const e = ESTILOS[estilo].real ? ESTILOS.archivo : ESTILOS[estilo];
+  const a = e.fill[f] || "#888", b = e.stroke[f] || "#555";
+  return `<div class="cabecera">
+    <div class="fondo" style="background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 2px, transparent 2px 9px),
+      radial-gradient(120% 90% at 20% 0%, ${a}, ${b} 70%, #2a1d16 130%)"></div>
+    <div class="sello">${esc(sello)}</div>
+    <div class="exp">${esc(titulo)}</div></div>`;
+}
+const expediente = (lat, lon) => "Expediente " + String(Math.abs(Math.round(lat * 37 + lon * 91)) % 9000 + 1000) + "-62";
+const pastilla = (f) => `<span class="pastilla"><span class="punto" style="background:${(ESTILOS[estilo].fill || ESTILOS.mapa.fill)[f]}"></span>${esc(FACCIONES[f].n)}</span>`;
+const estaGuardado = (lat, lon) => guardados.some((g) => Math.abs(g.lat - lat) < 1e-4 && Math.abs(g.lon - lon) < 1e-4);
+
+function botonesAccion(obj) {
+  const g = estaGuardado(obj.lat, obj.lon);
+  return `<div class="acciones">
+    <button class="accion primaria" data-acc="ruta">${'<span class="aro">' + ico("ruta") + "</span>"}Cómo llegar</button>
+    <button class="accion" data-acc="guardar"><span class="aro">${ico(g ? "guardado" : "guardar")}</span>${g ? "Guardado" : "Guardar"}</button>
+    <button class="accion" data-acc="cerca"><span class="aro">${ico("cerca")}</span>Cercanos</button>
+    <button class="accion" data-acc="copiar"><span class="aro">${ico("copiar")}</span>Copiar</button>
+  </div>`;
+}
+function conectarAcciones(obj) {
+  cuerpo.querySelectorAll("[data-acc]").forEach((b) => b.addEventListener("click", () => {
+    const acc = b.dataset.acc;
+    if (acc === "ruta") abrirRuta(null, obj);
+    if (acc === "guardar") { alternarGuardado(obj); const g = estaGuardado(obj.lat, obj.lon); b.innerHTML = `<span class="aro">${ico(g ? "guardado" : "guardar")}</span>${g ? "Guardado" : "Guardar"}`; }
+    if (acc === "cerca") abrirCercanos(obj);
+    if (acc === "copiar") copiar(`${obj.n} — ${fmtCoord(obj.lat, obj.lon)}`, "Coordenadas copiadas");
+  }));
+  cuerpo.querySelectorAll("[data-lugar]").forEach((b) => b.addEventListener("click", () => abrirLugar(LUGARES.find((l) => l.id === b.dataset.lugar))));
+}
+
+function abrirLugar(l, { volar = true } = {}) {
+  if (!l) return;
+  const tipo = { capital: "Capital", ciudad: "Ciudad", serie: "Lugar de la serie", base: "Base y puerto" }[l.t];
+  const t = territorioEn(l.lat, l.lon);
+  abrirPanel(`${cabecera(l.f, expediente(l.lat, l.lon), FACCIONES[l.f].c + " · 1962")}
+    <div class="ficha"><h2>${esc(l.n)}</h2><div class="sub">${esc(l.s)}</div><div class="sub" style="margin-top:8px">${pastilla(l.f)}<span>${esc(tipo)}</span></div></div>
+    ${botonesAccion(l)}
+    <div class="texto"><p>${esc(l.d)}</p></div>
+    <div class="datos">
+      <div class="dato">${ico("pin")}<div class="v mono">${fmtCoord(l.lat, l.lon)}<small>Coordenadas</small></div></div>
+      ${t ? `<div class="dato">${ico("bandera")}<div class="v">${esc(t.n)}<small>Territorio (nombre de antes de la guerra)</small></div></div>` : ""}
+      <div class="dato">${ico("info")}<div class="v">${esc(FACCIONES[l.f].d)}<small>${esc(FACCIONES[l.f].n)}</small></div></div>
+    </div>`);
+  conectarAcciones(l);
+  resaltar([l.id]);
+  if (volar) volarA(l.lat, l.lon, 5);
+  try { history.replaceState(null, "", "#" + l.id); } catch (e) {}
+}
+
+function volarA(lat, lon, z) {
+  z = Math.max(mapa.getZoom(), z);
+  if (!esMovil()) {
+    const p = mapa.project([lat, lon], z).subtract([204, 0]);
+    return mapa.flyTo(mapa.unproject(p, z), z, { duration: 0.8 });
+  }
+  const p = mapa.project([lat, lon], z).add([0, innerHeight * 0.27]);
+  mapa.flyTo(mapa.unproject(p, z), z, { duration: 0.8 });
+}
+function lugaresEn(t) { return LUGARES.filter((l) => territorioEn(l.lat, l.lon) === t); }
+function abrirTerritorio(t, latlng) {
+  if (!t) return;
+  const fac = FACCIONES[t.f];
+  const lat = latlng ? latlng.lat : t.c[0], lon = latlng ? normLon(latlng.lng) : t.c[1];
+  const obj = { n: t.n, lat: +lat.toFixed(4), lon: +lon.toFixed(4), f: t.f };
+  const dentro = lugaresEn(t);
+  const estatus = t.tipo === "estado" ? `Antiguo estado de EE. UU. · hoy en ${fac.n}` : t.f === "X" ? "Estado independiente" : t.f === "U" ? "Sin soberanía" : `Territorio de ${fac.n}`;
+  abrirPanel(`${cabecera(t.f, expediente(lat, lon), fac.c + " · territorio")}
+    <div class="ficha"><h2>${esc(t.n)}</h2><div class="sub">${esc(estatus)}</div><div class="sub" style="margin-top:8px">${pastilla(t.f)}</div></div>
+    ${botonesAccion(obj)}
+    <div class="texto"><p>${esc(fac.d)}</p></div>
+    <div class="datos"><div class="dato">${ico("pin")}<div class="v mono">${fmtCoord(lat, lon)}<small>Punto seleccionado</small></div></div></div>
+    ${dentro.length ? `<div class="seccion">Lugares en ${esc(t.n)}</div><div class="lista">${dentro.map(filaLugar).join("")}</div>` : ""}`);
+  conectarAcciones(obj);
+  ponerPin(lat, lon);
+  resaltar(dentro.map((l) => l.id));
+}
+function filaLugar(l, km) {
+  return `<button class="fila" data-lugar="${l.id}"><span class="burbuja">${ico(l.t === "capital" ? "capital" : l.t === "serie" ? "pelicula" : l.t === "base" ? "cohete" : "pin", "icon sm")}</span>
+    <span class="txt"><span class="t1">${esc(l.n)}</span><span class="t2">${esc(l.s)}</span></span>${km != null ? `<span class="km">${fmtKm(km)}</span>` : ""}</button>`;
+}
+
+function abrirCercanos(obj) {
+  const lista = LUGARES.filter((l) => l.lat !== obj.lat || l.lon !== obj.lon).map((l) => [l, distancia([obj.lat, obj.lon], [l.lat, l.lon])]).sort((a, b) => a[1] - b[1]).slice(0, 8);
+  abrirPanel(`<h2 class="titulo-vista">Cerca de ${esc(obj.n)}</h2><div class="nota">Distancia en línea recta.</div><div class="lista">${lista.map(([l, km]) => filaLugar(l, km)).join("")}</div>`);
+  conectarAcciones(obj);
+  resaltar(lista.map(([l]) => l.id));
+  mapa.flyToBounds(L.latLngBounds([[obj.lat, obj.lon], ...lista.slice(0, 5).map(([l]) => [l.lat, l.lon])]).pad(0.3), { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0] });
+}
+
+function resaltar(ids) {
+  const set = new Set(ids);
+  capaCiudades.eachLayer((m) => { const el = m.getElement(); if (!el) return; const c = el.firstChild; c.classList.toggle("resaltada", set.has(m._lugar.id)); c.classList.toggle("atenuada", ids.length > 1 && !set.has(m._lugar.id)); });
+}
+function quitarResaltado() { capaCiudades && capaCiudades.eachLayer((m) => { const el = m.getElement(); if (el) el.firstChild.classList.remove("resaltada", "atenuada"); }); }
+
+/* ================== Guardados ================== */
+function alternarGuardado(obj) {
+  if (estaGuardado(obj.lat, obj.lon)) { guardados = guardados.filter((g) => !(Math.abs(g.lat - obj.lat) < 1e-4 && Math.abs(g.lon - obj.lon) < 1e-4)); aviso("Quitado de Guardados"); }
+  else { guardados.push({ n: obj.n, lat: obj.lat, lon: obj.lon, f: obj.f || (territorioEn(obj.lat, obj.lon) || {}).f || "U", id: obj.id || null }); aviso("Guardado en tu lista"); }
+  almacen.guardar("guardados", guardados);
+}
+function abrirGuardados() {
+  if (!guardados.length) {
+    abrirPanel(`<h2 class="titulo-vista">Guardados</h2><div class="vacio">Todavía no has guardado nada. Abre una ciudad o un territorio y pulsa <b>Guardar</b>; aparecerá aquí.</div>`);
+    return;
+  }
+  abrirPanel(`<h2 class="titulo-vista">Guardados</h2><div class="lista">${guardados.map((g, i) => `<button class="fila" data-g="${i}"><span class="burbuja" style="color:var(--accent)">${ico("guardado", "icon sm")}</span>
+    <span class="txt"><span class="t1">${esc(g.n)}</span><span class="t2">${esc((FACCIONES[g.f] || FACCIONES.U).n)} · ${fmtCoord(g.lat, g.lon)}</span></span></button>`).join("")}</div>`);
+  cuerpo.querySelectorAll("[data-g]").forEach((b) => b.addEventListener("click", () => {
+    const g = guardados[+b.dataset.g]; const l = g.id && LUGARES.find((x) => x.id === g.id);
+    if (l) return abrirLugar(l);
+    const t = territorioEn(g.lat, g.lon); volarA(g.lat, g.lon, 5);
+    if (t) abrirTerritorio(t, L.latLng(g.lat, g.lon)); else ponerPin(g.lat, g.lon);
+  }));
+}
+
+/* ================== Chips ================== */
+document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => {
+  const ya = c.classList.contains("on");
+  document.querySelectorAll(".chip").forEach((x) => x.classList.remove("on"));
+  if (ya) return cerrarPanel();
+  const k = c.dataset.chip;
+  if (k === "guardados") { abrirGuardados(); c.classList.add("on"); return; }
+  const lista = k === "X" ? LUGARES.filter((l) => l.f === "X") : LUGARES.filter((l) => l.t === k);
+  const titulo = { capital: "Capitales", serie: "Lugares de la serie", base: "Bases y puertos", X: "Países neutrales" }[k];
+  abrirPanel(`<h2 class="titulo-vista">${titulo}</h2><div class="nota">${lista.length} resultados en el mapa.</div><div class="lista">${lista.map((l) => filaLugar(l)).join("")}</div>`);
+  c.classList.add("on");
+  conectarAcciones({});
+  resaltar(lista.map((l) => l.id));
+  mapa.flyToBounds(L.latLngBounds(lista.map((l) => [l.lat, l.lon])).pad(0.15), { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0], maxZoom: 5 });
+}));
+
+/* ================== Búsqueda ================== */
+function buscar(q, max = 8) {
+  const n = norm(q); if (!n) return [];
+  const m = n.match(/^(-?\d+(?:[.,]\d+)?)\s*[, ]\s*(-?\d+(?:[.,]\d+)?)$/);
+  if (m) {
+    const lat = parseFloat(m[1].replace(",", ".")), lon = parseFloat(m[2].replace(",", "."));
+    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) return [{ tipo: "coord", n: fmtCoord(lat, lon), s: "Coordenadas", lat, lon }];
+  }
+  const puntua = (txt) => { const t = norm(txt); return t.startsWith(n) ? 3 : t.split(/[\s\-]/).some((w) => w.startsWith(n)) ? 2 : t.includes(n) ? 1 : 0; };
+  const res = [];
+  for (const l of LUGARES) { const p = puntua(l.n); if (p) res.push({ p: p + 0.5, tipo: "lugar", n: l.n, s: l.s, lat: l.lat, lon: l.lon, ref: l }); }
+  for (const [k, f] of Object.entries(FACCIONES)) { const p = puntua(f.n); if (p && k !== "U") res.push({ p: p + 0.4, tipo: "faccion", n: f.n, s: "Facción · " + TERR.filter((t) => t.f === k).length + " territorios", ref: k }); }
+  for (const t of TERR) { const p = puntua(t.n); if (p) res.push({ p, tipo: "territorio", n: t.n, s: (t.tipo === "estado" ? "Antiguo estado · " : "Territorio · ") + FACCIONES[t.f].n, lat: t.c[0], lon: t.c[1], ref: t }); }
+  return res.sort((a, b) => b.p - a.p || a.n.localeCompare(b.n, "es")).slice(0, max);
+}
+const icoRes = (r) => r.tipo === "lugar" ? (r.ref.t === "capital" ? "capital" : r.ref.t === "serie" ? "pelicula" : r.ref.t === "base" ? "cohete" : "pin") : r.tipo === "faccion" ? "bandera" : r.tipo === "coord" ? "pin" : "globo";
+function htmlResultados(res) {
+  return res.map((r, i) => `<button class="fila" data-i="${i}"><span class="burbuja">${ico(icoRes(r), "icon sm")}</span><span class="txt"><span class="t1">${esc(r.n)}</span><span class="t2">${esc(r.s)}</span></span></button>`).join("");
+}
+function elegirResultado(r) {
+  $("#q").value = r.n; $("#sugerencias").hidden = true; $("#q").blur();
+  if (r.tipo === "lugar") return abrirLugar(r.ref);
+  if (r.tipo === "territorio") {
+    const capa = (r.ref.tipo === "estado" ? capaEEUU : capaMundo).getLayers().find((c) => c.feature === r.ref.feat);
+    const b = r.ref.n === "Rusia" ? L.latLngBounds([[41, 27], [78, 180]]) : capa.getBounds();
+    mapa.flyToBounds(b, { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0], maxZoom: 6 });
+    return abrirTerritorio(r.ref, L.latLng(r.ref.c[0], r.ref.c[1]));
+  }
+  if (r.tipo === "faccion") return abrirFaccion(r.ref);
+  if (r.tipo === "coord") {
+    volarA(r.lat, r.lon, 6);
+    const t = territorioEn(r.lat, r.lon);
+    if (t) abrirTerritorio(t, L.latLng(r.lat, r.lon)); else { abrirQueHay(L.latLng(r.lat, r.lon)); }
+  }
+}
+function abrirFaccion(k) {
+  const f = FACCIONES[k], ts = TERR.filter((t) => t.f === k).sort((a, b) => b.area - a.area), ls = LUGARES.filter((l) => l.f === k);
+  abrirPanel(`${cabecera(k, "Bloque · 1962", f.c)}
+    <div class="ficha"><h2>${esc(f.n)}</h2><div class="sub">${ts.length} territorios · ${ls.length} lugares señalados</div></div>
+    <div class="texto"><p>${esc(f.d)}</p></div>
+    ${ls.length ? `<div class="seccion">Lugares</div><div class="lista">${ls.map((l) => filaLugar(l)).join("")}</div>` : ""}
+    <div class="seccion">Territorios</div><div class="nota">${ts.map((t) => esc(t.n)).join(" · ")}</div>`);
+  conectarAcciones({});
+  resaltar(ls.map((l) => l.id));
+  const capasF = [...capaMundo.getLayers(), ...capaEEUU.getLayers()].filter((c) => c.feature.properties.f === k && c.feature.properties.n !== "Rusia" && c.feature.properties.n !== "Fiyi");
+  let b = L.latLngBounds([]); capasF.forEach((c) => b.extend(c.getBounds()));
+  if (k === "R") b = L.latLngBounds([[-35, -25], [72, 120]]);
+  if (b.isValid()) mapa.flyToBounds(b, { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0] });
+}
+
+const q = $("#q"), sug = $("#sugerencias");
+let resActuales = [], activo = -1;
+function mostrarSugerencias() {
+  resActuales = buscar(q.value); activo = -1;
+  if (!q.value.trim()) { sug.hidden = true; return; }
+  sug.innerHTML = resActuales.length ? htmlResultados(resActuales) : `<div class="vacio">No hay nada llamado «${esc(q.value)}» en este mundo. Prueba con una ciudad, un país o unas coordenadas como 38.44, -105.24.</div>`;
+  sug.hidden = false;
+  sug.querySelectorAll("[data-i]").forEach((b) => b.addEventListener("click", () => elegirResultado(resActuales[+b.dataset.i])));
+}
+q.addEventListener("input", mostrarSugerencias);
+q.addEventListener("focus", () => { if (q.value.trim()) mostrarSugerencias(); });
+q.addEventListener("keydown", (e) => {
+  const filas = sug.querySelectorAll("[data-i]");
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault(); if (!filas.length) return;
+    activo = (activo + (e.key === "ArrowDown" ? 1 : -1) + filas.length) % filas.length;
+    filas.forEach((f, i) => f.classList.toggle("activa", i === activo));
+  } else if (e.key === "Enter") {
+    const r = resActuales[activo >= 0 ? activo : 0]; if (r) elegirResultado(r);
+  } else if (e.key === "Escape") { sug.hidden = true; q.blur(); }
+});
+$("#btn-buscar").addEventListener("click", () => { const r = resActuales[0] || buscar(q.value)[0]; if (r) elegirResultado(r); else q.focus(); });
+document.addEventListener("click", (e) => { if (!e.target.closest("#buscador")) sug.hidden = true; });
+
+/* ================== Cómo llegar ================== */
+const MODOS = {
+  coche: { n: "Coche", i: "coche", v: 70, tierra: true, factor: 1.3 },
+  tren: { n: "Tren", i: "tren", v: 90, tierra: true, factor: 1.2 },
+  avion: { n: "Avión", i: "avion", v: 480, extra: 1 },
+  cohete: { n: "Cohete", i: "cohete", v: 9000, extra: 1.5 },
+};
+const ruta = { origen: null, destino: null, modo: almacen.leer("modo", "coche") };
+function puntoDe(obj) { return obj ? { n: obj.n, lat: obj.lat, lon: obj.lon } : null; }
+function abrirRuta(origen, destino) {
+  if (origen !== undefined) ruta.origen = puntoDe(origen);
+  if (destino !== undefined) ruta.destino = puntoDe(destino);
+  const campo = (k, ph, fin) => `<label class="campo"><span class="marca${fin ? " fin" : ""}"></span>
+      <input id="r-${k}" autocomplete="off" placeholder="${ph}" value="${ruta[k] ? esc(ruta[k].n) : ""}" aria-label="${ph}">
+      <button class="elegir" data-elegir="${k}" title="Elegir en el mapa" aria-label="Elegir ${ph.toLowerCase()} en el mapa">${ico("pin", "icon sm")}</button></label>`;
+  abrirPanel(`<h2 class="titulo-vista">Cómo llegar</h2>
+    <div class="ruta-campos"><div class="col">${campo("origen", "Punto de partida")}${campo("destino", "Destino", true)}</div>
+      <button class="btn-ico" id="r-cambiar" aria-label="Intercambiar origen y destino">${ico("cambiar")}</button></div>
+    <div class="ruta-sug" id="r-sug" hidden></div>
+    <div class="modos">${Object.entries(MODOS).map(([k, m]) => `<button class="modo${k === ruta.modo ? " on" : ""}" data-modo="${k}">${ico(m.i, "icon sm")}${m.n}</button>`).join("")}</div>
+    <div id="r-res"></div>`, { alto: true });
+  for (const k of ["origen", "destino"]) {
+    const inp = $("#r-" + k), caja = $("#r-sug");
+    inp.addEventListener("input", () => {
+      const res = buscar(inp.value, 6).filter((r) => r.tipo !== "faccion");
+      if (!inp.value.trim() || !res.length) { caja.hidden = true; return; }
+      caja.innerHTML = htmlResultados(res); caja.hidden = false;
+      caja.querySelectorAll("[data-i]").forEach((b) => b.addEventListener("click", () => {
+        const r = res[+b.dataset.i]; ruta[k] = { n: r.n, lat: r.lat, lon: r.lon }; inp.value = r.n; caja.hidden = true; calcularRuta();
+      }));
+    });
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { const r = buscar(inp.value, 1)[0]; if (r && r.tipo !== "faccion") { ruta[k] = { n: r.n, lat: r.lat, lon: r.lon }; inp.value = r.n; $("#r-sug").hidden = true; calcularRuta(); } } });
+  }
+  cuerpo.querySelectorAll("[data-elegir]").forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); empezarElegir(b.dataset.elegir); }));
+  $("#r-cambiar").addEventListener("click", () => { [ruta.origen, ruta.destino] = [ruta.destino, ruta.origen]; abrirRuta(); });
+  cuerpo.querySelectorAll("[data-modo]").forEach((b) => b.addEventListener("click", () => { ruta.modo = b.dataset.modo; almacen.guardar("modo", ruta.modo); cuerpo.querySelectorAll("[data-modo]").forEach((x) => x.classList.toggle("on", x === b)); calcularRuta(); }));
+  calcularRuta();
+  if (!ruta.origen) setTimeout(() => $("#r-origen") && $("#r-origen").focus(), 50);
+}
+function empezarElegir(k) {
+  modoElegir = k; $("#elegir-aviso").hidden = false; $("#elegir-aviso").textContent = k === "origen" ? "Toca el mapa para elegir el punto de partida" : "Toca el mapa para elegir el destino";
+  mapa.getContainer().style.cursor = "crosshair";
+  if (esMovil()) panel.hidden = true;
+}
+function terminarElegir() { modoElegir = null; $("#elegir-aviso").hidden = true; mapa.getContainer().style.cursor = ""; panel.hidden = false; }
+
+function calcularRuta() {
+  const res = $("#r-res"); if (!res) return;
+  capaRuta.clearLayers();
+  const { origen: a, destino: b } = ruta, modo = MODOS[ruta.modo];
+  if (!a || !b) { res.innerHTML = `<div class="vacio">Elige un punto de partida y un destino: escribe una ciudad o un territorio, o toca ${ico("pin", "icon sm")} para marcarlo en el mapa.</div>`; return; }
+  const pts = granCirculo([a.lat, a.lon], [b.lat, b.lon], 200), km = distancia([a.lat, a.lon], [b.lat, b.lon]);
+  // Recorrido: facciones atravesadas y tramos de mar.
+  const paso = km / 200; let mar = 0, peorMar = 0; const tramos = [];
+  for (const p of pts) {
+    const t = territorioEn(p[0], p[1]);
+    if (!t) { mar += paso; peorMar = Math.max(peorMar, mar); continue; }
+    mar = 0; if (tramos[tramos.length - 1] !== t.f) tramos.push(t.f);
+  }
+  const cruces = Math.max(0, tramos.length - 1);
+  const e = ESTILOS[estilo];
+  for (const seg of partirAntimeridiano(pts)) {
+    capaRuta.addLayer(L.polyline(seg, { pane: "rutas", color: "#ffffff", weight: 8, opacity: 0.9, interactive: false }));
+    capaRuta.addLayer(L.polyline(seg, { pane: "rutas", color: ruta.modo === "cohete" || ruta.modo === "avion" ? e.frente : "#1a73e8", weight: 4.5, opacity: 1, dashArray: modo.tierra ? null : "8 8", interactive: false }));
+  }
+  const fin = (lat, lon, c) => L.circleMarker([lat, lon], { pane: "rutas", radius: 6, color: "#fff", weight: 2.5, fillColor: c, fillOpacity: 1 });
+  capaRuta.addLayer(fin(a.lat, a.lon, "#333")); capaRuta.addLayer(fin(b.lat, b.lon, "#c0392b"));
+  mapa.flyToBounds(L.latLngBounds(pts.map((p) => [p[0], p[1]])).pad(0.2), { duration: 0.8, paddingTopLeft: esMovil() ? [0, 0] : [408, 0], paddingBottomRight: esMovil() ? [0, innerHeight * 0.45] : [0, 0], maxZoom: 7 });
+
+  const chipsTramos = tramos.length ? `<div class="tramos">${tramos.map((f) => pastilla(f)).join('<span class="flecha">→</span>')}</div>` : "";
+  if (modo.tierra && peorMar > 250) {
+    res.innerHTML = `<div class="resultado"><div class="aviso">${ico("aviso")}<div><b>No hay ruta por tierra.</b> El trayecto atraviesa unos ${fmtKm(peorMar)} de mar. Prueba en avión o en cohete.</div></div>
+      <div class="nota" style="padding:0">Distancia en línea recta: ${fmtKm(km)}</div></div>`;
+    return;
+  }
+  const kmReal = km * (modo.factor || 1);
+  let horas = kmReal / modo.v + (modo.extra || 0) + (modo.tierra ? cruces * 1.5 : 0);
+  const avisos = [];
+  if (cruces && modo.tierra) avisos.push(`Cruzas ${cruces} ${cruces === 1 ? "frontera" : "fronteras"} entre bloques. Se suma 1 h 30 min por cada control y necesitas salvoconducto.`);
+  if (tramos.includes("N") && modo.tierra) avisos.push("La Zona Neutral no tiene policía de ninguna potencia, pero sí cazarrecompensas. Viaja de día.");
+  if (ruta.modo === "cohete") {
+    const reich = (p) => { const t = territorioEn(p.lat, p.lon); return t && (t.f === "R" || t.f === "RA"); };
+    avisos.push(reich(a) || reich(b) ? "Los vuelos en cohete son un servicio del Reich: necesitas autorización de viaje del Reich." : "Ninguno de los dos extremos está en el Reich: no hay servicio regular de cohete en esta ruta.");
+  }
+  if (tramos.includes("R") && tramos.includes("J")) avisos.push("La ruta une territorio del Reich y del Imperio Japonés. Con la tensión entre las dos potencias, los pasos pueden cerrarse sin aviso.");
+  res.innerHTML = `<div class="resultado">
+    <div class="grande">${fmtHoras(horas)}<small>${fmtKm(kmReal)}</small></div>
+    <div class="nota" style="padding:0">${modo.tierra ? "Trazado aproximado por tierra." : "Ruta directa por el aire (ortodrómica)."} Velocidad media de 1962: ${modo.v.toLocaleString("es-ES")} km/h.</div>
+    ${chipsTramos}
+    ${avisos.map((t) => `<div class="aviso">${ico("aviso")}<div>${esc(t)}</div></div>`).join("")}
+  </div>`;
+}
+
+/* ================== Clic en el mapa, medir, menú contextual ================== */
+function alHacerClicMapa(e) {
+  cerrarMenuCtx();
+  const ll = e.latlng, lon = normLon(ll.lng);
+  if (modoElegir) {
+    const t = territorioEn(ll.lat, lon), k = modoElegir;
+    ruta[k] = { n: t ? `${t.n} (${ll.lat.toFixed(2)}, ${lon.toFixed(2)})` : `${ll.lat.toFixed(3)}, ${lon.toFixed(3)}`, lat: +ll.lat.toFixed(4), lon: +lon.toFixed(4) };
+    terminarElegir(); abrirRuta(); return;
+  }
+  if (midiendo) { puntosMedida.push([ll.lat, ll.lng]); dibujarMedida(); return; }
+  if (!panel.hidden && esMovil()) cerrarPanel();
+}
+function alternarMedir(on = !midiendo, desde) {
+  midiendo = on; $("#btn-medir").classList.toggle("on", on); $("#medida").hidden = !on;
+  puntosMedida = desde ? [desde] : []; capaMedida.clearLayers();
+  mapa.getContainer().style.cursor = on ? "crosshair" : "";
+  if (on) { if (esMovil()) cerrarPanel(); dibujarMedida(); }
+}
+function dibujarMedida() {
+  capaMedida.clearLayers(); let total = 0;
+  for (let i = 1; i < puntosMedida.length; i++) total += distancia(puntosMedida[i - 1], puntosMedida[i]);
+  if (puntosMedida.length > 1) {
+    capaMedida.addLayer(L.polyline(puntosMedida, { pane: "rutas", color: "#fff", weight: 6, opacity: 0.9, interactive: false }));
+    capaMedida.addLayer(L.polyline(puntosMedida, { pane: "rutas", color: "#222", weight: 2.5, dashArray: "6 5", interactive: false }));
+  }
+  puntosMedida.forEach((p) => capaMedida.addLayer(L.circleMarker(p, { pane: "rutas", radius: 5, color: "#222", weight: 2, fillColor: "#fff", fillOpacity: 1, interactive: false })));
+  $("#medida-total").textContent = fmtKm(total);
+  $("#medida-sub").textContent = puntosMedida.length < 2 ? "Toca el mapa para añadir puntos" : `${puntosMedida.length} puntos · ${(total / 1.852).toLocaleString("es-ES", { maximumFractionDigits: 0 })} millas náuticas`;
+}
+$("#btn-medir").addEventListener("click", () => alternarMedir());
+$("#medida-cerrar").addEventListener("click", () => alternarMedir(false));
+$("#medida-deshacer").addEventListener("click", () => { puntosMedida.pop(); dibujarMedida(); });
+
+const menu = $("#menu-ctx");
+function abrirMenuCtx(e) {
+  if (midiendo || modoElegir) return;
+  const ll = e.latlng, lat = +ll.lat.toFixed(4), lon = +normLon(ll.lng).toFixed(4), t = territorioEn(lat, lon);
+  const punto = { n: t ? t.n : "Punto en el mar", lat, lon, f: t ? t.f : "U" };
+  menu.innerHTML = `<div class="cab"><div class="mono">${fmtCoord(lat, lon)}</div><div class="nota" style="padding:2px 0 0">${t ? esc(t.n) + " · " + esc(FACCIONES[t.f].n) : "Aguas internacionales"}</div></div>
+    <button class="fila" data-m="que">${ico("info", "icon sm")}¿Qué hay aquí?</button>
+    <button class="fila" data-m="desde">${ico("ruta", "icon sm")}Cómo llegar desde aquí</button>
+    <button class="fila" data-m="hasta">${ico("pin", "icon sm")}Cómo llegar hasta aquí</button>
+    <button class="fila" data-m="medir">${ico("regla", "icon sm")}Medir distancia</button>
+    <button class="fila" data-m="guardar">${ico("guardar", "icon sm")}Guardar este punto</button>
+    <button class="fila" data-m="copiar">${ico("copiar", "icon sm")}Copiar coordenadas</button>`;
+  menu.hidden = false;
+  const p = e.containerPoint, w = menu.offsetWidth, h = menu.offsetHeight;
+  menu.style.left = Math.min(p.x, innerWidth - w - 12) + "px"; menu.style.top = Math.min(p.y, innerHeight - h - 12) + "px";
+  menu.querySelectorAll("[data-m]").forEach((b) => b.addEventListener("click", () => {
+    cerrarMenuCtx();
+    const k = b.dataset.m;
+    if (k === "que") abrirQueHay(ll);
+    if (k === "desde") abrirRuta(punto, undefined);
+    if (k === "hasta") abrirRuta(undefined, punto);
+    if (k === "medir") alternarMedir(true, [ll.lat, ll.lng]);
+    if (k === "guardar") alternarGuardado(punto);
+    if (k === "copiar") copiar(`${lat}, ${lon}`, "Coordenadas copiadas");
+  }));
+}
+function cerrarMenuCtx() { menu.hidden = true; }
+function abrirQueHay(ll) {
+  const lat = ll.lat, lon = normLon(ll.lng), t = territorioEn(lat, lon);
+  if (t) return abrirTerritorio(t, L.latLng(lat, lon));
+  const cerca = LUGARES.map((l) => [l, distancia([lat, lon], [l.lat, l.lon])]).sort((a, b) => a[1] - b[1]).slice(0, 4);
+  const obj = { n: "Punto en el mar", lat: +lat.toFixed(4), lon: +lon.toFixed(4), f: "U" };
+  abrirPanel(`<div class="ficha"><h2>Aguas internacionales</h2><div class="sub mono">${fmtCoord(lat, lon)}</div></div>${botonesAccion(obj)}
+    <div class="seccion">Lugares más cercanos</div><div class="lista">${cerca.map(([l, km]) => filaLugar(l, km)).join("")}</div>`);
+  conectarAcciones(obj); ponerPin(lat, lon);
+}
+
+/* ================== Controles ================== */
+$("#btn-mas").addEventListener("click", () => mapa.zoomIn());
+$("#btn-menos").addEventListener("click", () => mapa.zoomOut());
+$("#btn-mundo").addEventListener("click", () => mapa.flyTo([30, -20], esMovil() ? 2 : 2.5, { duration: 0.8 }));
+$("#btn-pantalla").addEventListener("click", async () => {
+  try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }
+  catch (e) { aviso("Este visor no permite pantalla completa"); }
+});
+$("#btn-ruta").addEventListener("click", () => abrirRuta());
+const panelCapas = $("#capas");
+$("#capas-btn").addEventListener("click", (e) => { e.stopPropagation(); panelCapas.hidden = !panelCapas.hidden; });
+document.addEventListener("click", (e) => { if (!e.target.closest("#capas, #capas-btn")) panelCapas.hidden = true; if (!e.target.closest("#menu-ctx")) cerrarMenuCtx(); });
+for (const k of ["fronteras", "frentes", "ciudades", "etiquetas", "cohetes", "cuadricula"]) {
+  const c = $("#c-" + k); c.checked = !!capas[k];
+  c.addEventListener("change", () => { capas[k] = c.checked; almacen.guardar("capas", capas); aplicarEstilo(); });
+}
+
+/* ================== Menú lateral ================== */
+const cajon = $("#cajon"), velo = $("#velo");
+function abrirCajon() {
+  cajon.innerHTML = `<div class="marca-app"><b>Mapas del Castillo</b><small>El mundo de la serie en 1962</small></div>
+    <button class="fila" data-c="guardados">${ico("guardar")}Guardados</button>
+    <button class="fila" data-c="leyenda">${ico("leyenda")}Leyenda de bloques</button>
+    <button class="fila" data-c="cronologia">${ico("cronologia")}Cronología</button>
+    <button class="fila" data-c="ruta">${ico("ruta")}Cómo llegar</button>
+    <button class="fila" data-c="medir">${ico("regla")}Medir distancia</button>
+    <button class="fila" data-c="atajos">${ico("teclado")}Atajos de teclado</button>
+    <button class="fila" data-c="acerca">${ico("info")}Acerca de este mapa</button>`;
+  cajon.hidden = false; velo.hidden = false;
+  cajon.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => {
+    cerrarCajon(); const k = b.dataset.c;
+    if (k === "guardados") abrirGuardados();
+    if (k === "leyenda") abrirLeyenda();
+    if (k === "cronologia") abrirCronologia();
+    if (k === "ruta") abrirRuta();
+    if (k === "medir") alternarMedir(true);
+    if (k === "atajos") abrirPanel(`<h2 class="titulo-vista">Atajos de teclado</h2><div class="lista leyenda">
+      ${[["/", "Ir al buscador"], ["+ / −", "Acercar o alejar"], ["Flechas", "Mover el mapa"], ["M", "Medir distancia"], ["R", "Cómo llegar"], ["L", "Leyenda"], ["Esc", "Cerrar panel o herramienta"], ["Clic derecho", "Menú del punto (mantén pulsado en móvil)"]]
+        .map(([k, v]) => `<div class="fila"><span class="mono" style="min-width:96px">${k}</span><span class="txt">${v}</span></div>`).join("")}</div>`);
+    if (k === "acerca") abrirPanel(`<h2 class="titulo-vista">Acerca de este mapa</h2><div class="texto">
+      <p>Un mapa de fans del mundo de la serie <i>El hombre en el castillo</i> en 1962: el Gran Reich Nazi, el Imperio Japonés y la Zona Neutral que los separa en Norteamérica.</p>
+      <p>Las fronteras entre bloques son una interpretación aproximada; la serie no muestra todos los límites con precisión. Los nombres de los territorios son los de antes de la guerra.</p>
+      <p>Las líneas de costa y fronteras salen de Natural Earth (dominio público). No es un producto oficial de la serie.</p></div>`);
+  }));
+}
+function cerrarCajon() { cajon.hidden = true; velo.hidden = true; }
+$("#btn-menu").addEventListener("click", abrirCajon);
+velo.addEventListener("click", cerrarCajon);
+
+function abrirLeyenda() {
+  const pal = ESTILOS[estilo].real ? ESTILOS.mapa : ESTILOS[estilo];
+  abrirPanel(`<h2 class="titulo-vista">Leyenda de bloques</h2><div class="nota">Toca un bloque para ver sus territorios.</div><div class="lista">
+    ${ORDEN_FAC.filter((k) => k !== "U").map((k) => `<button class="fila" data-fac="${k}" style="align-items:flex-start"><span class="muestra" style="background:${pal.fill[k]}"></span>
+      <span class="txt"><span class="t1">${esc(FACCIONES[k].n)}</span><span class="t2" style="white-space:normal">${esc(FACCIONES[k].d)}</span></span></button>`).join("")}
+    <div class="fila" style="cursor:default"><span class="muestra" style="background:none;box-shadow:none;border-top:2px dashed ${pal.frente};height:0;margin-top:10px"></span><span class="txt"><span class="t1">Frente entre bloques</span><span class="t2">Límite entre dos potencias</span></span></div>
+    <div class="fila" style="cursor:default"><span class="muestra" style="background:none;box-shadow:none;border-top:2px dotted ${pal.frente};height:0;margin-top:10px"></span><span class="txt"><span class="t1">Ruta de cohete o vuelo</span><span class="t2">Conexiones regulares de 1962</span></span></div>
+  </div>`);
+  cuerpo.querySelectorAll("[data-fac]").forEach((b) => b.addEventListener("click", () => abrirFaccion(b.dataset.fac)));
+}
+function abrirCronologia() {
+  const hitos = [
+    ["1945", "Alemania lanza una bomba atómica sobre Washington D. C. Estados Unidos se rinde y su territorio se reparte entre el Reich y Japón."],
+    ["1947", "Se traza la Zona Neutral en las Montañas Rocosas como colchón entre los dos imperios."],
+    ["1962", "Época de la serie. San Francisco vive bajo los Estados Japoneses del Pacífico y Nueva York bajo el Reich Americano. Circulan películas prohibidas que muestran una guerra con otro final."],
+    ["1962", "La salud del Führer empeora y la sucesión en Berlín amenaza la paz con Japón."],
+  ];
+  abrirPanel(`<h2 class="titulo-vista">Cronología</h2><div class="cronologia">${hitos.map(([a, t]) => `<div class="hito"><b>${a}</b><span>${esc(t)}</span></div>`).join("")}</div>`);
+}
+
+/* ================== Teclado ================== */
+document.addEventListener("keydown", (e) => {
+  const escribiendo = e.target.matches("input, textarea");
+  if (e.key === "Escape") {
+    if (!cajon.hidden) return cerrarCajon();
+    if (modoElegir) return terminarElegir();
+    if (midiendo) return alternarMedir(false);
+    if (!menu.hidden) return cerrarMenuCtx();
+    if (!panelCapas.hidden) { panelCapas.hidden = true; return; }
+    if (!panel.hidden) return cerrarPanel();
+  }
+  if (escribiendo || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "/") { e.preventDefault(); q.focus(); }
+  if (e.key === "m" || e.key === "M") alternarMedir();
+  if (e.key === "r" || e.key === "R") abrirRuta();
+  if (e.key === "l" || e.key === "L") abrirLeyenda();
+});
+addEventListener("resize", () => document.body.classList.toggle("movil", esMovil()));
+
+/* ================== Arranque ================== */
+iniciarMapa();
+fetch("datos/mundo.json")
+  .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then((datos) => {
+    construirTerritorios(datos);
+    const id = decodeURIComponent(location.hash.slice(1));
+    const l = LUGARES.find((x) => x.id === id);
+    if (l) abrirLugar(l);
+  })
+  .catch(() => aviso("No se pudieron cargar las fronteras del mundo. Abre el mapa desde un servidor web, no como archivo suelto."));
+</script>
+
+</body></html>
