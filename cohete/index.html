@@ -3,39 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cohete V2</title>
+<title>Cohete V-2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: hoja de plano técnico. Cajetín arriba, visor 3D + ficha de componentes, tablas de etapas y secuencia abajo. */
+/* Layout: estación de trabajo sobre papel de plano. Lista de piezas | visor 3D con consola de vuelo | inspector con pestañas. */
 :root {
-  --paper: #e4e9ec; --sheet: #f3f6f7; --ink: #1b2833; --muted: #55656f; --rule: #b6c2ca;
+  --paper: #e4e9ec; --sheet: #f3f6f7; --sheet-2: #e9eef1; --ink: #1b2833; --muted: #55656f; --rule: #b6c2ca;
   --grid: rgba(27, 40, 51, .07);
-  --accent: #e0531f; --accent-text: #ad3e0e;
-  --s1: #2f6690; --s2: #7a5ea8; --pl: #2e8a6b; --lox: #7fb6e0; --rp1: #d9a441;
+  --accent: #e0531f; --accent-text: #ad3e0e; --on-accent: #ffffff;
+  --s1: #2f6690; --s2: #7a5ea8; --pl: #2e8a6b; --st: #8a6d3b;
+  --chart: #2f6690;
+  --good: #2e7d4f; --warn: #a86b12; --crit: #c2362b;
+  --screen: #14212c; --screen-ink: #d9e6ee; --screen-dim: #7f97a8; --screen-hi: #ff8a50;
   --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
   --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0d1822; --sheet: #12212e; --ink: #d6e2ea; --muted: #8ea2b1; --rule: #2a3f50;
+    --paper: #0d1822; --sheet: #12212e; --sheet-2: #172a39; --ink: #d6e2ea; --muted: #8ea2b1; --rule: #2a3f50;
     --grid: rgba(150, 195, 230, .07);
-    --accent: #ff7a3d; --accent-text: #ff9a69;
-    --s1: #6fa8dc; --s2: #b39ae0; --pl: #5cc7a0;
+    --accent: #ff7a3d; --accent-text: #ff9a69; --on-accent: #1a0d06;
+    --s1: #6fa8dc; --s2: #b39ae0; --pl: #5cc7a0; --st: #c9a66b;
+    --chart: #6fa8dc;
+    --good: #5cc98a; --warn: #e3b04b; --crit: #ff6b5e;
+    --screen: #08121a; --screen-ink: #d9e6ee; --screen-dim: #7f97a8; --screen-hi: #ff8a50;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #0d1822; --sheet: #12212e; --ink: #d6e2ea; --muted: #8ea2b1; --rule: #2a3f50;
+  --paper: #0d1822; --sheet: #12212e; --sheet-2: #172a39; --ink: #d6e2ea; --muted: #8ea2b1; --rule: #2a3f50;
   --grid: rgba(150, 195, 230, .07);
-  --accent: #ff7a3d; --accent-text: #ff9a69;
-  --s1: #6fa8dc; --s2: #b39ae0; --pl: #5cc7a0;
+  --accent: #ff7a3d; --accent-text: #ff9a69; --on-accent: #1a0d06;
+  --s1: #6fa8dc; --s2: #b39ae0; --pl: #5cc7a0; --st: #c9a66b;
+  --chart: #6fa8dc;
+  --good: #5cc98a; --warn: #e3b04b; --crit: #ff6b5e;
+  --screen: #08121a; --screen-ink: #d9e6ee; --screen-dim: #7f97a8; --screen-hi: #ff8a50;
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0;
   background-color: var(--paper);
@@ -44,131 +54,292 @@ body {
   color: var(--ink);
   font: 15px/1.55 var(--f-body);
 }
-.wrap {
-  max-width: 1380px; margin: 0 auto;
-  padding-block: 20px 56px;
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.app {
+  max-width: 1640px; margin: 0 auto;
+  padding-block: 16px 40px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid; gap: 16px;
+  display: grid; gap: 14px;
 }
+.eyebrow { font: 500 11px/1.3 var(--f-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
 .mono { font-family: var(--f-mono); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Cajetín */
-.titleblock { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 2fr); border: 1.5px solid var(--ink); background: var(--sheet); }
-.tb-name { padding: 14px 18px; border-right: 1px solid var(--ink); display: grid; gap: 6px; align-content: space-between; }
-.tb-name h1 { font: 800 clamp(44px, 6vw, 72px)/.88 var(--f-display); text-transform: uppercase; letter-spacing: .01em; margin: 0; }
+.titleblock { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.1fr); border: 1.5px solid var(--ink); background: var(--sheet); }
+.tb-name { padding: 12px 18px; border-right: 1px solid var(--ink); display: grid; gap: 4px; align-content: center; }
+.tb-name h1 { font: 800 clamp(40px, 4.6vw, 60px)/.86 var(--f-display); text-transform: uppercase; letter-spacing: .01em; margin: 0; }
 .tb-name h1 span { color: var(--accent); }
-.tb-name p { margin: 0; color: var(--muted); font-size: 14px; max-width: 46ch; }
-.tb-name .drw { font: 500 11px/1.4 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tb-name p { margin: 0; color: var(--muted); font-size: 13.5px; }
 .tb-specs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; }
-.tb-specs > div { padding: 12px 14px; border-left: 1px solid var(--rule); display: grid; align-content: space-between; gap: 8px; }
+.tb-specs > div { padding: 10px 14px; border-left: 1px solid var(--rule); display: grid; align-content: space-between; gap: 6px; }
 .tb-specs > div:first-child { border-left: 0; }
 .tb-specs dt { font: 500 11px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.tb-specs dd { margin: 0; font: 800 clamp(26px, 2.8vw, 36px)/1 var(--f-display); font-variant-numeric: tabular-nums; }
-.tb-specs dd small { font: 500 13px var(--f-mono); color: var(--muted); margin-left: 3px; }
-.tb-specs dd em { display: block; font: 400 12px/1.3 var(--f-mono); color: var(--muted); font-style: normal; margin-top: 4px; }
+.tb-specs dd { margin: 0; font: 800 clamp(24px, 2.4vw, 32px)/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.tb-specs dd small { font: 500 12px var(--f-mono); color: var(--muted); margin-left: 3px; }
+.tb-specs dd em { display: block; font: 400 11.5px/1.3 var(--f-mono); color: var(--muted); font-style: normal; margin-top: 4px; }
 
-/* Principal */
-.main { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 16px; align-items: start; }
-.viewport { position: relative; height: clamp(480px, 78vh, 880px); border: 1.5px solid var(--ink); background: var(--sheet); overflow: hidden; }
-#stage { position: absolute; inset: 0; }
-#stage canvas { display: block; width: 100%; height: 100%; }
-.nogl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); margin: 0; }
-
-.tools { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px; max-width: calc(100% - 24px); z-index: 2; }
-.ctl, .btn {
-  display: inline-flex; align-items: center; gap: 10px; min-height: 36px;
-  background: var(--sheet); color: var(--ink); border: 1px solid var(--ink);
-  padding: 6px 12px; font: 500 12px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase;
+/* Estación de trabajo */
+.work {
+  display: grid; gap: 14px;
+  grid-template-columns: 236px minmax(0, 1fr) 410px;
+  grid-template-areas: "rail view insp";
+  height: max(660px, calc(100vh - 170px));
+  height: max(660px, calc(100dvh - 170px));
 }
-.btn { cursor: pointer; }
-.btn:hover { background: color-mix(in srgb, var(--ink) 8%, var(--sheet)); }
-.btn[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
-.ctl input[type="range"] { width: 120px; }
-.ctl input:disabled { opacity: .4; }
-.tag { position: absolute; top: 14px; right: 14px; z-index: 1; text-align: right; font: 500 11px/1.5 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
-.tip { position: absolute; z-index: 3; pointer-events: none; background: var(--ink); color: var(--sheet); font: 500 12px/1 var(--f-mono); padding: 6px 8px; transform: translate(14px, -50%); white-space: nowrap; }
+.rail { grid-area: rail; min-height: 0; overflow: auto; border: 1px solid var(--rule); background: var(--sheet); }
+.viewport { grid-area: view; position: relative; min-height: 0; border: 1.5px solid var(--ink); background: var(--sheet); overflow: hidden; }
+.insp { grid-area: insp; min-height: 0; overflow: auto; border: 1.5px solid var(--ink); background: var(--sheet); }
 
-.flight {
-  position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 2;
-  display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 14px;
-  background: var(--sheet); border: 1px solid var(--ink); padding: 8px 14px 8px 8px;
-}
-.play { min-width: 96px; justify-content: center; background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
-.play:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }
-.play svg { width: 12px; height: 12px; fill: currentColor; }
-.clock { font: 800 28px/1 var(--f-display); font-variant-numeric: tabular-nums; min-width: 4.6ch; }
-.track { display: grid; gap: 6px; min-width: 0; }
-.phase { font: 500 12px/1.2 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.phase b { color: var(--ink); font-weight: 500; }
-.scrub { position: relative; }
-.ticks { position: absolute; left: 7px; right: 7px; top: -3px; height: 4px; pointer-events: none; }
-.ticks span { position: absolute; top: 0; width: 1px; height: 4px; background: var(--ink); }
-.reset { min-height: 36px; padding: 6px 10px; }
-
-/* Rangos */
-input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; height: 18px; margin: 0; width: 100%; cursor: pointer; --p: 0%; }
-input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(to right, var(--accent) var(--p), var(--rule) var(--p)); }
-input[type="range"]::-moz-range-track { height: 4px; background: var(--rule); }
-input[type="range"]::-moz-range-progress { height: 4px; background: var(--accent); }
-input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 50%; }
-input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 50%; }
-input[type="range"]:disabled { cursor: not-allowed; }
-
-/* Ficha */
-.panel { display: grid; gap: 16px; align-content: start; }
-.detail { border: 1.5px solid var(--ink); background: var(--sheet); padding: 16px 18px; display: grid; gap: 10px; }
-.detail-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-.chip { display: inline-flex; align-items: center; gap: 7px; font: 500 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
-.chip::before { content: ""; width: 10px; height: 10px; background: var(--c, var(--ink)); }
+/* Lista de piezas */
+.rail-head { position: sticky; top: 0; z-index: 1; background: var(--sheet); padding: 12px 12px 8px; display: grid; gap: 8px; border-bottom: 1px solid var(--rule); }
+.search { width: 100%; padding: 7px 10px; border: 1px solid var(--rule); background: var(--paper); font-size: 14px; }
+.search::placeholder { color: var(--muted); }
+.rail-groups { display: grid; align-content: start; }
+.rail h3 { margin: 0; padding: 12px 12px 4px; }
+.rail ul { list-style: none; margin: 0; padding: 0 0 4px; }
+.prt { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; gap: 9px; align-items: center; width: 100%; padding: 6px 12px; background: none; border: 0; font-size: 14px; text-align: left; cursor: pointer; }
+.prt:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.prt[aria-current="true"] { background: color-mix(in srgb, var(--accent) 15%, transparent); font-weight: 600; }
+.prt .sw { width: 9px; height: 9px; background: var(--c); }
+.prt .st { font: 400 11.5px/1 var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.empty { padding: 12px; color: var(--muted); font-size: 14px; margin: 0; }
 [data-stage="s1"] { --c: var(--s1); }
 [data-stage="s2"] { --c: var(--s2); }
 [data-stage="pl"] { --c: var(--pl); }
-.station { font: 400 12px/1 var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-.detail h2 { font: 800 32px/.95 var(--f-display); text-transform: uppercase; margin: 0; text-wrap: balance; }
-.detail p { margin: 0; }
-.detail dl { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 7px 14px; margin: 2px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 14px; }
-.detail dt { color: var(--muted); font: 400 11.5px/1.7 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; }
-.detail dd { margin: 0; font-variant-numeric: tabular-nums; }
+[data-stage="st"] { --c: var(--st); }
+.chip { display: inline-flex; align-items: center; gap: 7px; font: 500 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+.chip::before { content: ""; width: 9px; height: 9px; background: var(--c, var(--ink)); flex: none; }
 
-.parts { border: 1px solid var(--rule); background: var(--sheet); padding-bottom: 6px; }
-.parts h3 { font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0; padding: 14px 14px 6px; }
-.parts ul { list-style: none; margin: 0; padding: 0; }
-.prt { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 7px 14px; background: none; border: 0; color: inherit; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
-.prt:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
-.prt[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 15%, transparent); font-weight: 600; }
-.prt .sw { width: 10px; height: 10px; background: var(--c); }
-.prt .st { font: 400 12px/1 var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+/* Visor */
+#stage { position: absolute; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; }
+.nogl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); margin: 0; }
+.tools { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 3; display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+.tools > * { pointer-events: auto; }
+.grp { display: inline-flex; border: 1px solid var(--ink); background: var(--sheet); }
+.grp > * + * { border-left: 1px solid var(--rule); }
+.btn, .ctl {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 34px;
+  background: transparent; border: 0; padding: 6px 11px;
+  font: 500 11.5px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; white-space: nowrap;
+}
+.btn:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+.ctl { cursor: default; }
+.ctl input[type="range"] { width: 96px; }
+.spacer { flex: 1; }
+.labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.labels svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.labels line { stroke: var(--muted); stroke-width: 1; }
+.labels line.on { stroke: var(--accent); stroke-width: 1.5; }
+.lbl { position: absolute; transform: translateY(-50%); pointer-events: auto; cursor: pointer; background: var(--sheet); border: 1px solid var(--rule); padding: 3px 7px; font: 500 11.5px/1.2 var(--f-mono); white-space: nowrap; }
+.lbl[data-side="l"] { transform: translate(-100%, -50%); }
+.lbl:hover { border-color: var(--ink); }
+.lbl.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.tip { position: absolute; z-index: 4; pointer-events: none; background: var(--ink); color: var(--sheet); font: 500 12px/1 var(--f-mono); padding: 6px 8px; transform: translate(14px, -50%); white-space: nowrap; }
 
-/* Abajo */
-.lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-.block { border: 1px solid var(--rule); background: var(--sheet); padding: 16px 18px; min-width: 0; }
-.block h2 { font: 800 26px/1 var(--f-display); text-transform: uppercase; margin: 0 0 4px; }
-.block > p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
-.tablewrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-thead th { font: 500 11px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1.5px solid var(--ink); }
-thead th .chip { color: var(--ink); }
-tbody th { font-weight: 500; color: var(--muted); white-space: nowrap; }
-td { font-variant-numeric: tabular-nums; }
+/* Consola de vuelo */
+.console {
+  position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 3;
+  background: var(--screen); color: var(--screen-ink); border: 1px solid var(--ink);
+  display: grid; gap: 8px; padding: 8px 12px 10px 8px;
+}
+.c-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.play { min-width: 98px; justify-content: center; background: var(--accent); color: var(--on-accent); font-weight: 600; border: 0; }
+.play:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }
+.play svg { width: 11px; height: 11px; fill: currentColor; }
+.clock { font: 800 28px/1 var(--f-display); font-variant-numeric: tabular-nums; min-width: 4.4ch; }
+.track { display: grid; gap: 6px; min-width: 0; }
+.phase { font: 500 11.5px/1.2 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--screen-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phase b { color: var(--screen-hi); font-weight: 500; }
+.scrub { position: relative; }
+.ticks { position: absolute; left: 7px; right: 7px; top: -3px; height: 4px; pointer-events: none; }
+.ticks span { position: absolute; top: 0; width: 1px; height: 4px; background: var(--screen-dim); }
+.c-btns { display: inline-flex; gap: 6px; }
+.speed { border: 1px solid var(--screen-dim); color: var(--screen-ink); padding: 6px 9px; }
+.speed:hover { background: rgba(255, 255, 255, .08); }
+.speed[aria-pressed="true"] { background: transparent; color: var(--screen-hi); border-color: var(--screen-hi); }
+.speed[aria-pressed="false"] { color: var(--screen-dim); }
+.speed svg { width: 15px; height: 15px; fill: currentColor; }
+#snd[aria-pressed="true"] .m, #snd[aria-pressed="false"] .w { display: none; }
+.readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.4fr); gap: 0; border-top: 1px solid rgba(255, 255, 255, .12); padding-top: 8px; margin-left: 4px; }
+.ro { display: grid; gap: 2px; padding-right: 10px; min-width: 0; }
+.ro + .ro { padding-left: 10px; border-left: 1px solid rgba(255, 255, 255, .12); }
+.ro span { font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--screen-dim); }
+.ro b { font: 600 20px/1.1 var(--f-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ro b small { font: 400 11px var(--f-mono); color: var(--screen-dim); margin-left: 3px; }
+.gauges { display: grid; gap: 5px; align-content: center; }
+.gauge { display: grid; grid-template-columns: 26px minmax(0, 1fr) 36px; gap: 8px; align-items: center; font: 500 10.5px/1 var(--f-mono); color: var(--screen-dim); }
+.gauge i { display: block; height: 6px; background: rgba(255, 255, 255, .12); position: relative; }
+.gauge i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v, 100%); background: var(--screen-ink); }
+.gauge output { text-align: right; color: var(--screen-ink); font-variant-numeric: tabular-nums; }
+
+/* Rangos */
+input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; height: 18px; margin: 0; width: 100%; cursor: pointer; --p: 0%; --tr: var(--rule); --th: var(--sheet); --tb: var(--ink); }
+input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(to right, var(--accent) var(--p), var(--tr) var(--p)); }
+input[type="range"]::-moz-range-track { height: 4px; background: var(--tr); }
+input[type="range"]::-moz-range-progress { height: 4px; background: var(--accent); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; background: var(--th); border: 2px solid var(--tb); border-radius: 50%; }
+input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; background: var(--th); border: 2px solid var(--tb); border-radius: 50%; }
+input[type="range"]:disabled { cursor: not-allowed; opacity: .4; }
+.console input[type="range"] { --tr: rgba(255, 255, 255, .2); --th: var(--screen); --tb: var(--screen-ink); }
+
+/* Inspector */
+.tabs { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--sheet); border-bottom: 1.5px solid var(--ink); }
+.tab { background: none; border: 0; padding: 12px 2px 10px; font: 500 11px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1.5px; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 500; }
+.pane { padding: 16px 18px 22px; display: grid; gap: 16px; align-content: start; }
+.pane h2 { font: 800 30px/.95 var(--f-display); text-transform: uppercase; margin: 0; text-wrap: balance; }
+.pane h3 { margin: 0 0 8px; }
+.pane p { margin: 0; }
+.sec { display: grid; gap: 8px; }
+.sec + .sec { border-top: 1px solid var(--rule); padding-top: 14px; }
+.muted { color: var(--muted); }
+.small { font-size: 13.5px; }
+
+/* Ficha */
+.f-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.nav2 { display: inline-flex; border: 1px solid var(--ink); }
+.nav2 button { background: none; border: 0; width: 34px; height: 30px; cursor: pointer; font: 600 15px/1 var(--f-mono); }
+.nav2 button + button { border-left: 1px solid var(--rule); }
+.nav2 button:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.f-intro { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 14px; align-items: start; }
+.sil { width: 78px; height: auto; display: block; }
+.sil .b { fill: var(--sheet-2); stroke: var(--ink); stroke-width: .7; cursor: pointer; }
+.sil .h { fill: none; stroke: var(--muted); stroke-width: .7; stroke-dasharray: 2 1.5; cursor: pointer; }
+.sil .x { fill: var(--ink); stroke: none; cursor: pointer; }
+.sil .on { fill: var(--accent); stroke: var(--accent); stroke-dasharray: none; }
+.sil .h.on { fill: color-mix(in srgb, var(--accent) 45%, transparent); }
+.sil text { font: 400 6px var(--f-mono); fill: var(--muted); }
+.sil .tk { stroke: var(--rule); stroke-width: .6; }
+.f-text { display: grid; gap: 8px; min-width: 0; }
+.station { font: 400 12px/1.3 var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 8px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; font-size: 14px; }
+.steps li::before { content: counter(s); font: 600 12px/22px var(--f-mono); text-align: center; height: 22px; border: 1px solid var(--ink); }
+.specs { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 6px 14px; margin: 0; font-size: 14px; }
+.specs dt { color: var(--muted); font: 400 11.5px/1.75 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; }
+.specs dd { margin: 0; font-variant-numeric: tabular-nums; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.tags li { border: 1px solid var(--rule); background: var(--paper); padding: 3px 8px; font-size: 13px; }
+.risks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.risk { border: 1px solid var(--rule); padding: 10px 12px; display: grid; gap: 4px; background: var(--paper); }
+.risk-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.risk b { font-weight: 600; font-size: 14.5px; }
+.risk p { font-size: 13.5px; color: var(--muted); }
+.risk p strong { color: var(--ink); font-weight: 500; }
+.sev { flex: none; display: inline-flex; align-items: center; gap: 5px; font: 500 10.5px/1 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--sv); }
+.sev::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--sv); }
+.sev[data-s="alta"] { --sv: var(--crit); }
+.sev[data-s="media"] { --sv: var(--warn); }
+.sev[data-s="baja"] { --sv: var(--muted); }
+
+/* Vuelo */
+.charts { display: grid; gap: 12px; }
+.chart { position: relative; }
+.ch-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+.ch-head b { font: 600 14px/1.2 var(--f-body); }
+.ch-head output { font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums; }
+.chart svg { display: block; width: 100%; height: 96px; cursor: crosshair; touch-action: pan-y; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; }
+.chart .axis { font: 400 10px var(--f-mono); fill: var(--muted); }
+.chart .ev { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; }
+.chart .area { fill: color-mix(in srgb, var(--chart) 14%, transparent); }
+.chart .line { fill: none; stroke: var(--chart); stroke-width: 2; stroke-linejoin: round; }
+.chart .cur { stroke: var(--accent); stroke-width: 1.5; }
+.chart .dot { fill: var(--accent); stroke: var(--sheet); stroke-width: 2; }
+.chart .hov { stroke: var(--ink); stroke-width: 1; opacity: .5; }
+.ctip { position: absolute; z-index: 2; pointer-events: none; background: var(--ink); color: var(--sheet); font: 500 11.5px/1.3 var(--f-mono); padding: 5px 7px; white-space: nowrap; transform: translate(-50%, -110%); }
 .events { list-style: none; margin: 0; padding: 0; }
-.events button { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 12px; align-items: start; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); padding: 9px 6px; color: inherit; font: inherit; cursor: pointer; }
+.events button { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 10px; align-items: start; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); padding: 8px 4px; cursor: pointer; }
 .events li:last-child button { border-bottom: 0; }
 .events button:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
 .events button[aria-current="step"] { background: color-mix(in srgb, var(--accent) 13%, transparent); }
-.events .tt { font: 500 13px/1.5 var(--f-mono); color: var(--accent-text); font-variant-numeric: tabular-nums; }
-.events b { display: block; font-weight: 600; }
-.events .d { color: var(--muted); font-size: 14px; }
-.events .chip { padding-top: 4px; color: var(--muted); }
-.note { color: var(--muted); font-size: 13px; margin: 0; max-width: 90ch; }
+.events .tt { font: 500 12.5px/1.5 var(--f-mono); color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.events b { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; font-size: 14px; }
+.events b .chip { font-weight: 500; color: var(--muted); padding-top: 3px; }
+.events .d { color: var(--muted); font-size: 13.5px; }
 
-@media (max-width: 1040px) {
+/* Misión */
+.field { display: grid; gap: 6px; }
+.field-top { display: flex; justify-content: space-between; align-items: baseline; }
+.field-top output { font: 800 24px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.field-top output small { font: 400 12px var(--f-mono); color: var(--muted); margin-left: 3px; }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--ink); }
+.seg label { position: relative; display: grid; gap: 2px; padding: 8px 9px; cursor: pointer; font-size: 13.5px; font-weight: 500; line-height: 1.25; }
+.seg label + label { border-left: 1px solid var(--rule); }
+.seg label small { font: 400 11px/1.3 var(--f-mono); color: var(--muted); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--ink); color: var(--sheet); }
+.seg label:has(input:checked) small { color: color-mix(in srgb, var(--sheet) 75%, transparent); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+.verdict { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px 14px; border: 1.5px solid var(--vc); background: color-mix(in srgb, var(--vc) 10%, transparent); }
+.verdict[data-s="good"] { --vc: var(--good); }
+.verdict[data-s="warn"] { --vc: var(--warn); }
+.verdict[data-s="crit"] { --vc: var(--crit); }
+.verdict .ic { width: 30px; height: 30px; border-radius: 50%; background: var(--vc); color: var(--sheet); display: grid; place-items: center; font: 700 16px/1 var(--f-mono); }
+.verdict b { display: block; font: 800 22px/1.05 var(--f-display); text-transform: uppercase; }
+.verdict span { font-size: 13.5px; color: var(--muted); }
+.dvbar { position: relative; height: 22px; background: var(--paper); border: 1px solid var(--rule); display: flex; gap: 2px; padding: 0; }
+.dvbar i { display: block; height: 100%; }
+.dvbar .a { background: var(--s1); }
+.dvbar .b { background: var(--s2); }
+.dvbar .need { position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--ink); }
+.dvleg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; }
+.dvleg .chip { font-size: 11px; color: var(--muted); }
+.dvleg b { font-variant-numeric: tabular-nums; font-weight: 600; margin-left: 4px; color: var(--ink); }
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--rule); }
+.kpis > div { padding: 10px 12px; display: grid; gap: 4px; }
+.kpis > div:nth-child(even) { border-left: 1px solid var(--rule); }
+.kpis > div:nth-child(n+3) { border-top: 1px solid var(--rule); }
+.kpis b { font: 800 24px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.kpis b small { font: 400 11.5px var(--f-mono); color: var(--muted); margin-left: 3px; }
+.kpis em { font-style: normal; font: 400 11.5px/1.3 var(--f-mono); color: var(--muted); }
+.kpis em.bad { color: var(--crit); }
+.cta { justify-self: start; background: var(--sheet); border: 1px solid var(--ink); padding: 8px 12px; cursor: pointer; font: 500 12px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
+.cta:hover { background: var(--ink); color: var(--sheet); }
+
+/* Etapas */
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+thead th { font: 500 10.5px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1.5px solid var(--ink); }
+thead th .chip { color: var(--ink); }
+tbody th { font-weight: 500; color: var(--muted); }
+td { font-variant-numeric: tabular-nums; }
+.bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.bars li { display: grid; grid-template-columns: minmax(0, 1fr) 64px; gap: 4px 10px; font-size: 13.5px; align-items: center; }
+.bars .bt { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 8px; }
+.bars .bt b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.bars i { display: block; height: 10px; background: var(--c); border-radius: 0 4px 4px 0; min-width: 2px; }
+.bars .pct { font: 400 11.5px var(--f-mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.bars .row { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 46px; gap: 10px; align-items: center; }
+
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; color: var(--muted); font-size: 13px; }
+.foot p { margin: 0; max-width: 80ch; }
+kbd { font: 500 11px/1 var(--f-mono); border: 1px solid var(--rule); border-bottom-width: 2px; padding: 2px 5px; background: var(--sheet); color: var(--ink); }
+
+.viewport:fullscreen { width: 100vw; height: 100vh; border: 0; }
+
+@media (max-width: 1320px) {
+  .work { grid-template-columns: minmax(0, 1fr) 390px; grid-template-areas: "view insp" "rail insp"; height: auto; }
+  .viewport { height: clamp(540px, 74vh, 860px); }
+  .insp { overflow: visible; align-self: start; }
+  .tabs { top: env(safe-area-inset-top, 0px); }
+  .rail { overflow: visible; }
+  .rail-head { position: static; }
+  .rail-groups { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+}
+@media (max-width: 1080px) {
   .titleblock { grid-template-columns: minmax(0, 1fr); }
   .tb-name { border-right: 0; border-bottom: 1px solid var(--ink); }
-  .main, .lower { grid-template-columns: minmax(0, 1fr); }
-  .viewport { height: clamp(440px, 66vh, 680px); }
+}
+@media (max-width: 860px) {
+  .work { grid-template-columns: minmax(0, 1fr); grid-template-areas: "view" "insp" "rail"; }
+  .viewport { height: clamp(520px, 78vh, 760px); }
 }
 @media (max-width: 640px) {
   .tb-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -176,680 +347,1204 @@ td { font-variant-numeric: tabular-nums; }
   .tb-specs > div:nth-child(-n+2) { border-top: 0; }
   .tb-specs > div:nth-child(even) { border-left: 1px solid var(--rule); }
   .tb-specs > div:last-child { grid-column: 1 / -1; }
-  .tag { display: none; }
-  .flight { grid-template-columns: auto minmax(0, 1fr); gap: 10px; }
-  .flight .clock { grid-column: 2; grid-row: 1; }
-  .flight .track { grid-column: 1 / -1; }
-  .ctl input[type="range"] { width: 90px; }
-  .events button { grid-template-columns: 56px minmax(0, 1fr); }
-  .events .chip { display: none; }
+  .views, .fs-grp { display: none; }
+  .ctl input[type="range"] { width: 70px; }
+  .c-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; }
+  .play { min-width: 0; }
+  #snd span { display: none; }
+  .c-row .track { grid-column: 1 / -1; grid-row: 2; }
+  .readouts { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 8px; }
+  .readouts .gauges { grid-column: 1 / -1; padding-left: 0; border-left: 0; }
+  .ro { padding-right: 6px; }
+  .ro + .ro { padding-left: 6px; }
+  .ro b { font-size: 17px; }
+  .tab { font-size: 10px; letter-spacing: .02em; }
+  .pane { padding: 14px 14px 20px; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+/* Cielo y espacio */
+.sky { position: absolute; inset: 0; background: linear-gradient(to bottom, var(--sky-top, #5d9fd6), var(--sky-bot, #bcdcf2)); }
+.stars { position: absolute; inset: 0; opacity: 0; background-size: 520px 520px; }
+.earth { position: absolute; left: 50%; width: var(--ew, 320%); aspect-ratio: 1; border-radius: 50%; transform: translateX(-50%); top: calc(100% - var(--rise, 0px)); opacity: var(--eo, 0);
+  background: radial-gradient(circle at 50% 50%, #12324d 0 55%, #1f5a86 66%, #4f93c4 70.5%, #9fd0f2 70.9%);
+  box-shadow: 0 0 32px 10px rgba(130, 195, 255, .55); }
+.karman { position: absolute; left: 0; right: 0; z-index: 1; border-top: 1px dashed rgba(255, 255, 255, .55); pointer-events: none; opacity: 0; }
+.karman span { position: absolute; left: 12px; top: -18px; font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: #fff; }
+.alt { position: absolute; right: 10px; top: 56px; bottom: 150px; width: 104px; z-index: 2; background: rgba(8, 18, 26, .74); border: 1px solid rgba(255, 255, 255, .18); color: #d9e6ee; }
+.alt svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.alt text { font: 500 9.5px var(--f-mono); fill: #a9bccb; }
+.alt .lay { fill: rgba(255, 255, 255, .04); }
+.alt .lay2 { fill: rgba(255, 255, 255, .09); }
+.alt .km { stroke: #ff8a50; stroke-width: 1; stroke-dasharray: 3 3; }
+.alt .mk { stroke: #a9bccb; stroke-width: 1; }
+.alt .now { fill: #ff8a50; }
+.alt .nowt { fill: #fff; font-weight: 600; font-size: 10.5px; }
+.alt .apo { stroke: #fff; stroke-width: 1; stroke-dasharray: 1 2; }
+.alt .ttl { fill: #fff; font-size: 9px; letter-spacing: .08em; }
+
+/* Trayectoria */
+.traj svg { display: block; width: 100%; height: 190px; }
+.traj .karl { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 4 3; }
+.traj .lay { fill: color-mix(in srgb, var(--chart) 6%, transparent); }
+.traj .lay2 { fill: color-mix(in srgb, var(--chart) 12%, transparent); }
+.traj .ground { stroke: var(--ink); stroke-width: 1.5; }
+.traj .path { fill: none; stroke: var(--chart); stroke-width: 2; }
+.traj .done { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.traj .lab { font: 400 10px var(--f-mono); fill: var(--muted); }
+.traj .labk { font: 500 10px var(--f-mono); fill: var(--accent-text); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--rule); }
+.stats > div { padding: 9px 10px; display: grid; gap: 3px; }
+.stats > div:not(:nth-child(3n+1)) { border-left: 1px solid var(--rule); }
+.stats > div:nth-child(n+4) { border-top: 1px solid var(--rule); }
+.stats b { font: 800 21px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.stats b small { font: 400 11px var(--f-mono); color: var(--muted); margin-left: 2px; }
+.mis-desc { font-size: 14px; }
+.verdict[data-s="info"] { --vc: var(--muted); }
+
+/* Historia */
+.hist { list-style: none; margin: 0; padding: 0; display: grid; }
+.hist li { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.hist li:last-child { border-bottom: 0; }
+.hist time { font: 500 12.5px/1.5 var(--f-mono); color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.hist b { display: block; font-weight: 600; font-size: 14.5px; }
+.hist p { font-size: 13.5px; color: var(--muted); }
+.callout { border: 1.5px solid var(--ink); padding: 12px 14px; display: grid; gap: 6px; background: var(--paper); }
+.callout b { font: 800 20px/1.05 var(--f-display); text-transform: uppercase; }
+.callout p { font-size: 14px; }
+.figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.figs div { display: grid; gap: 2px; }
+.figs b { font: 800 24px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.figs span { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+.mat td:first-child { font-weight: 600; }
+.mat td small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 400; }
+@media (max-width: 640px) {
+  .alt { display: none; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats > div { border-left: 0 !important; border-top: 1px solid var(--rule); }
+  .stats > div:nth-child(-n+2) { border-top: 0; }
+  .stats > div:nth-child(even) { border-left: 1px solid var(--rule) !important; }
+  .hist li { grid-template-columns: 64px minmax(0, 1fr); }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="app">
   <header class="titleblock">
     <div class="tb-name">
-      <h1>Cohete <span>V2</span></h1>
-      <p>Vehículo de lanzamiento de dos etapas, oxígeno líquido y queroseno, con primera etapa reutilizable.</p>
-      <div class="drw">Plano CV2-000 · Rev. B · Cotas en metros</div>
+      <div class="eyebrow">Aggregat 4 · Peenemünde, Alemania · 1942–1945</div>
+      <h1>Cohete <span>V-2</span></h1>
+      <p>El primer misil balístico de largo alcance y el primer objeto fabricado por el ser humano que llegó al espacio.</p>
     </div>
     <dl class="tb-specs">
-      <div><dt>Altura</dt><dd>68.0<small>m</small></dd></div>
-      <div><dt>Diámetro</dt><dd>3.7<small>m</small><em>Cofia 4.6 m</em></dd></div>
-      <div><dt>Masa al despegue</dt><dd>533<small>t</small></dd></div>
-      <div><dt>Empuje al despegue</dt><dd>5.95<small>MN</small><em>7 × 850 kN</em></dd></div>
-      <div><dt>Carga a órbita baja</dt><dd>18.5<small>t</small><em>GTO 6.2 t</em></dd></div>
+      <div><dt>Altura</dt><dd>14.0<small>m</small><em>Ø 1.65 m · aletas 3.56 m</em></dd></div>
+      <div><dt>Masa al despegue</dt><dd>12.5<small>t</small><em>8.7 t de propelente</em></dd></div>
+      <div><dt>Empuje</dt><dd>25<small>t</small><em>245 kN al nivel del mar</em></dd></div>
+      <div><dt>Alcance</dt><dd>320<small>km</small><em>Vuelo de unos 5 min</em></dd></div>
+      <div><dt>Altura máxima</dt><dd>174.6<small>km</small><em>20 de junio de 1944</em></dd></div>
     </dl>
   </header>
 
-  <div class="main">
-    <section class="viewport" aria-label="Modelo 3D del Cohete V2">
-      <div id="stage"></div>
-      <div class="tools">
-        <label class="ctl" for="explode">Despiece <input id="explode" type="range" min="0" max="100" value="0" style="--p:0%"></label>
-        <button class="btn" id="xray" type="button" aria-pressed="false">Rayos X</button>
-        <button class="btn" id="resetview" type="button">Vista inicial</button>
+  <div class="work">
+    <nav class="rail" aria-label="Componentes">
+      <div class="rail-head">
+        <div class="eyebrow" id="rail-count">10 componentes</div>
+        <input class="search" id="search" type="search" placeholder="Buscar pieza…" aria-label="Buscar pieza" autocomplete="off">
       </div>
-      <div class="tag" aria-hidden="true">Vista isométrica<br>Arrastra para girar · rueda para acercar</div>
+      <div class="rail-groups" id="parts"></div>
+      <p class="empty" id="no-results" hidden>Ninguna pieza coincide. Prueba con «tanque» o «motor».</p>
+    </nav>
+
+    <section class="viewport" id="viewport" aria-label="Modelo 3D del cohete V-2">
+      <div class="sky" id="sky"></div>
+      <div class="stars" id="stars"></div>
+      <div class="earth" id="earth"></div>
+      <div id="stage"></div>
+      <div class="labels" id="labels" aria-hidden="true"><svg id="leaders"></svg></div>
+      <div class="alt" id="alt" aria-label="Altímetro"><svg id="altsvg"></svg></div>
+      <div class="tools">
+        <div class="grp">
+          <label class="ctl" for="explode">Despiece <input id="explode" type="range" min="0" max="100" value="0" style="--p:0%"></label>
+          <button class="btn" id="xray" type="button" aria-pressed="false">Rayos X</button>
+          <button class="btn" id="tlabels" type="button" aria-pressed="true">Etiquetas</button>
+        </div>
+        <div class="grp views" role="group" aria-label="Vistas de cámara">
+          <button class="btn" type="button" data-view="front">Frente</button>
+          <button class="btn" type="button" data-view="side">Lado</button>
+          <button class="btn" type="button" data-view="below">Abajo</button>
+          <button class="btn" type="button" data-view="above">Arriba</button>
+        </div>
+        <span class="spacer"></span>
+        <div class="grp"><button class="btn" id="resetview" type="button">Vista inicial</button></div>
+        <div class="grp fs-grp" id="fs-grp"><button class="btn" id="fullscreen" type="button" aria-pressed="false">Pantalla completa</button></div>
+      </div>
       <div class="tip" id="tip" hidden></div>
-      <div class="flight">
-        <button class="btn play" id="play" type="button"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg><span class="lbl">Lanzar</span></button>
-        <div class="clock" id="clock" aria-live="off">T+00:00</div>
-        <div class="track">
-          <div class="phase" id="phase">En la plataforma de lanzamiento</div>
-          <div class="scrub">
-            <div class="ticks" id="ticks"></div>
-            <input id="timeline" type="range" min="0" max="600" step="1" value="0" aria-label="Tiempo de misión" style="--p:0%">
+
+      <div class="console" id="console">
+        <div class="c-row">
+          <button class="btn play" id="play" type="button"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg><span class="plbl">Lanzar</span></button>
+          <div class="clock" id="clock">T+00:00</div>
+          <div class="track">
+            <div class="phase" id="phase">En la mesa de lanzamiento</div>
+            <div class="scrub">
+              <div class="ticks" id="ticks"></div>
+              <input id="timeline" type="range" min="0" max="320" step="0.5" value="0" aria-label="Tiempo de vuelo" style="--p:0%">
+            </div>
+          </div>
+          <div class="c-btns">
+            <button class="btn speed" id="speed" type="button" aria-label="Velocidad de simulación" title="Velocidad de simulación">×10</button>
+            <button class="btn speed" id="snd" type="button" aria-pressed="true" title="Sonido"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10l-4-3H2z"/><path class="w" d="M11 5.5c1.3 1.3 1.3 3.7 0 5M12.8 3.8c2.2 2.3 2.2 6.1 0 8.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path class="m" d="M11 6l4 4M15 6l-4 4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg><span>Sonido</span></button>
+            <button class="btn speed" id="voz" type="button" aria-pressed="true" title="Voz de control de lanzamiento">Voz</button>
+          </div>
+        </div>
+        <div class="readouts" aria-live="off">
+          <div class="ro"><span>Altitud</span><b id="r-alt">0<small>km</small></b></div>
+          <div class="ro"><span>Velocidad</span><b id="r-vel">0<small>km/h</small></b></div>
+          <div class="ro"><span>Aceleración</span><b id="r-acc">0.0<small>g</small></b></div>
+          <div class="ro"><span>Distancia</span><b id="r-rng">0<small>km</small></b></div>
+          <div class="ro gauges">
+            <div class="gauge"><span>ALC</span><i id="g1"></i><output id="g1v">100 %</output></div>
+            <div class="gauge"><span>LOX</span><i id="g2"></i><output id="g2v">100 %</output></div>
           </div>
         </div>
       </div>
     </section>
 
-    <aside class="panel">
-      <section class="detail" aria-live="polite">
-        <div class="detail-head">
-          <span class="chip" id="d-chip" data-stage="s1">Etapa 1</span>
-          <span class="station" id="d-station"></span>
+    <aside class="insp" aria-label="Inspector">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tab-ficha" aria-controls="pane-ficha" aria-selected="true" type="button">Ficha</button>
+        <button class="tab" role="tab" id="tab-vuelo" aria-controls="pane-vuelo" aria-selected="false" type="button">Vuelo</button>
+        <button class="tab" role="tab" id="tab-mision" aria-controls="pane-mision" aria-selected="false" type="button">Misión</button>
+        <button class="tab" role="tab" id="tab-materiales" aria-controls="pane-materiales" aria-selected="false" type="button">Materiales</button>
+        <button class="tab" role="tab" id="tab-historia" aria-controls="pane-historia" aria-selected="false" type="button">Historia</button>
+      </div>
+
+      <section class="pane" id="pane-ficha" role="tabpanel" aria-labelledby="tab-ficha">
+        <div class="f-head">
+          <span class="chip" id="d-chip" data-stage="s1">Propulsión</span>
+          <div class="nav2"><button type="button" id="prev" aria-label="Pieza anterior">‹</button><button type="button" id="next" aria-label="Pieza siguiente">›</button></div>
         </div>
-        <h2 id="d-name">Componentes</h2>
-        <p id="d-desc">Toca una pieza en el modelo o en la lista para ver su ficha.</p>
-        <dl id="d-spec"></dl>
+        <div class="f-intro">
+          <svg class="sil" id="sil" viewBox="0 0 100 300" role="img" aria-label="Ubicación de la pieza en el cohete"></svg>
+          <div class="f-text">
+            <h2 id="d-name">Componente</h2>
+            <div class="station" id="d-station"></div>
+            <p id="d-desc"></p>
+          </div>
+        </div>
+        <div class="sec"><h3 class="eyebrow">Cómo funciona</h3><ol class="steps" id="d-how"></ol></div>
+        <div class="sec"><h3 class="eyebrow">Datos y materiales</h3><dl class="specs" id="d-spec"></dl></div>
+        <div class="sec"><h3 class="eyebrow">Piezas internas</h3><ul class="tags" id="d-inside"></ul></div>
+        <div class="sec"><h3 class="eyebrow">Problemas y soluciones</h3><ul class="risks" id="d-risks"></ul></div>
       </section>
-      <nav class="parts" id="parts" aria-label="Componentes"></nav>
+
+      <section class="pane" id="pane-vuelo" role="tabpanel" aria-labelledby="tab-vuelo" hidden>
+        <div class="sec">
+          <h2>¿Hasta dónde sube?</h2>
+          <p class="muted small" id="traj-note">Trayectoria simulada del vuelo elegido. El espacio empieza en la línea de Kármán, a 100 km.</p>
+          <div class="traj" id="traj"></div>
+        </div>
+        <div class="sec">
+          <h3 class="eyebrow">Telemetría simulada</h3>
+          <p class="muted small">Toca una gráfica para saltar a ese momento del vuelo.</p>
+          <div class="charts" id="charts"></div>
+        </div>
+        <div class="sec">
+          <h3 class="eyebrow">Secuencia de vuelo</h3>
+          <ol class="events" id="events"></ol>
+        </div>
+      </section>
+
+      <section class="pane" id="pane-mision" role="tabpanel" aria-labelledby="tab-mision" hidden>
+        <div class="sec">
+          <h2>Elegir vuelo</h2>
+          <p class="muted small">Tres vuelos reales del V-2, simulados con física: empuje, gravedad y resistencia del aire.</p>
+          <div class="seg" role="radiogroup" aria-label="Vuelo" id="mission"></div>
+          <p class="mis-desc" id="mis-desc"></p>
+        </div>
+        <div class="sec">
+          <div class="verdict" id="verdict" data-s="good"><div class="ic" id="v-ic" aria-hidden="true">✓</div><div><b id="v-t">Llega al espacio</b><span id="v-d"></span></div></div>
+          <div class="stats" id="stats"></div>
+        </div>
+        <div class="sec">
+          <p class="muted small">Modelo simplificado: empuje de 245 kN al nivel del mar y 288 kN en vacío, 123 kg/s de consumo, resistencia del aire según el número de Mach y gravedad que baja con la altura. Las cifras simuladas quedan cerca de las históricas, pero no son exactas.</p>
+        </div>
+      </section>
+
+      <section class="pane" id="pane-materiales" role="tabpanel" aria-labelledby="tab-materiales" hidden>
+        <div class="sec">
+          <h2>Materiales</h2>
+          <p class="muted small">Alemania fabricaba el V-2 en plena guerra, con escasez de metales. Por eso usaba sobre todo acero común y reservaba el aluminio para los tanques.</p>
+          <div class="tablewrap">
+            <table class="mat">
+              <thead><tr><th scope="col">Material</th><th scope="col">Dónde</th><th scope="col">Por qué</th></tr></thead>
+              <tbody>
+                <tr><td>Acero dulce</td><td>Piel exterior, cola, aletas, ojiva</td><td>Barato, fácil de soldar y de conseguir.</td></tr>
+                <tr><td>Aleación de aluminio</td><td>Tanques de alcohol y de oxígeno</td><td>Ligera y resiste el frío del oxígeno líquido.</td></tr>
+                <tr><td>Lana de vidrio</td><td>Entre los tanques y la piel</td><td>Aísla el oxígeno líquido del calor exterior.</td></tr>
+                <tr><td>Acero de motor</td><td>Cámara de combustión y tobera</td><td>Aguanta presión y calor; el propio alcohol lo enfría.</td></tr>
+                <tr><td>Grafito</td><td>Timones de chorro</td><td>Soporta el chorro de gases mientras se desgasta poco a poco.</td></tr>
+                <tr><td>Etanol 75 % y agua 25 %<small>B-Stoff · 3,810 kg</small></td><td>Combustible</td><td>El agua baja la temperatura de la llama y protege el motor.</td></tr>
+                <tr><td>Oxígeno líquido<small>A-Stoff · 4,900 kg</small></td><td>Oxidante</td><td>Hace arder el alcohol sin aire; se guarda a −183 °C.</td></tr>
+                <tr><td>Peróxido de hidrógeno 80 %<small>T-Stoff · unos 170 kg</small></td><td>Generador de vapor</td><td>Al descomponerse da el vapor que mueve la turbobomba.</td></tr>
+                <tr><td>Permanganato de sodio<small>Z-Stoff · unos 14 kg</small></td><td>Generador de vapor</td><td>Catalizador que descompone el peróxido al instante.</td></tr>
+                <tr><td>Amatol<small>TNT y nitrato de amonio</small></td><td>Ojiva de combate</td><td>Explosivo de unos 730 kg dentro de una ojiva de 1,000 kg.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="sec">
+          <h3 class="eyebrow">Reparto de la masa al despegue</h3>
+          <ul class="bars" id="bars"></ul>
+        </div>
+      </section>
+
+      <section class="pane" id="pane-historia" role="tabpanel" aria-labelledby="tab-historia" hidden>
+        <div class="sec">
+          <h2>Historia</h2>
+          <p class="small">El A4, rebautizado por la propaganda nazi como V-2 («arma de represalia 2»), fue a la vez un arma de terror y el punto de partida de la exploración espacial.</p>
+        </div>
+        <div class="sec">
+          <ol class="hist">
+            <li><time>1929</time><div><b>Nace la cuenta regresiva</b><p>La película alemana «La mujer en la Luna», asesorada por Hermann Oberth, inventa la cuenta atrás para el despegue.</p></div></li>
+            <li><time>1932</time><div><b>El ejército contrata a von Braun</b><p>Walter Dornberger recluta a Wernher von Braun, de 20 años, para desarrollar cohetes de combustible líquido en Kummersdorf.</p></div></li>
+            <li><time>1937</time><div><b>Se abre Peenemünde</b><p>El centro de pruebas en la isla de Usedom, en el mar Báltico, se vuelve el mayor laboratorio de cohetes del mundo.</p></div></li>
+            <li><time>3 oct 1942</time><div><b>Primer vuelo con éxito</b><p>Un A4 sube a 84.5 km y recorre 190 km. Dornberger dijo que ese día había nacido la nave espacial.</p></div></li>
+            <li><time>ago 1943</time><div><b>Bombardeo de Peenemünde</b><p>La aviación británica ataca el centro. La producción pasa a túneles bajo el monte Kohnstein (Mittelwerk), con prisioneros del campo de concentración Mittelbau-Dora.</p></div></li>
+            <li><time>20 jun 1944</time><div><b>Primer objeto en el espacio</b><p>El cohete de prueba MW 18014 se lanza en vertical y llega a 174.6 km, por encima de la línea de Kármán.</p></div></li>
+            <li><time>8 sep 1944</time><div><b>Primeros ataques</b><p>Se lanzan contra París y Londres. Llegaban más rápido que el sonido: no se oían venir y no había defensa posible.</p></div></li>
+            <li><time>27 mar 1945</time><div><b>Último lanzamiento</b><p>En total se dispararon más de 3,000 en combate, sobre todo contra Amberes y Londres.</p></div></li>
+            <li><time>1945–46</time><div><b>El reparto de los cohetes</b><p>Estados Unidos se lleva cohetes, piezas y a von Braun con su equipo (Operación Paperclip). La Unión Soviética copia el diseño en su R-1.</p></div></li>
+            <li><time>24 oct 1946</time><div><b>Primera foto de la Tierra desde el espacio</b><p>Un V-2 lanzado desde White Sands (Nuevo México) con una cámara de 35 mm fotografía la Tierra desde unos 105 km.</p></div></li>
+            <li><time>20 feb 1947</time><div><b>Primeros animales en el espacio</b><p>Un V-2 estadounidense lleva moscas de la fruta por encima de 100 km; vuelven vivas en una cápsula con paracaídas.</p></div></li>
+            <li><time>1969</time><div><b>Legado</b><p>El equipo de von Braun diseña el Saturno V, que lleva a los astronautas del Apolo 11 a la Luna. En la URSS, la línea del R-1 lleva al R-7 y al Sputnik.</p></div></li>
+          </ol>
+        </div>
+        <div class="callout">
+          <b>El costo humano</b>
+          <p>Fue la única arma en la que murió más gente fabricándola que atacada con ella.</p>
+          <div class="figs">
+            <div><b>~9,000</b><span>muertos por los ataques, en su mayoría civiles</span></div>
+            <div><b>12,000+</b><span>prisioneros muertos por trabajos forzados en su fabricación</span></div>
+            <div><b>3,000+</b><span>cohetes lanzados en combate</span></div>
+          </div>
+          <p class="muted small">Cifras aproximadas; varían según la fuente.</p>
+        </div>
+      </section>
     </aside>
   </div>
 
-  <div class="lower">
-    <section class="block">
-      <h2>Etapas</h2>
-      <p>Ambas etapas queman oxígeno líquido (LOX) y queroseno RP-1.</p>
-      <div class="tablewrap">
-        <table>
-          <thead>
-            <tr><th scope="col">Parámetro</th><th scope="col"><span class="chip" data-stage="s1">Etapa 1</span></th><th scope="col"><span class="chip" data-stage="s2">Etapa 2</span></th></tr>
-          </thead>
-          <tbody>
-            <tr><th scope="row">Longitud</th><td>46.5 m con interetapa</td><td>15.2 m sin cofia</td></tr>
-            <tr><th scope="row">Motores</th><td>7 × Cóndor</td><td>1 × Cóndor-V</td></tr>
-            <tr><th scope="row">Empuje</th><td>5.95 MN a nivel del mar</td><td>960 kN en vacío</td></tr>
-            <tr><th scope="row">Impulso específico</th><td>284 s mar · 311 s vacío</td><td>345 s</td></tr>
-            <tr><th scope="row">LOX</th><td>285 t</td><td>68 t</td></tr>
-            <tr><th scope="row">RP-1</th><td>107 t</td><td>25 t</td></tr>
-            <tr><th scope="row">Masa en seco</th><td>23 t</td><td>4.1 t</td></tr>
-            <tr><th scope="row">Combustión</th><td>170 s</td><td>325 s</td></tr>
-            <tr><th scope="row">Recuperación</th><td>Aterriza en barcaza</td><td>Se desecha</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="block">
-      <h2>Secuencia de vuelo</h2>
-      <p>Toca un evento para llevar el modelo a ese momento de la misión.</p>
-      <ol class="events" id="events"></ol>
-    </section>
-  </div>
-
-  <p class="note">Diseño conceptual: las cifras son estimaciones coherentes entre sí, no datos de un vehículo real. Estación = altura en metros desde la salida de las toberas de la etapa 1. En Rayos X el azul es oxígeno líquido y el ámbar queroseno; su nivel baja durante la simulación.</p>
+  <footer class="foot">
+    <p>Modelo y simulación con fines educativos. Medidas y masas aproximadas según fuentes históricas. Estación = altura en metros desde la base de la cola. En Rayos X el ámbar es alcohol y el azul oxígeno líquido.</p>
+    <p>Atajos: <kbd>Espacio</kbd> lanzar o pausar · <kbd>E</kbd> despiece · <kbd>X</kbd> rayos X · <kbd>L</kbd> etiquetas · <kbd>F</kbd> pantalla completa · <kbd>M</kbd> sonido · <kbd>↑</kbd><kbd>↓</kbd> cambiar pieza</p>
+  </footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const STAGES = { s1: 'Etapa 1', s2: 'Etapa 2', pl: 'Carga' };
+const STAGES = { pl: 'Carga', s2: 'Guiado', s1: 'Propulsión', st: 'Estructura' };
 
-// y: estación inferior y superior (m). ex: desplazamiento en la vista de despiece.
+// y: estación inferior y superior (m desde la base de la cola). ex: desplazamiento en el despiece.
 const PARTS = [
-  { id: 'cofia', name: 'Cofia', stage: 'pl', y: [56.8, 68.0], ex: 26,
-    desc: 'Protege la carga útil del calor y la presión del aire mientras el cohete cruza la atmósfera. A 112 km se abre en dos mitades y se desprende.',
-    spec: [['Material', 'Panal de aluminio con piel de fibra de carbono'], ['Masa', '1.7 t'], ['Tamaño', 'Ø 4.6 m × 11.2 m'], ['Separación', 'Pernos neumáticos, T+3:35']] },
-  { id: 'carga', name: 'Carga útil', stage: 'pl', y: [57.9, 61.4], ex: 22,
-    desc: 'Satélite de ejemplo dentro del volumen útil de la cofia, con los paneles solares plegados a los lados y la antena arriba.',
-    spec: [['Órbita baja', 'Hasta 18.5 t'], ['Transferencia geoestacionaria', 'Hasta 6.2 t'], ['Volumen útil', 'Ø 4.2 m × 9.0 m'], ['Aceleración máx.', '4.5 g']] },
-  { id: 'adaptador', name: 'Adaptador de carga', stage: 'pl', y: [56.8, 57.8], ex: 19,
-    desc: 'Une el satélite a la etapa 2. Una banda de sujeción se suelta y cuatro resortes empujan la carga sin hacerla girar.',
-    spec: [['Material', 'Aluminio 7075 mecanizado'], ['Masa', '210 kg'], ['Interfaz', 'Ø 1194 mm'], ['Separación', '0.5 m/s']] },
-  { id: 'avionica', name: 'Aviónica', stage: 's2', y: [56.0, 56.8], ex: 17,
-    desc: 'El cerebro del vehículo: computadoras de vuelo, navegación inercial con GPS, baterías, telemetría y el sistema de terminación de vuelo.',
-    spec: [['Computadoras', '3, votan por mayoría'], ['Navegación', 'Inercial + GPS'], ['Telemetría', 'Banda S, 2 Mbit/s'], ['Masa', '450 kg']] },
-  { id: 'lox2', name: 'Tanque LOX · etapa 2', stage: 's2', y: [49.9, 56.0], ex: 14.5,
-    desc: 'Oxígeno líquido a −183 °C. Un domo común lo separa del tanque de queroseno y ahorra longitud.',
-    spec: [['Material', 'Aleación aluminio-litio 2195'], ['Carga', '68 t de LOX'], ['Presión', '3.4 bar'], ['Masa en seco', '1.5 t']] },
-  { id: 'rp12', name: 'Tanque RP-1 · etapa 2', stage: 's2', y: [46.5, 49.9], ex: 12,
-    desc: 'Queroseno refinado. Se presuriza con helio para alimentar la turbobomba del motor.',
-    spec: [['Material', 'Aleación aluminio-litio 2195'], ['Carga', '25 t de RP-1'], ['Mezcla O/F', '2.7'], ['Masa en seco', '0.9 t']] },
-  { id: 'mvac', name: 'Motor Cóndor-V', stage: 's2', y: [41.6, 46.5], ex: 9,
-    desc: 'Versión de vacío del Cóndor con una tobera muy grande. Se puede reencender para dejar la carga en distintas órbitas.',
-    spec: [['Empuje', '960 kN en vacío'], ['Impulso específico', '345 s'], ['Expansión de tobera', '165 : 1'], ['Encendidos', 'Hasta 3'], ['Masa', '530 kg']] },
-  { id: 'interetapa', name: 'Interetapa', stage: 's1', y: [41.0, 46.5], ex: 5,
-    desc: 'Cubre la tobera del Cóndor-V y une las dos etapas. Lleva los empujadores de separación y los propulsores de nitrógeno que orientan la etapa 1 al regresar.',
-    spec: [['Material', 'Fibra de carbono con núcleo de aluminio'], ['Masa', '1.6 t'], ['Control de actitud', '8 propulsores de N₂'], ['Separación', '4 empujadores neumáticos']] },
-  { id: 'aletas', name: 'Aletas de rejilla', stage: 's1', y: [44.8, 46.3], ex: 5,
-    desc: 'Cuatro aletas plegadas durante el ascenso. Tras la separación se abren y guían la etapa 1 de vuelta hacia la barcaza.',
-    spec: [['Cantidad', '4'], ['Material', 'Titanio forjado'], ['Tamaño', '1.3 × 1.5 m'], ['Masa', '225 kg cada una']] },
-  { id: 'lox1', name: 'Tanque LOX · etapa 1', stage: 's1', y: [19.5, 41.0], ex: 2.5,
-    desc: 'El tanque más grande. Una tubería central lleva el oxígeno a través del tanque de queroseno hasta los motores.',
-    spec: [['Material', 'Aleación aluminio-litio 2195'], ['Carga', '285 t de LOX'], ['Longitud', '21.5 m'], ['Masa en seco', '5.6 t']] },
-  { id: 'rp11', name: 'Tanque RP-1 · etapa 1', stage: 's1', y: [6.0, 19.5], ex: -1,
-    desc: 'Queroseno para los siete motores. Se reserva un 10 % para los encendidos de regreso y aterrizaje.',
-    spec: [['Material', 'Aleación aluminio-litio 2195'], ['Carga', '107 t de RP-1'], ['Longitud', '13.5 m'], ['Masa en seco', '3.8 t']] },
-  { id: 'empuje', name: 'Sección de empuje', stage: 's1', y: [2.5, 6.0], ex: -4,
-    desc: 'Recibe la fuerza de los motores y la reparte al resto del cohete. Su escudo térmico protege las tuberías del calor de las llamas.',
-    spec: [['Material', 'Aluminio y acero inoxidable'], ['Carga máxima', '6.5 MN'], ['Escudo térmico', 'Manta cerámica'], ['Masa', '4.6 t']] },
-  { id: 'patas', name: 'Patas de aterrizaje', stage: 's1', y: [1.2, 10.2], ex: -4,
-    desc: 'Cuatro patas plegadas contra el cuerpo. Se abren segundos antes de tocar la barcaza.',
-    spec: [['Cantidad', '4'], ['Material', 'Fibra de carbono y panal de aluminio'], ['Envergadura abierta', '18 m'], ['Masa', '2.1 t en total']] },
-  { id: 'motores', name: 'Motores Cóndor ×7', stage: 's1', y: [0.0, 2.5], ex: -7,
-    desc: 'Siete motores de queroseno y oxígeno, uno central y seis en anillo. Regulan su empuje y giran sobre un cardán para dirigir el cohete.',
-    spec: [['Empuje', '850 kN cada uno, 5.95 MN en total'], ['Impulso específico', '284 s mar · 311 s vacío'], ['Ciclo', 'Generador de gas'], ['Regulación', '55–100 %'], ['Cardán', '±6°']] },
+  { id: 'espoleta', name: 'Espoleta', stage: 'pl', y: [13.7, 14.03], ex: 7,
+    desc: 'La punta del cohete. Lleva el detonador que hace estallar la ojiva al chocar contra el suelo.',
+    how: ['Viaja desactivada durante el despegue y el ascenso.', 'Al tocar el suelo, el golpe cierra un circuito eléctrico en la punta.', 'La corriente dispara el detonador y la carga explota en milésimas de segundo.'],
+    spec: [['Tipo', 'Espoleta eléctrica de impacto'], ['Material', 'Acero'], ['Longitud', 'Unos 0.3 m'], ['Velocidad de impacto', 'Más de 3,000 km/h']],
+    inside: ['Contacto de impacto', 'Detonador', 'Cableado a la ojiva'],
+    risks: [
+      { s: 'alta', p: 'Activarse antes de tiempo', m: 'La ojiva solo queda armada una vez en vuelo, lejos de la mesa de lanzamiento.' },
+      { s: 'media', p: 'Enterrarse antes de estallar', m: 'Contacto en la misma punta, para que detone en cuanto toca algo sólido.' },
+    ] },
+  { id: 'ojiva', name: 'Ojiva', stage: 'pl', y: [10.6, 13.7], ex: 5.5,
+    desc: 'La carga del cohete. En combate llevaba explosivo; en los vuelos científicos de posguerra se cambió por instrumentos y cámaras.',
+    how: ['Se carga con explosivo y se atornilla al compartimento de instrumentos.', 'Viaja en la punta, la parte que más se calienta al volver a bajar.', 'Al impactar, la espoleta la hace estallar.'],
+    spec: [['Masa', '1,000 kg'], ['Carga', 'Unos 730 kg de amatol'], ['Material', 'Chapa de acero'], ['Longitud', 'Unos 3 m']],
+    inside: ['Explosivo amatol', 'Tubo del detonador', 'Carcasa de acero'],
+    risks: [
+      { s: 'alta', p: 'Calentamiento al reentrar', m: 'El aire calienta la punta a cientos de grados; se eligió un explosivo estable y la carcasa se aisló.' },
+      { s: 'media', p: 'Peso adelante y atrás', m: 'La ojiva pesada en la punta mantiene el centro de masas adelante, lo que da estabilidad al vuelo.' },
+    ] },
+  { id: 'instrumentos', name: 'Compartimento de instrumentos', stage: 's2', y: [9.4, 10.6], ex: 4,
+    desc: 'El sistema de guiado. Giroscopios y una computadora analógica mantenían el rumbo y cortaban el motor a la velocidad justa.',
+    how: ['Dos giroscopios miden si el cohete se inclina o gira.', 'Una computadora analógica («Mischgerät») convierte esas medidas en órdenes para los timones.', 'Un acelerómetro integrador o una señal de radio corta el motor al llegar a la velocidad calculada.'],
+    spec: [['Giroscopios', '«Horizont» y «Vertikant»'], ['Computadora', 'Analógica, de válvulas de vacío'], ['Corte del motor', 'Por radio o acelerómetro integrador'], ['Material', 'Chapa de acero con escotillas']],
+    inside: ['Giroscopio Horizont', 'Giroscopio Vertikant', 'Mischgerät (mezclador)', 'Acelerómetro integrador', 'Receptor de radio', 'Baterías'],
+    risks: [
+      { s: 'alta', p: 'Poca precisión', m: 'El error medio era de varios kilómetros. Se mejoró con guiado por haz de radio y con el acelerómetro integrador.' },
+      { s: 'media', p: 'Vibración y frío', m: 'Montajes con amortiguación y calentamiento de los instrumentos antes del lanzamiento.' },
+    ] },
+  { id: 'alcohol', name: 'Tanque de alcohol', stage: 's1', y: [6.3, 9.4], ex: 2.2,
+    desc: 'Guarda el combustible: 75 % de etanol y 25 % de agua. Una tubería lo lleva hasta el motor atravesando el tanque de oxígeno.',
+    how: ['Se llena con 3,810 kg de alcohol mezclado con agua.', 'Aire comprimido mantiene la presión mientras se vacía.', 'Las bombas lo envían al motor, donde primero enfría las paredes y luego arde.'],
+    spec: [['Combustible', '3,810 kg (B-Stoff)'], ['Mezcla', '75 % etanol, 25 % agua'], ['Material', 'Aleación de aluminio'], ['Aislamiento', 'Lana de vidrio bajo la piel de acero']],
+    inside: ['Tubería de alcohol que cruza el tanque LOX', 'Deflectores', 'Válvula de llenado'],
+    risks: [
+      { s: 'alta', p: 'Explosiones en el aire al reentrar', m: 'Muchos cohetes se rompían cerca del blanco. Se reforzó la parte delantera del cuerpo con una camisa de acero.' },
+      { s: 'media', p: 'Llama demasiado caliente', m: 'El 25 % de agua baja la temperatura de la llama y protege la cámara.' },
+    ] },
+  { id: 'lox', name: 'Tanque de oxígeno líquido', stage: 's1', y: [3.6, 6.3], ex: 0.6,
+    desc: 'Guarda el oxidante, oxígeno líquido a −183 °C. Sin él, el alcohol no podría arder en el vacío.',
+    how: ['Se llena poco antes del lanzamiento, porque el oxígeno se evapora sin parar.', 'La lana de vidrio frena la entrada de calor.', 'La turbobomba lo envía a la cámara de combustión.'],
+    spec: [['Oxidante', '4,900 kg (A-Stoff)'], ['Temperatura', '−183 °C'], ['Material', 'Aleación de aluminio'], ['Aislamiento', 'Lana de vidrio']],
+    inside: ['Paso de la tubería de alcohol', 'Válvula de venteo', 'Sensores de nivel'],
+    risks: [
+      { s: 'alta', p: 'Evaporación en espera', m: 'Lanzamiento poco después de cargar, y llenado hasta el último momento.' },
+      { s: 'media', p: 'Hielo en válvulas y tuberías', m: 'Purga con aire seco y calentadores en las válvulas.' },
+    ] },
+  { id: 'turbobomba', name: 'Turbobomba', stage: 's1', y: [2.3, 3.6], ex: -2,
+    desc: 'Empuja unos 125 kg de propelente por segundo hacia el motor. La mueve vapor de peróxido de hidrógeno.',
+    how: ['El peróxido de hidrógeno (T-Stoff) se mezcla con permanganato de sodio (Z-Stoff).', 'Se descompone al instante en vapor muy caliente.', 'El vapor hace girar una turbina que mueve dos bombas: una de alcohol y otra de oxígeno.'],
+    spec: [['Caudal', 'Unos 125 kg/s'], ['Fuerza motriz', 'Vapor de peróxido de hidrógeno'], ['T-Stoff', 'Unos 170 kg'], ['Z-Stoff', 'Unos 14 kg']],
+    inside: ['Turbina de vapor', 'Bomba de alcohol', 'Bomba de oxígeno', 'Generador de vapor', 'Tanques T-Stoff y Z-Stoff', 'Botellas de aire comprimido'],
+    risks: [
+      { s: 'alta', p: 'Fallo de la turbina en el arranque', m: 'Encendido en dos fases: primero una etapa preliminar de 8 t para comprobar que todo funciona.' },
+      { s: 'media', p: 'Peróxido peligroso de manejar', m: 'Tanques y conductos de materiales compatibles, y carga justo antes del vuelo.' },
+    ] },
+  { id: 'motor', name: 'Motor', stage: 's1', y: [0.15, 2.3], ex: -4,
+    desc: 'El motor de cohete más potente de su época. Quema alcohol con oxígeno líquido y da 25 t de empuje.',
+    how: ['El propelente entra por 18 cámaras de precombustión en la parte de arriba.', 'Arde en la cámara a unos 2,700 °C.', 'La tobera acelera los gases a unos 2,000 m/s hacia abajo.'],
+    spec: [['Empuje', '25 t (245 kN) al nivel del mar'], ['Impulso específico', 'Unos 203 s al nivel del mar'], ['Tiempo de combustión', 'Unos 65 s'], ['Material', 'Acero; refrigerado por el alcohol']],
+    inside: ['18 cámaras de precombustión', 'Cámara de combustión', 'Tobera', 'Encendedor pirotécnico', 'Refrigeración por película de alcohol'],
+    risks: [
+      { s: 'alta', p: 'Paredes que se funden', m: 'El alcohol circula por las paredes antes de arder (refrigeración regenerativa) y una película de alcohol las protege por dentro.' },
+      { s: 'media', p: 'Mezcla irregular', m: 'Las 18 cámaras pequeñas mezclan mejor el propelente que un solo inyector grande.' },
+    ] },
+  { id: 'cola', name: 'Sección de cola', stage: 'st', y: [0, 3.6], ex: 0,
+    desc: 'La estructura trasera que rodea el motor y la turbobomba. Sostiene las aletas y apoya el cohete en la mesa de lanzamiento.',
+    how: ['El cohete se coloca de pie sobre la mesa de lanzamiento, apoyado en la cola.', 'Recibe el empuje del motor y lo pasa al resto del cuerpo.', 'Sostiene las aletas y los servos de los timones.'],
+    spec: [['Material', 'Chapa de acero'], ['Diámetro en la base', 'Unos 1.24 m'], ['Longitud', '3.6 m'], ['Montaje', 'Sobre mesa de lanzamiento móvil']],
+    inside: ['Bastidor del motor', 'Servos de los timones', 'Cableado', 'Anillo de apoyo'],
+    risks: [
+      { s: 'media', p: 'Calor del chorro al despegar', m: 'Deflector de llama bajo la mesa de lanzamiento.' },
+      { s: 'baja', p: 'Transporte por carretera', m: 'Remolque especial («Meillerwagen») que también lo ponía de pie.' },
+    ] },
+  { id: 'aletas', name: 'Aletas', stage: 's2', y: [-0.05, 3.3], ex: 0,
+    desc: 'Cuatro aletas que estabilizan el vuelo. En la punta de cada una hay un timón de aire que guía el cohete mientras hay atmósfera.',
+    how: ['Mantienen la cola atrás, como las plumas de una flecha.', 'Los timones de aire en sus puntas giran según las órdenes del guiado.', 'Funcionan solo con aire denso; arriba, el control queda en los timones de chorro.'],
+    spec: [['Cantidad', '4'], ['Envergadura', '3.56 m'], ['Material', 'Chapa de acero'], ['Timones de aire', '4, uno por aleta']],
+    inside: ['Timón de aire (Luftruder)', 'Servo eléctrico', 'Antena de radio en dos aletas'],
+    risks: [
+      { s: 'media', p: 'Inútiles a gran altura', m: 'Se combinan con los timones de grafito, que funcionan dentro del chorro del motor.' },
+      { s: 'baja', p: 'Tamaño para el transporte', m: 'Se dimensionaron para pasar por los túneles de ferrocarril.' },
+    ] },
+  { id: 'timones', name: 'Timones de chorro', stage: 's2', y: [-0.45, 0.15], ex: -5.2,
+    desc: 'Cuatro paletas de grafito metidas en el chorro del motor. Desvían los gases para girar el cohete cuando aún va lento o ya no hay aire.',
+    how: ['Al despegar el cohete va muy lento y las aletas no sirven todavía.', 'Las paletas giran dentro del chorro y desvían los gases.', 'El grafito se va quemando, pero dura los 65 s de combustión.'],
+    spec: [['Cantidad', '4'], ['Material', 'Grafito'], ['Control', 'Servos eléctricos'], ['Duración', 'Unos 65 s de combustión']],
+    inside: ['Paleta de grafito', 'Eje', 'Servo'],
+    risks: [
+      { s: 'media', p: 'Se desgastan en el chorro', m: 'Se dimensionaron para durar justo el tiempo de combustión.' },
+      { s: 'baja', p: 'Restan algo de empuje', m: 'Es el precio de poder dirigir el cohete desde el primer segundo.' },
+    ] },
 ];
 
-const EVENTS = [
-  { t: 0,   st: 's1', name: 'Ignición y despegue', d: 'Los siete motores llegan a empuje pleno y se sueltan los brazos de sujeción.' },
-  { t: 68,  st: 's1', name: 'Max-Q', d: 'Máxima presión aerodinámica, unos 32 kPa. Los motores bajan al 72 % para atravesarla.' },
-  { t: 170, st: 's1', name: 'Apagado de la etapa 1', d: 'MECO a 68 km de altura y 2.3 km/s.' },
-  { t: 173, st: 's1', name: 'Separación de etapas', d: 'Los empujadores neumáticos separan la etapa 2 y se abren las aletas de rejilla.' },
-  { t: 180, st: 's2', name: 'Ignición del Cóndor-V', d: 'Primer encendido de la etapa 2.' },
-  { t: 215, st: 'pl', name: 'Separación de la cofia', d: 'A 112 km ya casi no hay aire; las dos mitades se apartan.' },
-  { t: 370, st: 's1', name: 'Encendido de reentrada', d: 'Tres motores frenan la etapa 1 antes de entrar en la atmósfera densa.' },
-  { t: 485, st: 's1', name: 'Aterrizaje de la etapa 1', d: 'Último encendido con el motor central; las patas se abren y la etapa se posa en la barcaza.' },
-  { t: 505, st: 's2', name: 'Apagado de la etapa 2', d: 'SECO en órbita de aparcamiento a 210 km y 7.8 km/s.' },
-  { t: 580, st: 'pl', name: 'Despliegue de la carga', d: 'Se suelta la banda del adaptador y los resortes separan el satélite a 0.5 m/s.' },
-];
+/* ---------- Física ---------- */
+const G0 = 9.80665, AREA = Math.PI * 0.825 * 0.825, FSL = 245e3, FVAC = 288e3, ISPV = 239, MDOT = FVAC / (ISPV * G0);
+const M0 = 12500, PROP = 8710;
+const cdOf = M => M < 0.8 ? 0.15 : M < 1.1 ? 0.15 + (M - 0.8) / 0.3 * 0.25 : M < 2 ? 0.40 - (M - 1.1) / 0.9 * 0.12 : M < 4 ? 0.28 - (M - 2) / 2 * 0.08 : 0.20;
 
-const T_END = 600, SPEED = 30;                // 10 min de misión en 20 s
-const MECO = 170, TS = 173, IGN2 = 180, TF = 215, SECO = 505, TD = 580;
-const yOff = t => 0.0025 * t * t;             // ascenso estilizado del modelo
+const MISSIONS = {
+  combate: { label: 'Combate', sub: '1944–1945', th: 41, cut: 69, tag: 'Impacto',
+    desc: 'Disparo operativo: el cohete se inclina hacia el blanco y sigue un arco balístico. Subía casi hasta el borde del espacio y caía unos cinco minutos después.' },
+  mw18014: { label: 'MW 18014', sub: '20 jun 1944', th: 90, cut: 69.7, tag: 'Caída',
+    desc: 'Prueba vertical desde Peenemünde. Con el motor encendido unos segundos más y sin inclinarse, llegó a 174.6 km: el primer objeto humano en el espacio.' },
+  whitesands: { label: 'White Sands', sub: '24 oct 1946', th: 88, cut: 62.25, tag: 'Caída',
+    desc: 'V-2 capturado, lanzado por Estados Unidos en Nuevo México con una cámara de 35 mm en lugar de explosivo. Tomó la primera foto de la Tierra desde el espacio.' },
+};
+
+function simulate(m) {
+  const dt = 0.05; const out = [];
+  let t = 0, x = 0, h = 0, vx = 0, vh = 0, mass = M0, used = 0, lift = false, tl = null, k = 0;
+  while (t < 1200) {
+    const p = Math.exp(-h / 7400), rho = 1.225 * p;
+    let F = 0, md = 0, fr = 0;
+    if (t < m.cut && used < PROP) { fr = t < 2 ? 0.32 : t < 3.5 ? 0.32 + 0.68 * (t - 2) / 1.5 : 1; F = fr * (FVAC - (FVAC - FSL) * p); md = fr * MDOT; }
+    const lt = t - 3;
+    const el = (m.th >= 90 ? 90 : 90 - (90 - m.th) * Math.max(0, Math.min(1, (lt - 6) / 44))) * Math.PI / 180;
+    const v = Math.hypot(vx, vh), a = h < 11000 ? 340 - 0.0041 * h : 295, Mach = v / a;
+    const D = 0.5 * rho * v * v * cdOf(Mach) * AREA, g = G0 * (6371 / (6371 + h / 1000)) ** 2;
+    const dx = v > 1 ? vx / v : Math.cos(el), dh = v > 1 ? vh / v : Math.sin(el);
+    let ax = (F * Math.cos(el) - D * dx) / mass, ah = (F * Math.sin(el) - D * dh) / mass - g;
+    if (!lift) { if (ah > 0) { lift = true; tl = t; } else { ax = 0; ah = 0; } }
+    if (k % 5 === 0) out.push({ t, x: x / 1000, h: h / 1000, v, acc: Math.hypot(F * Math.cos(el) - D * dx, F * Math.sin(el) - D * dh) / mass / G0, q: 0.5 * rho * v * v / 1000, mach: Mach, fuel: 1 - used / PROP, fr, gam: v > 5 ? Math.atan2(vh, vx) : Math.PI / 2 });
+    vx += ax * dt; vh += ah * dt; x += vx * dt; h += vh * dt; mass -= md * dt; used += md * dt; t += dt; k++;
+    if (lift && h < 0) { out.push({ t, x: x / 1000, h: 0, v: Math.hypot(vx, vh), acc: 0, q: 0, mach: 0, fuel: 1 - used / PROP, fr: 0, gam: Math.atan2(vh, vx) }); break; }
+  }
+  const apo = out.reduce((a, s) => s.h > a.h ? s : a, out[0]);
+  const vmax = out.reduce((a, s) => Math.max(a, s.v), 0);
+  const up100 = out.find(s => s.h >= 100), dn100 = up100 ? out.find(s => s.t > apo.t && s.h < 100) : null;
+  const sonic = out.find(s => s.mach >= 1);
+  const re30 = out.find(s => s.t > apo.t && s.h < 30);
+  return { out, apo, vmax, tl, up100, dn100, sonic, re30, end: out[out.length - 1], cut: m.cut };
+}
+const SIMS = {}; for (const k in MISSIONS) SIMS[k] = simulate(MISSIONS[k]);
+
+let mKey = 'combate', S = SIMS[mKey], T_END = S.end.t, EVENTS = [];
+function state(t) {
+  const o = S.out; if (t <= 0) return o[0]; if (t >= T_END) return o[o.length - 1];
+  const i = Math.min(o.length - 2, Math.floor(t / 0.25)); const a = o[i], b = o[i + 1]; const f = (t - a.t) / (b.t - a.t || 1);
+  const r = {}; for (const k in a) r[k] = a[k] + (b[k] - a[k]) * f; return r;
+}
+function buildEvents() {
+  const m = MISSIONS[mKey], E = [];
+  E.push({ t: 0, name: 'Encendido preliminar', d: 'La etapa preliminar da 8 t de empuje: menos que el peso, así que el cohete aún no se mueve.', say: 'Encendido preliminar', fx: 'ign' });
+  E.push({ t: 2.0, name: 'Etapa principal', d: 'La turbobomba acelera y el empuje sube a 25 t.', say: 'Etapa principal', fx: 'bang' });
+  E.push({ t: Math.round(S.tl * 10) / 10, name: 'Despegue', d: 'El empuje supera al peso de 12.5 t y el cohete deja la mesa.', say: 'Despegue', fx: null });
+  if (m.th < 90) E.push({ t: 9, name: 'Inicio del giro', d: `Los timones inclinan el cohete poco a poco hasta ${m.th}° para tomar el arco hacia el blanco.`, say: 'Inicio del giro', fx: null });
+  if (S.sonic) E.push({ t: Math.round(S.sonic.t), name: 'Barrera del sonido', d: `Supera Mach 1 a ${S.sonic.h.toFixed(1)} km de altura.`, say: 'Mach uno', fx: 'boom' });
+  const cs = state(m.cut);
+  E.push({ t: m.cut, name: 'Corte del motor', d: `Brennschluss a ${cs.h.toFixed(0)} km y ${Math.round(cs.v * 3.6).toLocaleString('es')} km/h. Desde aquí vuela como una piedra lanzada.`, say: 'Corte del motor', fx: 'cut' });
+  if (S.up100) E.push({ t: Math.round(S.up100.t), name: 'Entra al espacio', d: 'Cruza la línea de Kármán, a 100 km de altura.', say: 'Entramos al espacio', fx: 'chime' });
+  E.push({ t: Math.round(S.apo.t), name: `Apogeo: ${S.apo.h.toFixed(1)} km`, d: mKey === 'whitesands' ? 'Punto más alto. La cámara fotografía la Tierra desde el espacio.' : 'El punto más alto del vuelo. Empieza la caída.', say: `Apogeo, ${Math.round(S.apo.h)} kilómetros`, fx: mKey === 'whitesands' ? 'shutter' : null });
+  if (S.dn100) E.push({ t: Math.round(S.dn100.t), name: 'Sale del espacio', d: 'Baja de nuevo por la línea de Kármán.', say: 'Salimos del espacio', fx: null });
+  if (S.re30) E.push({ t: Math.round(S.re30.t), name: 'Reentrada', d: 'Vuelve al aire denso. La fricción calienta la punta y frena el cohete.', say: 'Reentrada', fx: 'wind' });
+  E.push({ t: Math.round(T_END), name: m.tag === 'Impacto' ? `Impacto a ${S.end.x.toFixed(0)} km` : 'Llega al suelo', d: `Cae a ${Math.round(S.end.v * 3.6).toLocaleString('es')} km/h, más rápido que el sonido: no se oye llegar.`, say: m.tag === 'Impacto' ? 'Impacto' : 'Fin del vuelo', fx: 'impact' });
+  EVENTS = E.sort((a, b) => a.t - b.t);
+}
+
+const fmt = t => { if (t < 0) { const s = Math.ceil(-t); return `T−00:${String(s).padStart(2, '0')}`; } const s = Math.max(0, Math.floor(t)); return `T+${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+const fmtShort = t => `T+${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 const clamp01 = v => Math.max(0, Math.min(1, v));
-const fmt = t => { const s = Math.max(0, Math.round(t)); return `T+${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
-const fmtShort = t => `T+${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = s => document.querySelector(s);
 const byId = Object.fromEntries(PARTS.map(p => [p.id, p]));
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-let view = null;            // motor 3D, si carga
-let selected = null;
-let simT = 0, playing = false, explodeTarget = 0, explodeK = 0, xray = false;
+let view = null, selected = null;
+let simT = 0, playing = false, countdown = null, explodeTarget = 0, explodeK = 0, xray = false;
+let labelsOn = innerWidth > 860, SPEED = 10;
+
+/* ---------- Sonido ---------- */
+const Snd = (() => {
+  let ctx = null, master, brown, white, rumble, crackle, wind, hiss;
+  let on = store.get('v2-sound', true), voice = store.get('v2-voice', true), esVoice = null;
+  function ensure() {
+    if (!on) return null;
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    try { ctx = new AC(); } catch (e) { return null; }
+    master = ctx.createGain(); master.gain.value = 0.8;
+    const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
+    const n = ctx.sampleRate * 2;
+    brown = ctx.createBuffer(1, n, ctx.sampleRate); white = ctx.createBuffer(1, n, ctx.sampleRate);
+    const b = brown.getChannelData(0), w = white.getChannelData(0); let last = 0;
+    for (let i = 0; i < n; i++) { const r = Math.random() * 2 - 1; w[i] = r; last = (last + 0.02 * r) / 1.02; b[i] = last * 3.5; }
+    rumble = loop(brown, 'lowpass', 220); crackle = loop(white, 'bandpass', 1300, 0.7); wind = loop(white, 'bandpass', 500, 0.5); hiss = loop(white, 'highpass', 2500);
+    return ctx;
+  }
+  function loop(buf, type, f, q) {
+    const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true;
+    const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; if (q) fl.Q.value = q;
+    const g = ctx.createGain(); g.gain.value = 0; s.connect(fl); fl.connect(g); g.connect(master); s.start(); return { f: fl, g };
+  }
+  const setG = (node, v, tc = 0.08) => node.g.gain.setTargetAtTime(v, ctx.currentTime, tc);
+  function tone(freq, dur, vol, type = 'sine', delay = 0) {
+    if (!ensure()) return; const t0 = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur + 0.05);
+  }
+  function burst(dur, vol, freq, delay = 0) {
+    if (!ensure()) return; const t0 = ctx.currentTime + delay;
+    const s = ctx.createBufferSource(); s.buffer = white;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = freq;
+    const g = ctx.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t0); s.stop(t0 + dur + 0.05);
+  }
+  function thump(vol, delay = 0) {
+    if (!ensure()) return; const t0 = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(90, t0); o.frequency.exponentialRampToValueAtTime(35, t0 + 0.5);
+    g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6); o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + 0.7);
+  }
+  const FX = {
+    ign: () => { burst(0.6, 0.4, 600); thump(0.5); },
+    bang: () => { burst(0.9, 0.7, 900); thump(0.9); },
+    boom: () => { thump(1); burst(0.35, 0.6, 1400); thump(0.6, 0.12); },
+    cut: () => { tone(220, 0.35, 0.15, 'triangle'); },
+    chime: () => { tone(880, 1.4, 0.18); tone(1318.5, 1.6, 0.12, 'sine', 0.12); tone(1760, 1.8, 0.08, 'sine', 0.24); },
+    shutter: () => { burst(0.05, 0.5, 4000); burst(0.05, 0.5, 4000, 0.09); },
+    wind: () => { burst(1.2, 0.25, 700); },
+    impact: () => { thump(1); burst(1.6, 0.9, 500); thump(0.7, 0.18); },
+  };
+  function pickVoice() {
+    try { const vs = speechSynthesis.getVoices(); esVoice = vs.find(v => /^es(-|_)ES/i.test(v.lang)) || vs.find(v => /^es/i.test(v.lang)) || null; } catch (e) {}
+  }
+  try { pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) {}
+  return {
+    ensure,
+    get on() { return on; }, get voice() { return voice; },
+    setOn(v) { on = v; store.set('v2-sound', v); if (v) ensure(); if (ctx) master.gain.setTargetAtTime(v ? 0.8 : 0, ctx.currentTime, 0.05); if (!v) try { speechSynthesis.cancel(); } catch (e) {} },
+    setVoice(v) { voice = v; store.set('v2-voice', v); if (!v) try { speechSynthesis.cancel(); } catch (e) {} },
+    beep(f = 880, d = 0.14, v = 0.25) { tone(f, d, v); },
+    tick() { if (ctx && on) tone(1800, 0.03, 0.04); },
+    fx(name) { if (on && FX[name]) FX[name](); },
+    say(text) {
+      if (!on || !voice || !('speechSynthesis' in window)) return;
+      try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'es-ES'; if (esVoice) u.voice = esVoice; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {}
+    },
+    update(active, st) {
+      if (!ctx || !on) return;
+      const thr = active ? st.fr : 0, hi = clamp01(st.h / 60);
+      setG(rumble, thr * 0.6 * (1 - 0.6 * hi)); rumble.f.frequency.setTargetAtTime(170 + 90 * Math.random(), ctx.currentTime, 0.05);
+      setG(crackle, thr > 0 ? (0.04 + Math.random() * 0.12) * (1 - 0.7 * hi) : 0, 0.02);
+      setG(wind, active ? Math.min(1, st.q / 60) * 0.32 : 0, 0.2);
+      wind.f.frequency.setTargetAtTime(350 + Math.min(1, st.q / 80) * 900, ctx.currentTime, 0.2);
+      setG(hiss, active && thr > 0 && st.h > 30 ? 0.03 : 0, 0.3);
+    },
+  };
+})();
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => Snd.ensure(), { passive: true }));
 
 /* ---------- Lista de componentes ---------- */
 const partsEl = $('#parts');
-for (const [st, label] of [['pl', 'Carga y cofia'], ['s2', 'Etapa 2'], ['s1', 'Etapa 1']]) {
-  const h = document.createElement('h3'); h.textContent = label;
-  const ul = document.createElement('ul');
+const groups = [['pl', 'Carga'], ['s2', 'Guiado y control'], ['s1', 'Propulsión'], ['st', 'Estructura']];
+for (const [st, label] of groups) {
+  const wrap = el('div'); wrap.dataset.group = st;
+  const h = el('h3', 'eyebrow', label); const ul = el('ul');
   for (const p of PARTS.filter(p => p.stage === st)) {
-    const li = document.createElement('li');
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'prt'; b.dataset.id = p.id; b.dataset.stage = p.stage;
-    b.setAttribute('aria-pressed', 'false');
-    b.innerHTML = '<span class="sw" aria-hidden="true"></span><span class="nm"></span><span class="st"></span>';
-    b.querySelector('.nm').textContent = p.name;
-    b.querySelector('.st').textContent = `${p.y[0].toFixed(1)}–${p.y[1].toFixed(1)} m`;
-    b.addEventListener('click', () => select(p.id));
+    const li = el('li'); const b = el('button', 'prt'); b.type = 'button'; b.dataset.id = p.id; b.dataset.stage = p.stage;
+    b.append(el('span', 'sw'), el('span', 'nm', p.name), el('span', 'st', `${p.y[0].toFixed(1)}–${p.y[1].toFixed(1)} m`));
+    b.firstChild.setAttribute('aria-hidden', 'true');
+    b.addEventListener('click', () => select(p.id, { focus: true }));
     li.append(b); ul.append(li);
   }
-  partsEl.append(h, ul);
+  wrap.append(h, ul); partsEl.append(wrap);
 }
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+$('#search').addEventListener('input', e => {
+  const q = norm(e.target.value.trim()); let n = 0;
+  partsEl.querySelectorAll('.prt').forEach(b => { const p = byId[b.dataset.id]; const hit = !q || norm(p.name + ' ' + p.desc + ' ' + p.inside.join(' ')).includes(q); b.parentElement.hidden = !hit; if (hit) n++; });
+  partsEl.querySelectorAll('[data-group]').forEach(g => g.hidden = !g.querySelector('li:not([hidden])'));
+  $('#no-results').hidden = n > 0;
+  $('#rail-count').textContent = q ? `${n} de ${PARTS.length} componentes` : `${PARTS.length} componentes`;
+});
 
-function select(id, fromHash = false) {
+/* ---------- Silueta (plano lateral) ---------- */
+const SVGNS = 'http://www.w3.org/2000/svg';
+function sv(tag, attrs, parent) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.append(e); return e; }
+function outerR(y) {
+  if (y <= 0) return 0.62;
+  if (y < 3.6) { const s = y / 3.6; return 0.62 + 0.205 * (1 - (1 - s) * (1 - s)); }
+  if (y <= 9.4) return 0.825;
+  const L = 14.03 - 9.4, R = 0.825, rho = (R * R + L * L) / (2 * R), s = Math.min(1, (y - 9.4) / L);
+  return Math.max(0, Math.sqrt(rho * rho - (L * s) ** 2) + R - rho);
+}
+(function buildSil() {
+  const svg = $('#sil'); const cx = 58, Y = st => 286 - st * (270 / 14.6);
+  const sx = r => r * (270 / 14.6);
+  for (const st of [0, 2, 4, 6, 8, 10, 12, 14]) { sv('line', { class: 'tk', x1: 4, x2: st % 4 === 0 ? 14 : 10, y1: Y(st), y2: Y(st) }, svg); if (st % 4 === 0) sv('text', { x: 2, y: Y(st) - 2 }, svg).textContent = st; }
+  const band = (id, y0, y1, cls = 'b') => {
+    const pts = []; const n = 16;
+    for (let i = 0; i <= n; i++) { const y = y0 + (y1 - y0) * i / n; pts.push(`${(cx + sx(outerR(y))).toFixed(2)},${Y(y).toFixed(2)}`); }
+    for (let i = n; i >= 0; i--) { const y = y0 + (y1 - y0) * i / n; pts.push(`${(cx - sx(outerR(y))).toFixed(2)},${Y(y).toFixed(2)}`); }
+    return sv('polygon', { class: cls, points: pts.join(' '), 'data-id': id }, svg);
+  };
+  band('cola', 0, 3.6); band('lox', 3.6, 6.3); band('alcohol', 6.3, 9.4); band('instrumentos', 9.4, 10.6); band('ojiva', 10.6, 13.7); band('espoleta', 13.7, 14.03);
+  for (const s of [1, -1]) sv('polygon', { class: 'x', 'data-id': 'aletas', points: [[0.62, -0.05], [1.78, -0.05], [1.78, 0.95], [0.8, 3.3]].map(([r, y]) => `${cx + s * sx(r)},${Y(y)}`).join(' ') }, svg);
+  sv('rect', { class: 'x', 'data-id': 'timones', x: cx - sx(0.05) - 1, y: Y(0.15), width: 2, height: sx(0.6) }, svg);
+  const noz = [[0.37, 0.15], [0.3, 0.5], [0.2, 1.0], [0.3, 1.3], [0.47, 1.7], [0.42, 2.0], [0.2, 2.25]];
+  sv('polygon', { class: 'h', 'data-id': 'motor', points: noz.map(([r, y]) => `${cx + sx(r)},${Y(y)}`).concat(noz.slice().reverse().map(([r, y]) => `${cx - sx(r)},${Y(y)}`)).join(' ') }, svg);
+  sv('rect', { class: 'h', 'data-id': 'turbobomba', x: cx - sx(0.55), y: Y(3.5), width: sx(1.1), height: sx(1.1) }, svg);
+  svg.addEventListener('click', e => { const id = e.target.getAttribute && e.target.getAttribute('data-id'); if (id) select(id, { focus: true }); });
+  svg.querySelectorAll('[data-id]').forEach(n => { const t = sv('title', {}, n); t.textContent = byId[n.getAttribute('data-id')].name; });
+})();
+
+/* ---------- Ficha ---------- */
+function select(id, { focus = false, hash = true } = {}) {
   const p = byId[id]; if (!p) return;
   selected = id;
   const chip = $('#d-chip'); chip.textContent = STAGES[p.stage]; chip.dataset.stage = p.stage;
-  $('#d-station').textContent = `Estación ${p.y[0].toFixed(1)}–${p.y[1].toFixed(1)} m`;
-  $('#d-name').textContent = p.name;
-  $('#d-desc').textContent = p.desc;
-  $('#d-spec').replaceChildren(...p.spec.flatMap(([k, v]) => {
-    const dt = document.createElement('dt'); dt.textContent = k;
-    const dd = document.createElement('dd'); dd.textContent = v;
-    return [dt, dd];
+  $('#d-station').textContent = `Estación ${p.y[0].toFixed(2)}–${p.y[1].toFixed(2)} m · ${PARTS.indexOf(p) + 1} de ${PARTS.length}`;
+  $('#d-name').textContent = p.name; $('#d-desc').textContent = p.desc;
+  $('#d-how').replaceChildren(...p.how.map(s => el('li', null, s)));
+  $('#d-spec').replaceChildren(...p.spec.flatMap(([k, v]) => [el('dt', null, k), el('dd', null, v)]));
+  $('#d-inside').replaceChildren(...p.inside.map(s => el('li', null, s)));
+  $('#d-risks').replaceChildren(...p.risks.map(r => {
+    const li = el('li', 'risk'); const top = el('div', 'risk-top'); top.append(el('b', null, r.p));
+    const sev = el('span', 'sev', r.s === 'alta' ? 'Grave' : r.s === 'media' ? 'Moderado' : 'Menor'); sev.dataset.s = r.s; top.append(sev);
+    const pp = el('p'); const st = el('strong', null, 'Solución: '); pp.append(st, document.createTextNode(r.m));
+    li.append(top, pp); return li;
   }));
-  document.querySelectorAll('.prt').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === id)));
-  if (!fromHash) { try { history.replaceState(null, '', '#' + id); } catch (e) {} }
+  document.querySelectorAll('.prt').forEach(b => b.setAttribute('aria-current', String(b.dataset.id === id)));
+  document.querySelectorAll('#sil [data-id]').forEach(n => n.classList.toggle('on', n.getAttribute('data-id') === id));
+  if (hash) { try { history.replaceState(null, '', '#' + id); } catch (e) {} }
+  if (focus) { view?.focusOn(id); Snd.tick(); }
   view?.highlight();
 }
-const fromHash = () => { const id = location.hash.slice(1); if (byId[id]) { select(id, true); return true; } return false; };
-if (!fromHash()) select('motores', true);
+const step = d => { const i = PARTS.findIndex(p => p.id === selected); select(PARTS[(i + d + PARTS.length) % PARTS.length].id, { focus: true }); };
+$('#prev').addEventListener('click', () => step(-1));
+$('#next').addEventListener('click', () => step(1));
+const fromHash = () => { const id = location.hash.slice(1); if (byId[id]) { select(id, { hash: false, focus: !!view }); return true; } return false; };
+if (!fromHash()) select('motor', { hash: false });
 addEventListener('hashchange', fromHash);
 
-/* ---------- Secuencia de vuelo ---------- */
-const evEl = $('#events');
-for (const e of EVENTS) {
-  const li = document.createElement('li');
-  const b = document.createElement('button');
-  b.type = 'button'; b.dataset.t = e.t;
-  b.innerHTML = '<span class="tt"></span><span><b></b><span class="d"></span></span><span class="chip"></span>';
-  b.querySelector('.tt').textContent = fmtShort(e.t);
-  b.querySelector('b').textContent = e.name;
-  b.querySelector('.d').textContent = e.d;
-  const chip = b.querySelector('.chip'); chip.dataset.stage = e.st; chip.textContent = STAGES[e.st];
-  b.addEventListener('click', () => {
-    playing = false; setT(e.t + 0.5); updatePlay();
-    $('.viewport').scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
-  });
-  li.append(b); evEl.append(li);
+/* ---------- Pestañas ---------- */
+const TABS = ['ficha', 'vuelo', 'mision', 'materiales', 'historia'];
+function setTab(name) {
+  for (const t of TABS) { $('#tab-' + t).setAttribute('aria-selected', String(t === name)); $('#tab-' + t).tabIndex = t === name ? 0 : -1; $('#pane-' + t).hidden = t !== name; }
+  store.set('v2-tab', name); $('.insp').scrollTop = 0;
+  if (name === 'vuelo') { drawCharts(); drawTraj(); }
 }
-const ticks = $('#ticks');
-for (const e of EVENTS) { const s = document.createElement('span'); s.style.left = (e.t / T_END * 100) + '%'; ticks.append(s); }
+TABS.forEach((t, i) => {
+  const b = $('#tab-' + t);
+  b.addEventListener('click', () => setTab(t));
+  b.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const n = TABS[(i + (e.key === 'ArrowRight' ? 1 : -1) + TABS.length) % TABS.length]; setTab(n); $('#tab-' + n).focus(); e.preventDefault(); } });
+});
 
+/* ---------- Gráficas ---------- */
+const niceCeil = v => { if (v <= 0) return 1; const p = 10 ** Math.floor(Math.log10(v)); for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p; return 10 * p; };
+const fmtAxis = v => v >= 1000 ? (v / 1000) + 'k' : (Math.round(v * 10) / 10).toString();
+const CHARTS = [
+  { title: 'Altitud', unit: 'km', f: s => s.h, fmt: v => v.toFixed(1) },
+  { title: 'Velocidad', unit: 'km/h', f: s => s.v * 3.6, fmt: v => Math.round(v).toLocaleString('es') },
+  { title: 'Aceleración', unit: 'g', f: s => s.acc, fmt: v => v.toFixed(1) },
+  { title: 'Presión dinámica', unit: 'kPa', f: s => s.q, fmt: v => v.toFixed(0) },
+];
+const chartsEl = $('#charts');
+for (const c of CHARTS) {
+  const box = el('div', 'chart'); const head = el('div', 'ch-head'); head.append(el('b', null, c.title)); c.out = el('output'); head.append(c.out);
+  c.svg = sv('svg', { role: 'img', 'aria-label': `${c.title} a lo largo del vuelo` });
+  c.tip = el('div', 'ctip'); c.tip.hidden = true;
+  box.append(head, c.svg, c.tip); chartsEl.append(box);
+  const toT = e => { const r = c.svg.getBoundingClientRect(); const x = e.clientX - r.left; return { x, t: clamp01((x - c.L) / (c.W - c.L - c.R)) * T_END }; };
+  c.svg.addEventListener('pointermove', e => {
+    if (!c.xs) return; const { t } = toT(e); const s = state(t); const x = c.xs(t);
+    c.hov.setAttribute('x1', x); c.hov.setAttribute('x2', x); c.hov.style.display = '';
+    c.tip.hidden = false; c.tip.textContent = `${fmt(t)} · ${c.fmt(c.f(s))} ${c.unit}`; c.tip.style.left = x + 'px'; c.tip.style.top = (c.ys(c.f(s)) + 22) + 'px';
+  });
+  c.svg.addEventListener('pointerleave', () => { if (c.hov) c.hov.style.display = 'none'; c.tip.hidden = true; });
+  c.svg.addEventListener('click', e => { const { t } = toT(e); seek(t); });
+}
+function drawCharts() {
+  for (const c of CHARTS) {
+    const W = c.svg.clientWidth; if (!W) continue; const H = 96, L = 38, R = 8, T = 8, B = 18;
+    Object.assign(c, { W, L, R });
+    c.svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const N = 220, vals = []; let max = 0;
+    for (let i = 0; i <= N; i++) { const t = T_END * i / N; const v = c.f(state(t)); vals.push([t, v]); if (v > max) max = v; }
+    const top = niceCeil(max * 1.04); c.top = top;
+    c.xs = t => L + (W - L - R) * t / T_END; c.ys = v => T + (H - T - B) * (1 - v / top);
+    let g = '';
+    for (const fr of [0, 0.5, 1]) { const y = c.ys(top * fr); g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/><text class="axis" x="${L - 5}" y="${y + 3}" text-anchor="end">${fmtAxis(top * fr)}</text>`; }
+    const stepM = T_END > 360 ? 2 : 1;
+    for (let m = 0; m * 60 <= T_END; m += stepM) { const x = c.xs(m * 60); g += `<text class="axis" x="${x}" y="${H - 4}" text-anchor="${m === 0 ? 'start' : 'middle'}">${m}${m === 0 ? '' : ' min'}</text>`; }
+    for (const e of EVENTS) if (/Corte|Apogeo/.test(e.name)) { const x = c.xs(e.t); g += `<line class="ev" x1="${x}" x2="${x}" y1="${T}" y2="${H - B}"/>`; }
+    const line = vals.map(([t, v], i) => `${i ? 'L' : 'M'}${c.xs(t).toFixed(1)},${c.ys(v).toFixed(1)}`).join('');
+    g += `<path class="area" d="${line}L${c.xs(T_END)},${c.ys(0)}L${c.xs(0)},${c.ys(0)}Z"/><path class="line" d="${line}"/>`;
+    g += `<line class="hov" y1="${T}" y2="${H - B}" style="display:none"/><line class="cur" y1="${T}" y2="${H - B}"/><circle class="dot" r="4"/>`;
+    c.svg.innerHTML = g; c.cur = c.svg.querySelector('.cur'); c.dot = c.svg.querySelector('.dot'); c.hov = c.svg.querySelector('.hov');
+  }
+  updateCharts();
+}
+function updateCharts() {
+  const s = state(Math.max(0, simT));
+  for (const c of CHARTS) {
+    c.out.textContent = `${c.fmt(c.f(s))} ${c.unit}`;
+    if (!c.cur) continue; const x = c.xs(Math.max(0, simT)), y = c.ys(c.f(s));
+    c.cur.setAttribute('x1', x); c.cur.setAttribute('x2', x); c.dot.setAttribute('cx', x); c.dot.setAttribute('cy', y);
+  }
+  updateTraj();
+}
+
+/* Trayectoria: distancia frente a altitud, con capas y línea de Kármán */
+const trajEl = $('#traj'); let TJ = null;
+function drawTraj() {
+  const W = trajEl.clientWidth; if (!W) return; const H = 190, L = 40, R = 10, T = 10, B = 22;
+  const maxX = Math.max(60, niceCeil(S.end.x * 1.05)), maxY = Math.max(120, niceCeil(Math.max(S.apo.h, 100) * 1.1));
+  const xs = x => L + (W - L - R) * x / maxX, ys = h => T + (H - T - B) * (1 - h / maxY);
+  let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Trayectoria: altura frente a distancia">`;
+  const layers = [[0, 12, 'Troposfera'], [12, 50, 'Estratosfera'], [50, 85, 'Mesosfera'], [85, maxY, 'Termosfera']];
+  layers.forEach(([a, b, n], i) => { if (a >= maxY) return; g += `<rect class="${i % 2 ? 'lay2' : 'lay'}" x="${L}" width="${W - L - R}" y="${ys(Math.min(b, maxY))}" height="${ys(a) - ys(Math.min(b, maxY))}"/>`; if (ys(a) - ys(Math.min(b, maxY)) > 14) g += `<text class="lab" x="${W - R - 4}" y="${ys(Math.min(b, maxY)) + 11}" text-anchor="end">${n}</text>`; });
+  g += `<line class="karl" x1="${L}" x2="${W - R}" y1="${ys(100)}" y2="${ys(100)}"/><text class="labk" x="${L + 4}" y="${ys(100) - 4}">Línea de Kármán · 100 km · empieza el espacio</text>`;
+  for (const h of [0, maxY / 2, maxY]) g += `<text class="lab" x="${L - 5}" y="${ys(h) + 3}" text-anchor="end">${h} km</text>`;
+  for (const x of [0, maxX / 2, maxX]) g += `<text class="lab" x="${xs(x)}" y="${H - 6}" text-anchor="${x === 0 ? 'start' : x === maxX ? 'end' : 'middle'}">${x} km</text>`;
+  const pts = S.out.filter((_, i) => i % 4 === 0).map(s => `${xs(s.x).toFixed(1)},${ys(s.h).toFixed(1)}`).join(' ');
+  g += `<polyline class="path" points="${pts}"/><polyline class="done" id="tj-done" points=""/>`;
+  g += `<line class="ground" x1="${L}" x2="${W - R}" y1="${ys(0)}" y2="${ys(0)}"/>`;
+  g += `<text class="lab" x="${xs(S.apo.x)}" y="${ys(S.apo.h) - 6}" text-anchor="middle">Apogeo ${S.apo.h.toFixed(1)} km</text>`;
+  g += `<circle class="dot" id="tj-dot" r="4.5" style="fill:var(--accent);stroke:var(--sheet);stroke-width:2"/></svg>`;
+  trajEl.innerHTML = g; TJ = { xs, ys, done: $('#tj-done'), dot: $('#tj-dot') };
+  updateTraj();
+}
+function updateTraj() {
+  if (!TJ) return; const t = Math.max(0, simT); const s = state(t);
+  const pts = S.out.filter(o => o.t <= t).filter((_, i) => i % 3 === 0).map(o => `${TJ.xs(o.x).toFixed(1)},${TJ.ys(o.h).toFixed(1)}`);
+  pts.push(`${TJ.xs(s.x).toFixed(1)},${TJ.ys(s.h).toFixed(1)}`);
+  TJ.done.setAttribute('points', pts.join(' ')); TJ.dot.setAttribute('cx', TJ.xs(s.x)); TJ.dot.setAttribute('cy', TJ.ys(s.h));
+}
+if ('ResizeObserver' in window) new ResizeObserver(() => { if (!$('#pane-vuelo').hidden) { drawCharts(); drawTraj(); } }).observe($('.insp'));
+
+/* ---------- Altímetro en el visor ---------- */
+const altEl = $('#alt'), altSvg = $('#altsvg'); let ALT = null;
+function drawAlt() {
+  const W = altEl.clientWidth, H = altEl.clientHeight; if (!W || !H) return;
+  const top = 200, T = 22, B = 10, ys = h => T + (H - T - B) * (1 - Math.min(h, top) / top);
+  let g = `<text class="ttl" x="8" y="14">ALTITUD</text>`;
+  [[0, 12], [12, 50], [50, 85], [85, top]].forEach(([a, b], i) => g += `<rect class="${i % 2 ? 'lay2' : 'lay'}" x="0" width="${W}" y="${ys(b)}" height="${ys(a) - ys(b)}"/>`);
+  for (const h of [0, 50, 100, 150, 200]) g += `<line class="mk" x1="${W - 8}" x2="${W}" y1="${ys(h)}" y2="${ys(h)}"/><text x="${W - 10}" y="${ys(h) + 3}" text-anchor="end">${h}</text>`;
+  const marks = [[11, 'Avión'], [35, 'Globo'], [100, 'Kármán']];
+  for (const [h, n] of marks) g += `<line class="${h === 100 ? 'km' : 'mk'}" x1="0" x2="${W - 32}" y1="${ys(h)}" y2="${ys(h)}"/><text x="4" y="${ys(h) - 3}">${n}</text>`;
+  g += `<line class="apo" x1="0" x2="${W - 32}" y1="${ys(S.apo.h)}" y2="${ys(S.apo.h)}"/><text x="4" y="${ys(S.apo.h) + 11}" style="fill:#fff">Máx ${S.apo.h.toFixed(0)}</text>`;
+  g += `<g id="alt-now"><path class="now" d="M${W - 30},0 l-8,-5 v10z"/><text class="nowt" x="4" y="4">0 km</text></g>`;
+  altSvg.innerHTML = g; ALT = { ys, now: $('#alt-now'), txt: altSvg.querySelector('.nowt'), W }; updateAlt(state(Math.max(0, simT)));
+}
+function updateAlt(s) { if (!ALT) return; const y = ALT.ys(s.h); ALT.now.setAttribute('transform', `translate(0,${y})`); ALT.txt.textContent = `${s.h.toFixed(1)} km`; }
+if ('ResizeObserver' in window) new ResizeObserver(drawAlt).observe(altEl);
+
+/* Cielo: azul de día, negro con estrellas al subir; la Tierra se curva abajo */
+(function stars() {
+  const c = document.createElement('canvas'); c.width = 520; c.height = 520; const x = c.getContext('2d');
+  for (let i = 0; i < 260; i++) { const r = Math.random() < 0.08 ? 1.3 : 0.7; x.fillStyle = `rgba(255,255,255,${0.4 + Math.random() * 0.6})`; x.beginPath(); x.arc(Math.random() * 520, Math.random() * 520, r, 0, 7); x.fill(); }
+  try { $('#stars').style.backgroundImage = `url(${c.toDataURL()})`; } catch (e) {}
+})();
+const SKY = [[0, '#5d9fd6', '#bfdcf1'], [12, '#3a78bb', '#8fc0e6'], [30, '#163d70', '#4f86bf'], [60, '#050d1e', '#1d3c66'], [100, '#000005', '#0b1a33'], [200, '#000000', '#060d1c']];
+const mix = (a, b, f) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16); const ch = s => [(s >> 16) & 255, (s >> 8) & 255, s & 255]; const A = ch(pa), Bc = ch(pb); return `rgb(${A.map((v, i) => Math.round(v + (Bc[i] - v) * f)).join(',')})`; };
+function updateSky(h) {
+  let i = 0; while (i < SKY.length - 2 && h > SKY[i + 1][0]) i++;
+  const [h0, t0, b0] = SKY[i], [h1, t1, b1] = SKY[i + 1]; const f = clamp01((h - h0) / (h1 - h0));
+  const sky = $('#sky'); sky.style.setProperty('--sky-top', mix(t0, t1, f)); sky.style.setProperty('--sky-bot', mix(b0, b1, f));
+  $('#stars').style.opacity = clamp01((h - 35) / 45).toFixed(3);
+  const e = $('#earth'), vp = $('#viewport');
+  const ef = clamp01((h - 4) / 30);
+  e.style.setProperty('--eo', ef.toFixed(3));
+  e.style.setProperty('--ew', (420 - 260 * clamp01(h / 180)) + '%');
+  e.style.setProperty('--rise', (vp.clientHeight * (0.1 + 0.12 * clamp01(h / 180)) * ef + 120) + 'px');
+}
+
+/* ---------- Secuencia y consola ---------- */
+const evEl = $('#events'), ticks = $('#ticks');
 const tl = $('#timeline'), clock = $('#clock'), phase = $('#phase'), playBtn = $('#play'), explodeIn = $('#explode');
-const evButtons = [...evEl.querySelectorAll('button')];
+function renderEvents() {
+  evEl.replaceChildren(); ticks.replaceChildren();
+  for (const e of EVENTS) {
+    const li = el('li'); const b = el('button'); b.type = 'button'; b.dataset.t = e.t;
+    const tt = el('span', 'tt', fmtShort(e.t)); const right = el('span'); const bb = el('b', null, e.name); right.append(bb, el('span', 'd', e.d));
+    b.append(tt, right);
+    b.addEventListener('click', () => { seek(e.t + 0.3); $('#viewport').scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }); });
+    li.append(b); evEl.append(li);
+    const s = el('span'); s.style.left = (e.t / T_END * 100) + '%'; ticks.append(s);
+  }
+}
+function seek(t) { countdown = null; playing = false; setT(t); updatePlay(); }
 function setT(t) { simT = Math.min(T_END, Math.max(0, t)); updateFlightUI(); }
+let lastCur = null;
 function updateFlightUI() {
-  tl.value = String(Math.round(simT));
-  tl.style.setProperty('--p', (simT / T_END * 100) + '%');
-  clock.textContent = fmt(simT);
-  let cur = null;
-  if (simT > 0 || playing) for (const e of EVENTS) if (e.t <= simT) cur = e;
-  phase.innerHTML = '';
-  if (cur) { const b = document.createElement('b'); b.textContent = cur.name; phase.append(b); }
-  else phase.textContent = 'En la plataforma de lanzamiento';
-  evButtons.forEach(b => { if (cur && +b.dataset.t === cur.t) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
-  explodeIn.disabled = simT > 0;
+  tl.value = String(Math.max(0, simT)); tl.style.setProperty('--p', (Math.max(0, simT) / T_END * 100) + '%');
+  clock.textContent = countdown !== null ? fmt(-countdown) : fmt(simT);
+  let cur = null; if (simT > 0 || playing) for (const e of EVENTS) if (e.t <= simT) cur = e;
+  phase.replaceChildren();
+  if (countdown !== null) phase.append(el('b', null, 'Cuenta regresiva'));
+  else if (cur) phase.append(el('b', null, cur.name));
+  else phase.textContent = 'En la mesa de lanzamiento · ' + MISSIONS[mKey].label;
+  if (cur !== lastCur) { evEl.querySelectorAll('button').forEach(b => { if (cur && +b.dataset.t === cur.t) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); }); lastCur = cur; }
+  explodeIn.disabled = simT > 0 || countdown !== null;
+  const s = state(Math.max(0, simT));
+  $('#r-alt').firstChild.textContent = s.h < 10 ? s.h.toFixed(2) : s.h.toFixed(1);
+  $('#r-vel').firstChild.textContent = Math.round(s.v * 3.6).toLocaleString('es');
+  $('#r-acc').firstChild.textContent = s.acc.toFixed(1);
+  $('#r-rng').firstChild.textContent = s.x.toFixed(s.x < 10 ? 1 : 0);
+  const fuel = Math.max(0, s.fuel);
+  $('#g1').style.setProperty('--v', (fuel * 100) + '%'); $('#g1v').textContent = Math.round(fuel * 100) + ' %';
+  $('#g2').style.setProperty('--v', (fuel * 100) + '%'); $('#g2v').textContent = Math.round(fuel * 100) + ' %';
+  updateCharts(); updateAlt(s); updateSky(s.h);
 }
 function updatePlay() {
-  const lbl = playing ? 'Pausa' : (simT > 0 && simT < T_END ? 'Seguir' : (simT >= T_END ? 'Repetir' : 'Lanzar'));
-  playBtn.querySelector('.lbl').textContent = lbl;
-  playBtn.querySelector('path').setAttribute('d', playing ? 'M2 1h3v10H2zM7 1h3v10H7z' : 'M2 1l9 5-9 5z');
+  const lbl = countdown !== null ? 'Abortar' : playing ? 'Pausa' : (simT > 0 && simT < T_END ? 'Seguir' : (simT >= T_END ? 'Repetir' : 'Lanzar'));
+  playBtn.querySelector('.plbl').textContent = lbl;
+  playBtn.querySelector('path').setAttribute('d', playing ? 'M2 1h3v10H2zM7 1h3v10H7z' : countdown !== null ? 'M2 2h8v8H2z' : 'M2 1l9 5-9 5z');
 }
-playBtn.addEventListener('click', () => {
-  if (!playing && simT >= T_END) setT(0);
-  playing = !playing; updatePlay(); updateFlightUI();
-});
-tl.addEventListener('input', () => { playing = false; setT(+tl.value); updatePlay(); });
+const NUM = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco'];
+function togglePlay() {
+  Snd.ensure();
+  if (countdown !== null) { countdown = null; Snd.say('Lanzamiento abortado'); updatePlay(); updateFlightUI(); return; }
+  if (playing) { playing = false; updatePlay(); updateFlightUI(); return; }
+  if (simT >= T_END) setT(0);
+  if (simT === 0) { countdown = 5; view?.clearFocus(); Snd.beep(880); Snd.say('Cinco'); }
+  else playing = true;
+  updatePlay(); updateFlightUI();
+}
+function fire(e) { Snd.fx(e.fx); Snd.say(e.say); }
+playBtn.addEventListener('click', togglePlay);
+tl.addEventListener('input', () => seek(+tl.value));
 explodeIn.addEventListener('input', () => { explodeTarget = +explodeIn.value / 100; explodeIn.style.setProperty('--p', explodeIn.value + '%'); });
-$('#xray').addEventListener('click', e => { xray = !xray; e.currentTarget.setAttribute('aria-pressed', String(xray)); view?.setXray(); });
-$('#resetview').addEventListener('click', () => {
-  playing = false; setT(0); updatePlay();
-  explodeIn.value = '0'; explodeTarget = 0; explodeIn.style.setProperty('--p', '0%');
-  view?.resetCamera();
+$('#speed').addEventListener('click', e => { SPEED = SPEED === 5 ? 10 : SPEED === 10 ? 20 : 5; e.currentTarget.textContent = '×' + SPEED; });
+const sndBtn = $('#snd'), vozBtn = $('#voz');
+const syncSnd = () => { sndBtn.setAttribute('aria-pressed', String(Snd.on)); vozBtn.setAttribute('aria-pressed', String(Snd.on && Snd.voice)); vozBtn.disabled = !Snd.on; };
+sndBtn.addEventListener('click', () => { Snd.setOn(!Snd.on); syncSnd(); });
+vozBtn.addEventListener('click', () => { Snd.setVoice(!Snd.voice); syncSnd(); if (Snd.voice) Snd.say('Voz activada'); });
+syncSnd();
+const setXray = v => { xray = v; $('#xray').setAttribute('aria-pressed', String(v)); view?.setXray(); };
+const setLabels = v => { labelsOn = v; $('#tlabels').setAttribute('aria-pressed', String(v)); $('#labels').hidden = !v; };
+$('#xray').addEventListener('click', () => setXray(!xray));
+$('#tlabels').addEventListener('click', () => setLabels(!labelsOn));
+setLabels(labelsOn);
+$('#resetview').addEventListener('click', () => { seek(0); explodeIn.value = '0'; explodeTarget = 0; explodeIn.style.setProperty('--p', '0%'); view?.resetCamera(); });
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => view?.preset(b.dataset.view)));
+const vp = $('#viewport'), fsBtn = $('#fullscreen');
+if (!document.fullscreenEnabled) $('#fs-grp').hidden = true;
+const toggleFS = () => { if (!document.fullscreenEnabled) return; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else vp.requestFullscreen().catch(() => {}); };
+fsBtn.addEventListener('click', toggleFS);
+document.addEventListener('fullscreenchange', () => fsBtn.setAttribute('aria-pressed', String(!!document.fullscreenElement)));
+
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const tg = e.target; if (tg.closest && tg.closest('input, select, textarea, [contenteditable="true"]')) return;
+  const k = e.key.toLowerCase();
+  if (k === ' ') { if (tg.closest && tg.closest('button')) return; e.preventDefault(); togglePlay(); }
+  else if (k === 'e') { if (explodeIn.disabled) return; explodeIn.value = explodeTarget > 0.5 ? '0' : '100'; explodeIn.dispatchEvent(new Event('input')); }
+  else if (k === 'x') setXray(!xray);
+  else if (k === 'l') setLabels(!labelsOn);
+  else if (k === 'f') toggleFS();
+  else if (k === 'm') { Snd.setOn(!Snd.on); syncSnd(); }
+  else if (e.key === 'ArrowDown' && !(tg.closest && tg.closest('[role="tab"]'))) { e.preventDefault(); step(1); }
+  else if (e.key === 'ArrowUp' && !(tg.closest && tg.closest('[role="tab"]'))) { e.preventDefault(); step(-1); }
 });
-updateFlightUI(); updatePlay();
+
+/* ---------- Misión ---------- */
+const misEl = $('#mission');
+for (const [k, m] of Object.entries(MISSIONS)) {
+  const lab = el('label'); const inp = el('input'); inp.type = 'radio'; inp.name = 'mission'; inp.value = k; inp.checked = k === mKey;
+  lab.append(inp, document.createTextNode(m.label), el('small', null, m.sub));
+  inp.addEventListener('change', () => setMission(k)); misEl.append(lab);
+}
+function setMission(k) {
+  mKey = k; S = SIMS[k]; T_END = S.end.t; tl.max = String(T_END);
+  buildEvents(); renderEvents(); seek(0); store.set('v2-mission', k);
+  const m = MISSIONS[k]; $('#mis-desc').textContent = m.desc;
+  const space = S.apo.h >= 100;
+  $('#verdict').dataset.s = space ? 'good' : 'info'; $('#v-ic').textContent = space ? '✓' : '–';
+  $('#v-t').textContent = space ? 'Llega al espacio' : 'Se queda bajo el espacio';
+  $('#v-d').textContent = space ? `Sube ${(S.apo.h - 100).toFixed(1)} km por encima de la línea de Kármán y pasa ${Math.round(S.dn100.t - S.up100.t)} s en el espacio.` : `Su punto más alto queda ${(100 - S.apo.h).toFixed(1)} km por debajo de la línea de Kármán.`;
+  const cs = state(m.cut);
+  const stats = [['Altura máxima', S.apo.h.toFixed(1), 'km'], ['Distancia', S.end.x.toFixed(0), 'km'], ['Vel. máxima', Math.round(S.vmax * 3.6).toLocaleString('es'), 'km/h'], ['Corte del motor', m.cut.toFixed(1), 's'], ['Altura al corte', cs.h.toFixed(1), 'km'], ['Duración', fmtShort(T_END).slice(2), 'min']];
+  $('#stats').replaceChildren(...stats.map(([a, b, u]) => { const d = el('div'); const bb = el('b', null, b); bb.append(el('small', null, u)); d.append(el('span', 'eyebrow', a), bb); return d; }));
+  $('#traj-note').textContent = `Trayectoria simulada · ${m.label} (${m.sub}). El espacio empieza en la línea de Kármán, a 100 km.`;
+  drawAlt(); if (!$('#pane-vuelo').hidden) { drawCharts(); drawTraj(); }
+  view?.resetFlight();
+}
+
+/* Reparto de masa */
+(function bars() {
+  const items = [['Oxígeno líquido', 4900, 's1'], ['Alcohol y agua', 3810, 's1'], ['Estructura y motor', 2606, 'st'], ['Ojiva', 1000, 'pl'], ['Peróxido de hidrógeno', 170, 's1'], ['Permanganato de sodio', 14, 's1']];
+  const total = items.reduce((a, i) => a + i[1], 0), max = items[0][1];
+  $('#bars').replaceChildren(...items.map(([n, kg, st]) => {
+    const li = el('li'); li.dataset.stage = st; const bt = el('div', 'bt'); bt.append(el('span', null, n), el('b', null, `${kg.toLocaleString('es')} kg`));
+    const row = el('div', 'row'); const i = el('i'); i.style.width = (kg / max * 100) + '%'; row.append(i, el('span', 'pct', (kg / total * 100).toFixed(1) + ' %'));
+    li.append(bt, row); return li;
+  }));
+})();
+
+setMission(store.get('v2-mission', 'combate') in MISSIONS ? store.get('v2-mission', 'combate') : 'combate');
+const savedTab = store.get('v2-tab', 'ficha'); setTab(TABS.includes(savedTab) ? savedTab : 'ficha');
 
 /* ---------- Bucle ---------- */
 let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (playing) {
-    simT += dt * SPEED;
-    if (simT >= T_END) { simT = T_END; playing = false; updatePlay(); }
+  if (countdown !== null) {
+    const before = Math.ceil(countdown); countdown -= dt; const after = Math.ceil(countdown);
+    if (after < before && after > 0) { Snd.beep(880); Snd.say(NUM[after]); }
+    if (countdown <= 0) { countdown = null; playing = true; simT = 0; Snd.beep(1320, 0.3, 0.3); fire(EVENTS[0]); updatePlay(); }
     updateFlightUI();
   }
-  const target = simT > 0 ? 0 : explodeTarget;
+  if (playing) {
+    const prev = simT; simT += dt * SPEED;
+    if (simT >= T_END) { simT = T_END; playing = false; updatePlay(); }
+    for (const e of EVENTS) if (e.t > 0 && prev < e.t && simT >= e.t) fire(e);
+    updateFlightUI();
+  }
+  const target = simT > 0 || countdown !== null ? 0 : explodeTarget;
   explodeK += (target - explodeK) * (1 - Math.exp(-dt * 7));
-  view?.render(dt, explodeK, simT, simT > 0 || playing);
+  const st = state(Math.max(0, simT));
+  Snd.update(playing, st);
+  view?.render(dt, explodeK, simT, st, simT > 0 || playing);
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-
-/* ---------- Modelo 3D ---------- */
 init3D();
 
+/* ---------- Modelo 3D ---------- */
 async function init3D() {
   const host = $('#stage');
-  const fail = msg => { host.innerHTML = ''; const p = document.createElement('p'); p.className = 'nogl'; p.textContent = msg; host.append(p); };
+  const fail = msg => { host.replaceChildren(el('p', 'nogl', msg)); };
   const THREE = window.THREE;
-  if (!THREE) { fail('No se pudo cargar el motor 3D. Revisa la conexión y recarga la página; la ficha de componentes sigue disponible.'); return; }
-
+  if (!THREE) { fail('No se pudo cargar el motor 3D. Revisa la conexión y recarga la página; la ficha, el vuelo y la historia siguen disponibles.'); return; }
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
   catch (e) { fail('Este navegador no tiene WebGL activado, así que el modelo 3D no se puede mostrar.'); return; }
 
-  try { await Promise.race([document.fonts.load('800 92px "Big Shoulders Display"'), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
-
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
-  const cv = renderer.domElement;
-  cv.style.touchAction = 'none';
-  cv.setAttribute('aria-hidden', 'true');
+  const cv = renderer.domElement; cv.style.touchAction = 'none'; cv.setAttribute('aria-hidden', 'true');
   host.append(cv);
 
   const scene = new THREE.Scene();
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a96a3, 0.75));
-  const key = new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(60, 120, 80); scene.add(key);
-  const rim = new THREE.DirectionalLight(0xcfe0ff, 0.35); rim.position.set(-80, 40, -60); scene.add(rim);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a96a3, 0.8));
+  const key = new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(30, 60, 40); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xcfe0ff, 0.35); rim.position.set(-40, 20, -30); scene.add(rim);
 
-  /* Cámara orbital propia: arrastrar gira, rueda o pellizco acerca */
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 6000);
-  const camDir = new THREE.Vector3(0.48, 0.16, 0.86).normalize();
-  const ctl = { target: new THREE.Vector3(0, 34.3, 0), theta: 0, phi: 0, dist: 175, autoRotate: !reduce };
+  /* Cámara orbital propia */
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 8000);
+  const camDir = new THREE.Vector3(0.5, 0.18, 0.85).normalize();
+  const ctl = { target: new THREE.Vector3(0, 6.8, 0), theta: 0, phi: 0, dist: 40, autoRotate: !reduce, goal: null, userZoom: false };
+  let focus = null;
   const placeCamera = () => {
     const sp = Math.sin(ctl.phi);
     camera.position.set(ctl.target.x + ctl.dist * sp * Math.sin(ctl.theta), ctl.target.y + ctl.dist * Math.cos(ctl.phi), ctl.target.z + ctl.dist * sp * Math.cos(ctl.theta));
     camera.lookAt(ctl.target);
   };
+  const clampDist = d => Math.max(5, Math.min(260, d));
   function resetCamera() {
-    ctl.target.set(0, 34.3 + 9.5 * explodeK, 0);
+    focus = null; ctl.userZoom = false; ctl.goal = null;
+    ctl.target.set(0, 6.8 + 6.6 * explodeK, 0);
     ctl.theta = Math.atan2(camDir.x, camDir.z); ctl.phi = Math.acos(camDir.y);
-    ctl.dist = 175 * (1 + 0.45 * explodeK);
-    ctl.autoRotate = !reduce;
+    ctl.dist = 40 * (1 + 0.9 * explodeK); ctl.autoRotate = !reduce;
     placeCamera();
   }
-
-  const R = 1.85;
-  const C = { body: '#eef1f3', carbon: '#2a2d32', engine: '#5a5f66', ext: '#8f949b', alu: '#b9bfc6', gold: '#d6a63a', solar: '#22406f', ti: '#9096a0', band: '#3d424a', white: '#f4f5f6' };
-  const mat = (color, { m = 0.1, r = 0.55, side = THREE.FrontSide } = {}) => new THREE.MeshStandardMaterial({ color, metalness: m, roughness: r, side });
-  const cyl = (rt, rb, y0, y1, { seg = 64, open = false } = {}) => { const g = new THREE.CylinderGeometry(rt, rb, y1 - y0, seg, 1, open); g.translate(0, (y0 + y1) / 2, 0); return g; };
-  const box = (w, h, d, x, y, z) => { const b = new THREE.BoxGeometry(w, h, d); b.translate(x, y, z); return b; };
-  function merge(geos) {
-    const list = geos.map(g => (g.index ? g.toNonIndexed() : g));
-    let n = 0; for (const g of list) n += g.attributes.position.count;
-    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3);
-    let o = 0;
-    for (const g of list) { pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; }
-    const m = new THREE.BufferGeometry();
-    m.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    m.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
-    return m;
+  function preset(name) {
+    const base = Math.atan2(camDir.x, camDir.z);
+    const g = { front: [base, 1.45], side: [base + Math.PI / 2, 1.45], below: [base, 2.65], above: [base, 0.4] }[name];
+    if (!g) return; ctl.autoRotate = false;
+    let th = g[0]; while (th - ctl.theta > Math.PI) th -= 2 * Math.PI; while (ctl.theta - th > Math.PI) th += 2 * Math.PI;
+    ctl.goal = { theta: th, phi: g[1] };
   }
 
+  /* Materiales y geometría */
+  const C = { steel: '#5e6266', carbon: '#2a2d32', graphite: '#3a3b3d', alu: '#b9bfc6', white: '#efeee8', black: '#1d1d1d', copper: '#9a6a3a', khaki: '#8b8a5c' };
+  const mat = (color, { m = 0.1, r = 0.6, side = THREE.FrontSide, map = null } = {}) => new THREE.MeshStandardMaterial({ color, metalness: m, roughness: r, side, map });
+  const box = (w, h, d, x, y, z) => { const b = new THREE.BoxGeometry(w, h, d); b.translate(x, y, z); return b; };
+  const cyl = (rt, rb, y0, y1, { seg = 48, open = false } = {}) => { const g = new THREE.CylinderGeometry(rt, rb, y1 - y0, seg, 1, open); g.translate(0, (y0 + y1) / 2, 0); return g; };
+  function checker(phase, solid) {
+    const c = document.createElement('canvas'); c.width = 128; c.height = 8; const x = c.getContext('2d');
+    for (let i = 0; i < 4; i++) { x.fillStyle = solid ? C.black : ((i + phase) % 2 ? C.black : C.white); x.fillRect(i * 32, 0, 32, 8); }
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+  }
+  const profile = (y0, y1, n = 18) => { const pts = []; for (let i = 0; i <= n; i++) { const y = y0 + (y1 - y0) * i / n; pts.push(new THREE.Vector2(Math.max(0.001, outerR(y)), y)); } return pts; };
+
   const inkC = new THREE.Color('#1b2833'), accC = new THREE.Color('#e0531f');
-  let ruleStr = '#b6c2ca';
   const edgeBase = new THREE.LineBasicMaterial({ color: inkC, transparent: true, opacity: 0.45 });
 
-  const rocket = new THREE.Group(), s1G = new THREE.Group(), upG = new THREE.Group();
-  rocket.add(s1G, upG); scene.add(rocket);
-  const P = {}, pickables = [], skins = [], fluids = [];
-  const newPart = (id, parent) => { const g = new THREE.Group(); parent.add(g); return (P[id] = { id, g, meshes: [], edge: edgeBase.clone(), extra: {} }); };
+  const flight = new THREE.Group(), model = new THREE.Group();
+  flight.add(model); model.position.y = -7; flight.position.y = 7; scene.add(flight);
+  const P = {}, pickables = [], skins = [], fluids = [], xonly = [];
+  const newPart = id => { const g = new THREE.Group(); model.add(g); return (P[id] = { id, g, meshes: [], edge: edgeBase.clone(), extra: {} }); };
   function addMesh(p, geo, material, { parent = p.g, skin = false, edges = true, angle = 24 } = {}) {
-    const m = new THREE.Mesh(geo, material);
-    m.userData.part = p.id; m.userData.skin = skin;
+    const m = new THREE.Mesh(geo, material); m.userData.part = p.id; m.userData.skin = skin;
     parent.add(m); p.meshes.push(m); pickables.push(m);
     if (edges) { const l = new THREE.LineSegments(new THREE.EdgesGeometry(geo, angle), p.edge); l.raycast = () => {}; m.add(l); }
     if (skin) skins.push(m);
     return m;
   }
-  function fluid(p, y0, y1, color, stage) {
-    const h = y1 - y0 - 0.3;
-    const g = new THREE.CylinderGeometry(1.72, 1.72, h, 48); g.translate(0, h / 2, 0);
-    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0, transparent: true, opacity: 0.9 }));
-    m.position.y = y0 + 0.15; m.visible = false; m.userData.part = p.id;
-    p.g.add(m); pickables.push(m); fluids.push({ m, stage });
+  function inner(p, geo, color, opts = {}) {
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0, transparent: true, opacity: 0.92 }));
+    m.visible = false; m.userData.part = p.id; p.g.add(m); pickables.push(m); xonly.push(m);
+    if (opts.fluid) { m.position.y = opts.y0; fluids.push(m); }
+    return m;
   }
+  const skinPart = (id, y0, y1, phase, solid) => { const p = newPart(id); addMesh(p, new THREE.LatheGeometry(profile(y0, y1), 48), mat('#ffffff', { r: 0.55, map: checker(phase, solid), side: THREE.DoubleSide }), { skin: true, angle: 30 }); return p; };
 
-  // Calcomanía del tanque LOX de la etapa 1
-  function decal() {
-    const c = document.createElement('canvas'); c.width = 512; c.height = 1024;
-    const x = c.getContext('2d');
-    x.fillStyle = '#ffffff'; x.fillRect(0, 0, 512, 1024);
-    x.fillStyle = '#e0531f'; x.fillRect(0, 36, 512, 16);
-    x.save(); x.translate(256, 560); x.rotate(-Math.PI / 2);
-    x.fillStyle = '#1b2833'; x.font = '800 92px "Big Shoulders Display", Impact, sans-serif';
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('COHETE V2', 0, 0);
-    x.restore();
-    const t = new THREE.CanvasTexture(c); t.anisotropy = 4;
-    return t;
+  { const p = skinPart('espoleta', 13.7, 14.03, 0, true); }
+  { const p = skinPart('ojiva', 10.6, 13.7, 1); const g = new THREE.LatheGeometry(profile(10.8, 13.4).map(v => new THREE.Vector2(v.x * 0.85, v.y)), 32); inner(p, g, C.khaki); }
+  { const p = skinPart('instrumentos', 9.4, 10.6, 0);
+    for (const [x, z, w] of [[0.25, 0.1, 0.35], [-0.28, -0.05, 0.3], [0.0, -0.35, 0.4]]) inner(p, box(w, 0.35, w, x, 9.95, z), '#c9c2a8');
   }
-
-  /* Etapa 1 */
-  {
-    const p = newPart('motores', s1G);
-    const exits = [[0, 0], ...Array.from({ length: 6 }, (_, i) => [Math.sin(i * Math.PI / 3) * 1.2, Math.cos(i * Math.PI / 3) * 1.2])];
-    const noz = [], rings = [];
-    for (const [x, z] of exits) {
-      const n = cyl(0.22, 0.46, 0, 2.3, { seg: 32, open: true }); n.translate(x, 0, z); noz.push(n);
-      const r = cyl(0.3, 0.3, 2.3, 2.5, { seg: 32 }); r.translate(x, 0, z); rings.push(r);
-    }
-    addMesh(p, merge(noz), mat(C.engine, { m: 0.4, r: 0.4, side: THREE.DoubleSide }));
-    addMesh(p, merge(rings), mat(C.carbon, { r: 0.6 }));
-    p.extra.exits = exits;
+  { const p = skinPart('alcohol', 6.3, 9.4, 1);
+    const h = 2.8; const g = new THREE.CylinderGeometry(0.76, 0.76, h, 40); g.translate(0, h / 2, 0); inner(p, g, '#e2b551', { fluid: true, y0: 6.45 });
+    inner(p, cyl(0.07, 0.07, 3.1, 6.4, { seg: 12 }), '#e2b551');
   }
-  {
-    const p = newPart('empuje', s1G);
-    addMesh(p, cyl(R, R, 2.5, 6.0, { open: true }), mat(C.body, { side: THREE.DoubleSide }), { skin: true });
-    const sh = new THREE.CircleGeometry(R - 0.01, 64); sh.rotateX(Math.PI / 2); sh.translate(0, 2.5, 0);
-    addMesh(p, sh, mat(C.carbon, { r: 0.85, side: THREE.DoubleSide }), { edges: false });
+  { const p = skinPart('lox', 3.6, 6.3, 0);
+    const h = 2.45; const g = new THREE.CylinderGeometry(0.76, 0.76, h, 40); g.translate(0, h / 2, 0); inner(p, g, '#8ec3ea', { fluid: true, y0: 3.75 });
   }
-  {
-    const p = newPart('patas', s1G);
-    const g = merge([box(0.42, 9, 0.22, 0, 4.5, 0.11), box(0.75, 0.4, 0.36, 0, 8.8, 0.18), box(0.2, 3.2, 0.12, 0, 2.0, 0.28)]);
-    p.extra.legs = [];
+  { const p = newPart('turbobomba');
+    addMesh(p, cyl(0.22, 0.22, 2.6, 3.2, { seg: 24 }), mat(C.steel, { m: 0.4, r: 0.4 }));
+    addMesh(p, box(0.3, 0.35, 0.3, 0.35, 2.85, 0), mat(C.copper, { m: 0.4, r: 0.45 }));
+    addMesh(p, cyl(0.18, 0.18, 2.5, 3.4, { seg: 20 }).translate(-0.42, 0, 0.1), mat('#7c8a6a', { r: 0.5 }));
+    addMesh(p, cyl(0.09, 0.09, 2.7, 3.2, { seg: 16 }).translate(0.1, 0, -0.42), mat('#7a4a8a', { r: 0.5 }));
+    for (const a of [0.8, 2.4, 4.0, 5.5]) { const s = new THREE.SphereGeometry(0.1, 14, 10); s.translate(Math.sin(a) * 0.5, 3.45, Math.cos(a) * 0.5); addMesh(p, s, mat(C.alu, { m: 0.3 }), { edges: false }); }
+  }
+  { const p = newPart('motor');
+    const noz = [[0.37, 0.15], [0.3, 0.5], [0.2, 1.0], [0.21, 1.1], [0.32, 1.3], [0.46, 1.6], [0.48, 1.8], [0.42, 2.0], [0.25, 2.15], [0.001, 2.2]].map(([r, y]) => new THREE.Vector2(r, y));
+    addMesh(p, new THREE.LatheGeometry(noz, 40), mat(C.steel, { m: 0.45, r: 0.4, side: THREE.DoubleSide }));
+    for (let i = 0; i < 18; i++) { const inr = i < 6, a = (inr ? i / 6 : (i - 6) / 12) * Math.PI * 2, r = inr ? 0.13 : 0.3;
+      const c = cyl(0.06, 0.06, 2.06, 2.26, { seg: 10 }); c.translate(Math.sin(a) * r, inr ? 0.08 : 0, Math.cos(a) * r); addMesh(p, c, mat('#8a8f94', { m: 0.4 }), { edges: false }); }
+  }
+  { const p = skinPart('cola', 0, 3.6, 1);
+    const ring = new THREE.TorusGeometry(0.62, 0.035, 8, 40); ring.rotateX(Math.PI / 2); addMesh(p, ring, mat(C.black), { edges: false });
+  }
+  { const p = newPart('aletas'); p.extra.fins = [];
+    const sh = new THREE.Shape(); sh.moveTo(0.6, -0.05); sh.lineTo(1.78, -0.05); sh.lineTo(1.78, 0.95); sh.lineTo(0.8, 3.3); sh.lineTo(0.6, 3.3); sh.closePath();
+    const fg = new THREE.ExtrudeGeometry(sh, { depth: 0.05, bevelEnabled: false }); fg.translate(0, 0, -0.025);
     for (let i = 0; i < 4; i++) {
-      const a = Math.PI / 4 + i * Math.PI / 2;
-      const o = new THREE.Group(); o.rotation.y = a; o.position.set(Math.sin(a) * 1.86, 1.2, Math.cos(a) * 1.86);
-      const hinge = new THREE.Group(); o.add(hinge); p.g.add(o);
-      addMesh(p, g, mat(C.carbon, { r: 0.6 }), { parent: hinge });
-      p.extra.legs.push({ hinge });
+      const o = new THREE.Group(); o.rotation.y = i * Math.PI / 2; p.g.add(o);
+      addMesh(p, fg, mat(i % 2 ? C.black : C.white, { r: 0.55 }), { parent: o, angle: 30 });
+      addMesh(p, box(0.32, 0.36, 0.09, 1.6, 0.15, 0), mat(C.carbon, { r: 0.5 }), { parent: o });
+      p.extra.fins.push(o);
     }
   }
-  {
-    const p = newPart('rp11', s1G);
-    addMesh(p, cyl(R, R, 6.0, 19.5), mat(C.body), { skin: true });
-    fluid(p, 6.0, 19.5, '#d9a441', 's1');
-  }
-  {
-    const p = newPart('lox1', s1G);
-    const m = mat(C.body); m.map = decal();
-    const mesh = addMesh(p, cyl(R, R, 19.5, 41.0), m, { skin: true });
-    mesh.rotation.y = Math.PI;
-    fluid(p, 19.5, 41.0, '#8ec3ea', 's1');
-  }
-  {
-    const p = newPart('interetapa', s1G);
-    addMesh(p, cyl(R, R, 41.0, 46.5, { open: true }), mat(C.carbon, { r: 0.7, side: THREE.DoubleSide }), { skin: true });
-  }
-  {
-    const p = newPart('aletas', s1G);
-    const W = 1.3, H = 1.5, D = 0.16, t = 0.07;
-    const bars = [box(W, t, D, 0, t / 2, D / 2), box(W, t, D, 0, H - t / 2, D / 2), box(t, H, D, -W / 2 + t / 2, H / 2, D / 2), box(t, H, D, W / 2 - t / 2, H / 2, D / 2)];
-    for (let i = 1; i < 4; i++) { bars.push(box(0.035, H, D, -W / 2 + i * W / 4, H / 2, D / 2)); bars.push(box(W, 0.035, D, 0, i * H / 4, D / 2)); }
-    const fg = merge(bars);
-    p.extra.fins = [];
-    for (let i = 0; i < 4; i++) {
-      const a = i * Math.PI / 2;
-      const o = new THREE.Group(); o.rotation.y = a; o.position.set(Math.sin(a) * 1.87, 44.8, Math.cos(a) * 1.87);
-      const hinge = new THREE.Group(); o.add(hinge); p.g.add(o);
-      addMesh(p, fg, mat(C.ti, { m: 0.35, r: 0.45 }), { parent: hinge, angle: 30 });
-      p.extra.fins.push({ o, hinge, a });
-    }
+  { const p = newPart('timones');
+    for (let i = 0; i < 4; i++) { const g = box(0.3, 0.6, 0.05, 0.2, -0.15, 0); g.rotateY(i * Math.PI / 2); addMesh(p, g, mat(C.graphite, { r: 0.8 })); }
   }
 
-  /* Etapa 2 y carga */
-  {
-    const p = newPart('mvac', upG);
-    const pts = [];
-    for (let i = 0; i <= 24; i++) { const s = i / 24; pts.push(new THREE.Vector2(0.25 + 0.9 * Math.pow(1 - s, 0.6), s * 3.8)); }
-    const ext = new THREE.LatheGeometry(pts.slice(0, 15), 64); ext.translate(0, 41.6, 0);
-    const regen = new THREE.LatheGeometry(pts.slice(14), 64); regen.translate(0, 41.6, 0);
-    addMesh(p, ext, mat(C.ext, { m: 0.45, r: 0.35, side: THREE.DoubleSide }));
-    addMesh(p, regen, mat(C.engine, { m: 0.4, r: 0.4, side: THREE.DoubleSide }));
-    addMesh(p, cyl(0.45, 0.45, 45.4, 46.4, { seg: 32 }), mat(C.band, { m: 0.3, r: 0.45 }));
-    const tp = cyl(0.18, 0.18, 45.0, 46.2, { seg: 20 }); tp.translate(0.62, 0, 0);
-    addMesh(p, tp, mat(C.engine, { m: 0.35, r: 0.4 }));
-  }
-  {
-    const p = newPart('rp12', upG);
-    addMesh(p, cyl(R, R, 46.5, 49.9), mat(C.body), { skin: true });
-    fluid(p, 46.5, 49.9, '#d9a441', 's2');
-  }
-  {
-    const p = newPart('lox2', upG);
-    addMesh(p, cyl(R, R, 49.9, 56.0), mat(C.body), { skin: true });
-    fluid(p, 49.9, 56.0, '#8ec3ea', 's2');
-  }
-  {
-    const p = newPart('avionica', upG);
-    addMesh(p, cyl(R + 0.02, R + 0.02, 56.0, 56.8), mat(C.band, { r: 0.5 }));
-    for (const a of [0.6, 3.6]) {
-      const b = new THREE.BoxGeometry(0.26, 0.5, 0.14); b.translate(0, 56.4, 1.93); b.rotateY(a);
-      addMesh(p, b, mat(C.white, { r: 0.4 }));
-    }
-  }
-  {
-    const p = newPart('adaptador', upG);
-    addMesh(p, cyl(0.65, 1.5, 56.8, 57.8, { seg: 48, open: true }), mat(C.alu, { m: 0.35, r: 0.35, side: THREE.DoubleSide }));
-    const tor = new THREE.TorusGeometry(0.65, 0.05, 10, 48); tor.rotateX(Math.PI / 2); tor.translate(0, 57.8, 0);
-    addMesh(p, tor, mat(C.alu, { m: 0.35, r: 0.35 }), { edges: false });
-  }
-  {
-    const p = newPart('carga', upG);
-    addMesh(p, box(2, 3, 2, 0, 59.4, 0), mat(C.gold, { m: 0.4, r: 0.4 }));
-    for (const s of [1, -1]) addMesh(p, box(0.06, 2.8, 1.8, s * 1.04, 59.4, 0), mat(C.solar, { m: 0.2, r: 0.35 }));
-    const dp = []; for (let i = 0; i <= 10; i++) { const r = 0.75 * i / 10; dp.push(new THREE.Vector2(r, 0.35 * (i / 10) ** 2)); }
-    const dish = new THREE.LatheGeometry(dp, 40); dish.translate(0, 61.0, 0);
-    addMesh(p, dish, mat(C.white, { r: 0.5, side: THREE.DoubleSide }));
-    addMesh(p, cyl(0.05, 0.05, 60.9, 61.05, { seg: 12 }), mat(C.alu, { m: 0.35, r: 0.35 }), { edges: false });
-  }
-  {
-    const p = newPart('cofia', upG);
-    const Rb = 2.3, L = 4.8, rho = (Rb * Rb + L * L) / (2 * Rb);  // ojiva tangente
-    const pts = [new THREE.Vector2(1.86, 0), new THREE.Vector2(1.86, 0.3), new THREE.Vector2(Rb, 1.3), new THREE.Vector2(Rb, 6.4)];
-    for (let i = 1; i <= 28; i++) { const s = i / 28; pts.push(new THREE.Vector2(Math.max(0, Math.sqrt(rho * rho - (L * s) ** 2) + Rb - rho), 6.4 + s * L)); }
-    p.extra.halves = [];
-    for (const [k, phi] of [[1, 0], [-1, Math.PI]]) {
-      const hg = new THREE.Group(); hg.position.y = 56.8; p.g.add(hg);
-      addMesh(p, new THREE.LatheGeometry(pts, 48, phi, Math.PI), mat(C.body, { side: THREE.DoubleSide }), { parent: hg, skin: true, angle: 20 });
-      p.extra.halves.push({ hg, k });
-    }
-  }
+  /* Mesa de lanzamiento y suelo */
+  const pad = new THREE.Group(); scene.add(pad);
+  const groundMat = new THREE.MeshStandardMaterial({ color: '#56634a', roughness: 1 });
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(90, 64), groundMat); ground.rotation.x = -Math.PI / 2; ground.position.y = -1.42; pad.add(ground);
+  const grid = new THREE.GridHelper(180, 60, 0x6f7d61, 0x6f7d61); grid.position.y = -1.41; grid.material.transparent = true; grid.material.opacity = 0.35; pad.add(grid);
+  const concrete = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 0.1, 40), new THREE.MeshStandardMaterial({ color: '#9a9a92', roughness: 0.95 })); concrete.position.y = -1.37; pad.add(concrete);
+  const tableMat = new THREE.MeshStandardMaterial({ color: '#4a4f45', roughness: 0.7, metalness: 0.2 });
+  const tring = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.06, 8, 40), tableMat); tring.rotation.x = Math.PI / 2; tring.position.y = -0.05; pad.add(tring);
+  for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + i * Math.PI / 2; const l = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.4, 0.16), tableMat); l.position.set(Math.sin(a) * 0.95, -0.7, Math.cos(a) * 0.95); l.rotation.z = Math.sin(a) * 0.15; l.rotation.x = -Math.cos(a) * 0.15; pad.add(l); }
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.8, 24), tableMat); cone.position.y = -0.95; pad.add(cone);
 
-  /* Llamas */
+  /* Llama */
   const flameMat = new THREE.MeshBasicMaterial({ color: 0xffa640, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false });
   const coreMat = new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
-  function flame(r, len, x, y, z, parent) {
-    const g = new THREE.Group();
-    const outer = new THREE.Mesh(new THREE.ConeGeometry(r, len, 24, 1, true), flameMat); outer.rotation.x = Math.PI; outer.position.y = -len / 2;
-    const inner = new THREE.Mesh(new THREE.ConeGeometry(r * 0.55, len * 0.6, 20, 1, true), coreMat); inner.rotation.x = Math.PI; inner.position.y = -len * 0.3;
-    g.add(outer, inner); g.position.set(x, y, z); g.visible = false; parent.add(g);
-    return g;
-  }
-  const flames1 = P.motores.extra.exits.map(([x, z]) => flame(0.42, 7, x, 0, z, P.motores.g));
-  const flame2 = flame(1.05, 10, 0, 41.6, 0, P.mvac.g);
+  const flame = new THREE.Group();
+  const fo = new THREE.Mesh(new THREE.ConeGeometry(0.42, 5, 24, 1, true), flameMat); fo.rotation.x = Math.PI; fo.position.y = -2.5;
+  const fi = new THREE.Mesh(new THREE.ConeGeometry(0.24, 2.6, 20, 1, true), coreMat); fi.rotation.x = Math.PI; fi.position.y = -1.3;
+  flame.add(fo, fi); flame.position.y = 0.15; flame.visible = false; model.add(flame);
 
-  /* Suelo */
-  let grid = null;
-  function makeGrid() {
-    if (grid) { scene.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
-    grid = new THREE.GridHelper(80, 40, inkC, new THREE.Color(ruleStr));
-    grid.position.y = -0.3; grid.material.transparent = true; grid.material.opacity = 0.7;
-    scene.add(grid);
+  /* Etiquetas */
+  const labelsEl = $('#labels'), leaders = $('#leaders');
+  const LBL = PARTS.map((d, i) => { const n = el('div', 'lbl', d.name); n.dataset.side = i % 2 ? 'r' : 'l'; n.addEventListener('click', () => select(d.id, { focus: true })); labelsEl.append(n); return { d, n, side: i % 2 ? 1 : -1 }; });
+  const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3(), right = new THREE.Vector3();
+  function updateLabels() {
+    if (!labelsOn) return;
+    const W = host.clientWidth, H = host.clientHeight; let lines = '';
+    right.setFromMatrixColumn(camera.matrixWorld, 0);
+    const placed = { '-1': [], '1': [] };
+    for (const L of LBL) {
+      const g = P[L.d.id].g; let vis = true; for (let n = g; n; n = n.parent) if (!n.visible) vis = false;
+      const mid = (L.d.y[0] + L.d.y[1]) / 2;
+      tmp.set(0, mid, 0); g.localToWorld(tmp);
+      tmp2.copy(tmp).addScaledVector(right, 1.0); tmp.project(camera); tmp2.project(camera);
+      if (!vis || tmp.z > 1 || Math.abs(tmp.x) > 1.2 || Math.abs(tmp.y) > 1.2) { L.n.hidden = true; continue; }
+      const sx = (tmp.x + 1) / 2 * W, sy = (1 - tmp.y) / 2 * H, rpx = Math.abs((tmp2.x + 1) / 2 * W - sx);
+      placed[L.side].push({ L, sx, sy, rpx, ly: sy });
+    }
+    for (const side of ['-1', '1']) {
+      const arr = placed[side].sort((a, b) => a.sy - b.sy);
+      for (let i = 1; i < arr.length; i++) if (arr[i].ly - arr[i - 1].ly < 24) arr[i].ly = arr[i - 1].ly + 24;
+      for (const a of arr) {
+        const s = +side, x0 = a.sx + s * (a.rpx + 4), x1 = a.sx + s * (a.rpx + 34);
+        a.L.n.hidden = false; a.L.n.style.left = x1 + 'px'; a.L.n.style.top = a.ly + 'px';
+        a.L.n.classList.toggle('on', a.L.d.id === selected);
+        lines += `<line class="${a.L.d.id === selected ? 'on' : ''}" x1="${x0.toFixed(1)}" y1="${a.sy.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${a.ly.toFixed(1)}"/>`;
+      }
+    }
+    leaders.innerHTML = lines;
   }
 
-  /* Resaltado, rayos X y tema */
+  /* Resaltado, rayos X, tema */
   let hovered = null;
   function highlight() {
     for (const p of Object.values(P)) {
       const s = p.id === selected, h = p.id === hovered && !s;
-      for (const m of p.meshes) { m.material.emissive.copy(accC); m.material.emissiveIntensity = s ? 0.55 : h ? 0.22 : 0; }
-      p.edge.color.copy(s ? accC : inkC);
-      p.edge.opacity = s ? 1 : (xray ? 0.75 : 0.45);
+      for (const m of p.meshes) { m.material.emissive.copy(accC); m.material.emissiveIntensity = s ? 0.5 : h ? 0.2 : 0; }
+      p.edge.color.copy(s ? accC : inkC); p.edge.opacity = s ? 1 : (xray ? 0.8 : 0.45);
     }
   }
-  function setXray() {
-    for (const m of skins) { m.material.transparent = xray; m.material.opacity = xray ? 0.1 : 1; m.material.depthWrite = !xray; m.material.needsUpdate = true; }
-    for (const f of fluids) f.m.visible = xray;
+  function setXrayMode() {
+    for (const m of skins) { m.material.transparent = xray; m.material.opacity = xray ? 0.12 : 1; m.material.depthWrite = !xray; m.material.needsUpdate = true; }
+    for (const m of xonly) m.visible = xray;
     highlight();
   }
   function theme() {
     const cs = getComputedStyle(document.documentElement);
-    inkC.set(cs.getPropertyValue('--ink').trim() || '#1b2833');
-    accC.set(cs.getPropertyValue('--accent').trim() || '#e0531f');
-    ruleStr = cs.getPropertyValue('--rule').trim() || '#b6c2ca';
-    makeGrid(); highlight();
+    inkC.set(cs.getPropertyValue('--ink').trim() || '#1b2833'); accC.set(cs.getPropertyValue('--accent').trim() || '#e0531f');
+    highlight();
   }
   try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', theme); } catch (e) {}
   new MutationObserver(theme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-  /* Puntero: girar, acercar, señalar y elegir piezas */
-  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const tip = $('#tip'), vp = $('.viewport');
+  /* Puntero */
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), tip = $('#tip');
   const shown = o => { for (let n = o; n; n = n.parent) if (!n.visible) return false; return true; };
   function pick(ev) {
     const r = cv.getBoundingClientRect();
     ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    for (const h of ray.intersectObjects(pickables, false)) {
-      if (!shown(h.object)) continue;
-      if (xray && h.object.userData.skin) continue;
-      return h.object.userData.part;
-    }
+    for (const h of ray.intersectObjects(pickables, false)) { if (!shown(h.object)) continue; if (xray && h.object.userData.skin) continue; return h.object.userData.part; }
     return null;
   }
-  const clampDist = d => Math.max(18, Math.min(420, d));
-  const pointers = new Map();
-  let down = null, pinch = 0;
+  const pointers = new Map(); let down = null, pinch = 0;
   cv.addEventListener('pointerdown', e => {
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    ctl.autoRotate = false; tip.hidden = true;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); ctl.autoRotate = false; ctl.goal = null; tip.hidden = true;
     down = pointers.size === 1 ? { x: e.clientX, y: e.clientY } : null;
     if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); }
   });
-  const release = e => {
-    if (down && pointers.size === 1 && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const id = pick(e); if (id) select(id); }
+  cv.addEventListener('pointerup', e => {
+    if (down && pointers.size === 1 && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const id = pick(e); if (id) select(id, { focus: true }); }
     pointers.delete(e.pointerId); down = null;
-  };
-  cv.addEventListener('pointerup', release);
+  });
   cv.addEventListener('pointercancel', e => { pointers.delete(e.pointerId); down = null; });
   cv.addEventListener('pointermove', e => {
     const prev = pointers.get(e.pointerId);
     if (prev) {
-      if (pointers.size === 1) {
-        ctl.theta -= (e.clientX - prev.x) * 0.008;
-        ctl.phi = Math.max(0.08, Math.min(Math.PI - 0.08, ctl.phi - (e.clientY - prev.y) * 0.008));
-      }
+      if (pointers.size === 1) { ctl.theta -= (e.clientX - prev.x) * 0.008; ctl.phi = Math.max(0.08, Math.min(Math.PI - 0.08, ctl.phi - (e.clientY - prev.y) * 0.008)); }
       prev.x = e.clientX; prev.y = e.clientY;
-      if (pointers.size === 2) {
-        const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
-        if (pinch > 0 && d > 0) ctl.dist = clampDist(ctl.dist * pinch / d);
-        pinch = d;
-      }
+      if (pointers.size === 2) { const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch > 0 && d > 0) { ctl.dist = clampDist(ctl.dist * pinch / d); ctl.userZoom = true; } pinch = d; }
       return;
     }
     if (e.pointerType === 'touch') return;
     const id = pick(e);
     if (id !== hovered) { hovered = id; highlight(); }
     cv.style.cursor = id ? 'pointer' : 'grab';
-    if (id) {
-      const vr = vp.getBoundingClientRect();
-      tip.textContent = byId[id].name; tip.hidden = false;
-      tip.style.left = (e.clientX - vr.left) + 'px'; tip.style.top = (e.clientY - vr.top) + 'px';
-    } else tip.hidden = true;
+    if (id) { const vr = vp.getBoundingClientRect(); tip.textContent = byId[id].name; tip.hidden = false; tip.style.left = (e.clientX - vr.left) + 'px'; tip.style.top = (e.clientY - vr.top) + 'px'; }
+    else tip.hidden = true;
   });
   cv.addEventListener('pointerleave', () => { tip.hidden = true; if (hovered) { hovered = null; highlight(); } });
-  cv.addEventListener('wheel', e => { e.preventDefault(); ctl.autoRotate = false; ctl.dist = clampDist(ctl.dist * Math.exp(e.deltaY * 0.001)); }, { passive: false });
+  cv.addEventListener('wheel', e => { e.preventDefault(); ctl.autoRotate = false; ctl.userZoom = true; ctl.dist = clampDist(ctl.dist * Math.exp(e.deltaY * 0.001)); }, { passive: false });
 
-  function resize() {
-    const w = host.clientWidth, h = host.clientHeight; if (!w || !h) return;
-    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
-  }
+  function resize() { const w = host.clientWidth, h = host.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(host); else addEventListener('resize', resize);
   resize();
 
-  /* Estado por fotograma */
-  function apply(k, t, flying) {
+  /* Por fotograma */
+  const VS = 6;   // unidades de escena por km de vuelo
+  let lastK = 0, tilt = 0;
+  function render(dt, k, t, st, flying) {
     for (const d of PARTS) P[d.id].g.position.set(0, d.ex * k, 0);
-    const finD = clamp01((t - TS - 2) / 6);
-    for (const f of P.aletas.extra.fins) {
-      const r = 1.87 + k * 1.0;
-      f.o.position.x = Math.sin(f.a) * r; f.o.position.z = Math.cos(f.a) * r;
-      f.hinge.rotation.x = finD * Math.PI / 2;
-    }
-    for (const l of P.patas.extra.legs) l.hinge.rotation.x = k * 0.28;
+    model.position.y = -7 + 5.7 * k;   // en el despiece todo sube para no hundirse en el suelo
+    P.aletas.extra.fins.forEach((o, i) => { const a = i * Math.PI / 2; o.position.set(Math.sin(a + Math.PI / 2) * k * 0.9, 0, Math.cos(a + Math.PI / 2) * k * 0.9); });
+    for (const m of fluids) m.scale.y = Math.max(0.002, st.fuel);
 
-    rocket.position.y = yOff(t);
-    if (t > TS) {
-      const dt = t - TS;
-      s1G.position.set(dt * 0.04, -0.25 * dt - 0.0325 * dt * dt, 0);
-      s1G.rotation.z = dt * 0.005; s1G.visible = dt < 120;
-    } else { s1G.position.set(0, 0, 0); s1G.rotation.z = 0; s1G.visible = true; }
+    const air = flying || t > 0;
+    const targetTilt = air && st.v > 5 ? -(Math.PI / 2 - st.gam) : 0;
+    tilt += (targetTilt - tilt) * (1 - Math.exp(-dt * (playing ? 6 : 30)));
+    flight.rotation.z = tilt;
+    flight.position.set(air ? st.x * VS : 0, 7 + (air ? st.h * VS : 0), 0);
+    const burn = air && st.fr > 0;
+    flame.visible = burn;
+    if (burn) { const fl = reduce ? 1 : 1 + (Math.random() - 0.5) * 0.15; const w = Math.min(4, 1 + st.h / 25); flame.scale.set(w * (0.6 + 0.4 * st.fr), fl * (0.5 + 0.5 * st.fr) * (1 + st.h / 60), w * (0.6 + 0.4 * st.fr)); }
 
-    let fx = 0, fy = 0, ang = 0, fvis = true;
-    if (t > TF) { const d = t - TF; fx = d * 0.12; fy = -0.15 * d - 0.0325 * d * d; ang = Math.min(1, d / 6) * 0.7; fvis = d < 80; }
-    for (const h of P.cofia.extra.halves) {
-      h.hg.position.x = h.k * (3 * k + fx); h.hg.position.y = 56.8 + fy;
-      h.hg.rotation.z = -h.k * ang; h.hg.visible = fvis;
-    }
-    if (t > TD) { const d = t - TD; P.carga.g.position.y += d * 0.05; P.carga.g.rotation.y = d * 0.015; }
-    else P.carga.g.rotation.y = 0;
-
-    for (const f of fluids) {
-      const fill = f.stage === 's1' ? 1 - 0.9 * clamp01(t / MECO) : 1 - 0.98 * clamp01((t - IGN2) / (SECO - IGN2));
-      f.m.scale.y = Math.max(fill, 0.002);
-    }
-
-    const on1 = flying && t < MECO, on2 = t >= IGN2 && t < SECO;
-    const fl = reduce ? 1 : 1 + (Math.random() - 0.5) * 0.14;
-    for (const g of flames1) { g.visible = on1; g.scale.set(1, fl, 1); }
-    flame2.visible = on2; flame2.scale.set(1 + (fl - 1) * 0.5, fl, 1 + (fl - 1) * 0.5);
-
-    return t > TS ? rocket.position.y + 54.8 : rocket.position.y + 34.3 + 9.5 * k;
-  }
-
-  let lastK = 0;
-  function render(dt, k, t, flying) {
-    const desired = apply(k, t, flying);
-    // Al despiezar, la cámara se aleja en proporción para que quepa la pila completa.
-    if (k !== lastK) { ctl.dist = clampDist(ctl.dist * (1 + 0.45 * k) / (1 + 0.45 * lastK)); lastK = k; }
-    if (ctl.autoRotate) ctl.theta += dt * 0.09;
-    ctl.target.y += (desired - ctl.target.y) * (1 - Math.exp(-dt * (flying ? 10 : 4)));
+    // Destino de la cámara
+    let ty = 6.8 + 6.6 * k, tx = 0, wantDist = null;
+    if (air) { tx = flight.position.x; ty = flight.position.y; focus = null; }
+    else if (focus) { const d = byId[focus]; ty = (d.y[0] + d.y[1]) / 2 + d.ex * k + 5.7 * k; wantDist = Math.max(8, Math.min(34, (d.y[1] - d.y[0]) * 2.6 + 7)) / Math.min(1, camera.aspect * 1.3); }
+    if (!focus && k !== lastK) ctl.dist = clampDist(ctl.dist * (1 + 0.9 * k) / (1 + 0.9 * lastK));
+    lastK = k;
+    if (wantDist && !ctl.userZoom) ctl.dist += (wantDist - ctl.dist) * (1 - Math.exp(-dt * 3));
+    const f = air ? 1 - Math.exp(-dt * 12) : 1 - Math.exp(-dt * 4);
+    ctl.target.x += (tx - ctl.target.x) * f; ctl.target.y += (ty - ctl.target.y) * f;
+    if (ctl.goal) { ctl.theta += (ctl.goal.theta - ctl.theta) * (1 - Math.exp(-dt * 5)); ctl.phi += (ctl.goal.phi - ctl.phi) * (1 - Math.exp(-dt * 5)); if (Math.abs(ctl.goal.theta - ctl.theta) < 0.002 && Math.abs(ctl.goal.phi - ctl.phi) < 0.002) ctl.goal = null; }
+    if (ctl.autoRotate) ctl.theta += dt * 0.12;
     placeCamera();
     renderer.render(scene, camera);
+    updateLabels();
   }
 
-  resetCamera();
-  theme();
-  setXray();
-  view = { render, highlight, setXray, resetCamera };
+  resetCamera(); theme(); setXrayMode();
+  view = {
+    render, highlight, resetCamera, preset,
+    setXray: setXrayMode,
+    focusOn(id) { focus = id; ctl.userZoom = false; ctl.autoRotate = false; },
+    clearFocus() { focus = null; },
+    resetFlight() { tilt = 0; },
+  };
+  if (location.hash && byId[location.hash.slice(1)]) view.focusOn(location.hash.slice(1));
 }
 </script>
 </body>
