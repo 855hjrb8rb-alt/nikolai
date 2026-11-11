@@ -16,6 +16,8 @@ const { pathToFileURL } = require("node:url");
 const isMac = process.platform === "darwin";
 const OLLAMA = process.env.OLLAMA_HOST_URL || "http://127.0.0.1:11434";
 const HOTKEY = "Alt+Space";
+// Para diagnosticar un arranque: GEORGE_SKIP=tray,login,hotkey,fullscreen,ollama omite esas piezas.
+const SKIP = new Set((process.env.GEORGE_SKIP || "").split(",").filter(Boolean));
 
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
@@ -70,7 +72,7 @@ function createShell() {
   shellWin.once("ready-to-show", () => {
     // Pantalla completa "simple": tapa el Dock y la barra de menús sin cambiar de Space,
     // así las apps que abras aparecen encima de tu escritorio con estilo.
-    if (isMac) shellWin.setSimpleFullScreen(true);
+    if (isMac && !SKIP.has("fullscreen")) shellWin.setSimpleFullScreen(true);
     shellWin.show();
   });
   shellWin.on("close", (e) => { if (!quitting) { e.preventDefault(); shellWin.hide(); } });
@@ -126,6 +128,7 @@ const THEME_NAMES = [
 ];
 
 function buildTray() {
+  if (SKIP.has("tray")) return;
   if (!tray) {
     const icon = nativeImage.createFromPath(path.join(__dirname, "build", "trayTemplate.png"));
     if (isMac) icon.setTemplateImage(true);
@@ -153,7 +156,7 @@ function buildTray() {
     { type: "separator" },
     {
       label: "Abrir al encender la Mac", type: "checkbox",
-      checked: app.getLoginItemSettings().openAtLogin,
+      checked: SKIP.has("login") ? false : app.getLoginItemSettings().openAtLogin,
       click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }),
     },
     { label: "Salir de George", click: () => { quitting = true; app.quit(); } },
@@ -395,7 +398,7 @@ function registerIpc() {
     ramGB: Math.round(os.totalmem() / 2 ** 30), version: app.getVersion(),
     whisper: Boolean(findWhisper() && findWhisperModel()),
     faceModel: fs.existsSync(path.join(modelsDir(), "face_landmarker.task")),
-    loginItem: app.getLoginItemSettings().openAtLogin, hotkey: HOTKEY, musicRoot: musicRoot(),
+    loginItem: SKIP.has("login") ? false : app.getLoginItemSettings().openAtLogin, hotkey: HOTKEY, musicRoot: musicRoot(),
   }));
   ipcMain.handle("sys:volume", (_e, v) => osa(`set volume output volume ${Math.max(0, Math.min(100, Math.round(v)))}`).then((r) => r.ok));
   ipcMain.handle("sys:battery", async () => {
@@ -444,12 +447,12 @@ app.whenReady().then(() => {
   const s = settings();
   if (s.firstRunDone !== true) {
     // La primera vez queda puesto para abrirse solo al encender la Mac.
-    if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: true });
+    if (app.isPackaged && !SKIP.has("login")) app.setLoginItemSettings({ openAtLogin: true });
     writeStore("settings", { ...s, firstRunDone: true });
   }
   buildTray();
-  globalShortcut.register(HOTKEY, summonGeorge);
-  if (s.themesEnabled === false) createPanel(!app.getLoginItemSettings().wasOpenedAtLogin);
+  if (!SKIP.has("hotkey")) globalShortcut.register(HOTKEY, summonGeorge);
+  if (s.themesEnabled === false) createPanel(SKIP.has("login") || !app.getLoginItemSettings().wasOpenedAtLogin);
   else createShell();
-  startOllama();
+  if (!SKIP.has("ollama")) startOllama();
 });

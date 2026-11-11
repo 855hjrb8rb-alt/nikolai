@@ -15,20 +15,31 @@
     "@mediapipe/tasks-vision": "0.10.14"
   },
   "devDependencies": {
-    "electron": "^33.4.11",
-    "electron-builder": "^25.1.8"
+    "electron": "^45.3.0",
+    "electron-builder": "^26.18.0"
   },
   "build": {
     "appId": "com.george.escritorio",
     "productName": "George",
     "asar": false,
-    "files": ["main.js", "preload.js", "ui/**/*", "build/trayTemplate*.png", "node_modules/@mediapipe/tasks-vision/**/*", "package.json"],
-    "directories": { "buildResources": "build" },
+    "files": [
+      "main.js",
+      "preload.js",
+      "ui/**/*",
+      "build/trayTemplate*.png",
+      "node_modules/@mediapipe/tasks-vision/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
       "identity": null,
-      "target": ["dir"],
+      "target": [
+        "dir"
+      ],
       "extendInfo": {
         "NSMicrophoneUsageDescription": "George te escucha para que puedas hablarle.",
         "NSCameraUsageDescription": "George puede verte por la cámara cuando tú la enciendes.",

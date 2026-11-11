@@ -32,11 +32,17 @@ jobs:
           echo "APP=$APP" >> "$GITHUB_ENV"
       - name: Arranca y sigue vivo
         run: |
-          "$APP/Contents/MacOS/George" > george.log 2>&1 &
-          sleep 15
-          pgrep -x George || { cat george.log; exit 1; }
-          pkill -x George || true
+          probar() { # etiqueta, GEORGE_SKIP
+            GEORGE_SKIP="$2" "$APP/Contents/MacOS/George" > "george-$1.log" 2>&1 &
+            sleep 15
+            if pgrep -x George >/dev/null; then echo "OK   [$1]"; pkill -x George || true; sleep 2; return 0; fi
+            echo "FALLA [$1]"; tail -5 "george-$1.log"; return 1
+          }
           /usr/libexec/PlistBuddy -c "Print :NSMicrophoneUsageDescription" "$APP/Contents/Info.plist"
+          if probar normal ""; then exit 0; fi
+          # Si falla, se prueba omitiendo cada pieza para saber cuál es.
+          for s in tray login hotkey fullscreen ollama "tray,login,hotkey,fullscreen,ollama"; do probar "sin-$s" "$s" || true; done
+          exit 1
       - name: Empaquetar
         run: ditto -c -k --keepParent "$APP" George-mac.zip
       - uses: actions/upload-artifact@v4
