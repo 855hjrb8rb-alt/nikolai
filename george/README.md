@@ -45,7 +45,10 @@ Diseños originales inspirados en géneros de cine (no usan logos ni imágenes d
 - **Nieve:** botón ❄ (arriba a la derecha) o «George, quita la nieve». Se puede poner en cualquier estilo.
 - **Quitar los estilos:** Estilos → «Quitar los estilos». Vuelve tu Mac normal y George se queda como
   ventana flotante y en la barra de menús.
-- Escribe en cualquier momento para buscar una app; clic derecho en una app la fija en el dock.
+- **Apps:** el dock de abajo tiene tus favoritas; el último botón abre todas. Escribe en cualquier
+  momento para buscar una app; clic derecho en una app la fija o la quita del dock.
+- **Iconos:** las apps conocidas llevan un icono dibujado con el color del estilo y el resto, su icono
+  real teñido. Si prefieres los originales: Ajustes → General.
 
 ## La música
 

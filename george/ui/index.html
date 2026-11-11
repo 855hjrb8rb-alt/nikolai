@@ -21,33 +21,45 @@
       <button id="settingsBtn" class="chip icon" title="Ajustes">⚙</button>
     </header>
 
-    <section id="hero">
-      <div id="clock">00:00</div>
-      <div id="date"></div>
-      <div id="motto"></div>
+    <section id="stage">
+      <div id="hero">
+        <div id="heroLabel"></div>
+        <div id="clock">00:00</div>
+        <div id="date"></div>
+        <div id="motto"></div>
+      </div>
+      <div id="widgets">
+        <div id="cal" class="card"></div>
+        <div id="player" class="card">
+          <button id="playBtn" class="round" title="Reproducir / pausar">▶</button>
+          <div class="meta"><b id="trackTitle">Música</b><small id="trackSrc"></small></div>
+          <button id="nextBtn" class="mini" title="Siguiente">⏭</button>
+          <div class="prow">
+            <input id="vol" type="range" min="0" max="100" value="60" title="Volumen">
+            <button id="folderBtn" class="mini" title="Abrir la carpeta de música de este estilo">📁</button>
+            <button id="appleBtn" class="mini" title="Tocar mi lista de la app Música / buscar la banda sonora">♫</button>
+          </div>
+        </div>
+      </div>
+      <div id="orb" class="card">
+        <canvas id="orbFace" title="Abrir a George"></canvas>
+        <b>George</b><small id="orbState">en línea</small>
+        <p id="lastLine"></p>
+        <div class="pbtns"><button id="pMic" class="btn ghost small">🎙 Hablar</button><button id="pChat" class="btn small">Chat</button></div>
+      </div>
     </section>
 
-    <section id="launcher">
+    <footer id="foot"><nav id="dock" class="card"></nav></footer>
+  </main>
+  <div id="vignette"></div>
+
+  <!-- ===== Todas las apps ===== -->
+  <div id="launcher" class="overlay" hidden>
+    <div id="launchBox">
       <div id="searchWrap"><input id="search" type="search" placeholder="Buscar una app…" autocomplete="off" spellcheck="false"></div>
       <div id="apps" tabindex="-1"></div>
-    </section>
-
-    <footer id="foot">
-      <div id="player" class="card">
-        <button id="playBtn" class="round" title="Reproducir / pausar">▶</button>
-        <div class="meta"><b id="trackTitle">Música</b><small id="trackSrc"></small></div>
-        <button id="nextBtn" class="mini" title="Siguiente">⏭</button>
-        <input id="vol" type="range" min="0" max="100" value="60" title="Volumen">
-        <button id="folderBtn" class="mini" title="Abrir la carpeta de música de este estilo">📁</button>
-        <button id="appleBtn" class="mini" title="Tocar mi lista de la app Música / buscar la banda sonora">♫</button>
-      </div>
-      <nav id="dock" class="card"></nav>
-      <button id="orb" class="card" title="Hablar con George">
-        <canvas id="orbFace"></canvas>
-        <span><b>George</b><small id="orbState">en línea</small></span>
-      </button>
-    </footer>
-  </main>
+    </div>
+  </div>
   <canvas id="snow"></canvas>
 
   <!-- ===== George ===== -->
@@ -131,6 +143,7 @@
       <section id="tGeneral" class="tab" hidden>
         <label class="check"><input id="loginItem" type="checkbox"> Abrir George al encender la Mac</label>
         <label class="check"><input id="snowAll" type="checkbox"> Nieve en este estilo</label>
+        <label class="check"><input id="iconsOrig" type="checkbox"> Usar los iconos originales de las apps (sin tematizar)</label>
         <p class="hint">Atajo para llamar a George desde cualquier app: <kbd id="hotkey">⌥ Espacio</kbd>. También está siempre en la barra de menús, aunque quites los estilos.</p>
         <div class="row"><button id="offStyles" class="btn ghost">Quitar los estilos</button><button id="quit" class="btn ghost">Salir de George</button></div>
         <p class="hint" id="about"></p>

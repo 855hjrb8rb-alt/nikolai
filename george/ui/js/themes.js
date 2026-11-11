@@ -5,7 +5,7 @@
 
 export const THEMES = [
   {
-    id: "aventura", name: "Reliquia", tag: "Aventura · arqueología años 30", glyph: "🧭",
+    id: "aventura", layout: "left", label: "Diario de expedición · Hoja 12", name: "Reliquia", tag: "Aventura · arqueología años 30", glyph: "🧭",
     fx: ["map", "dust"], icon: "seal", snow: false,
     vars: {
       bg: "radial-gradient(120% 90% at 50% 30%, #e9d3a1 0%, #c9a468 55%, #7c5a2c 100%)",
@@ -19,7 +19,7 @@ export const THEMES = [
     apple: "Raiders of the Lost Ark soundtrack John Williams", playlist: "George – Aventura",
   },
   {
-    id: "reactor", name: "Reactor", tag: "Armadura · interfaz holográfica", glyph: "⚛️",
+    id: "reactor", layout: "core", label: "SISTEMA · EN LÍNEA", name: "Reactor", tag: "Armadura · interfaz holográfica", glyph: "⚛️",
     fx: ["hud", "grid"], icon: "hex", snow: false,
     vars: {
       bg: "radial-gradient(90% 80% at 50% 45%, #0b2a3d 0%, #06131f 55%, #02060b 100%)",
@@ -33,7 +33,7 @@ export const THEMES = [
     apple: "Iron Man soundtrack", playlist: "George – Reactor",
   },
   {
-    id: "expreso", name: "Expreso del Norte", tag: "Tren de Nochebuena", glyph: "🚂",
+    id: "expreso", layout: "center", label: "Boleto de ida y vuelta · Vagón 1", name: "Expreso del Norte", tag: "Tren de Nochebuena", glyph: "🚂",
     fx: ["aurora", "stars", "train"], icon: "ticket", snow: true,
     vars: {
       bg: "linear-gradient(180deg, #050b24 0%, #0c1d4a 45%, #1d3a6e 78%, #dfe9f7 100%)",
@@ -47,7 +47,7 @@ export const THEMES = [
     apple: "The Polar Express soundtrack", playlist: "George – Expreso",
   },
   {
-    id: "galaxia", name: "Galaxia Lejana", tag: "Ópera espacial", glyph: "🌌",
+    id: "galaxia", layout: "left", label: "Sector 7 · Órbita estable", name: "Galaxia Lejana", tag: "Ópera espacial", glyph: "🌌",
     fx: ["hyperspace", "planet"], icon: "holo", snow: false,
     vars: {
       bg: "radial-gradient(100% 80% at 50% 50%, #0a0f24 0%, #03040c 60%, #000 100%)",
@@ -61,7 +61,7 @@ export const THEMES = [
     apple: "Star Wars A New Hope soundtrack John Williams", playlist: "George – Galaxia",
   },
   {
-    id: "guerra", name: "Cuartel 1944", tag: "Sala de mapas · años 40", glyph: "🎖️",
+    id: "guerra", layout: "left", label: "Parte del día · Confidencial", name: "Cuartel 1944", tag: "Sala de mapas · años 40", glyph: "🎖️",
     fx: ["radar", "dust"], icon: "stamp", snow: false,
     vars: {
       bg: "radial-gradient(110% 90% at 50% 40%, #6b6a45 0%, #45472c 55%, #1d2014 100%)",
@@ -75,7 +75,7 @@ export const THEMES = [
     apple: "Glenn Miller In the Mood 1940s big band", playlist: "George – 1944",
   },
   {
-    id: "navidad", name: "Navidad Clásica", tag: "Chimenea, luces y crooners", glyph: "🎄",
+    id: "navidad", layout: "center", label: "❦ Felices fiestas ❦", name: "Navidad Clásica", tag: "Chimenea, luces y crooners", glyph: "🎄",
     fx: ["lights", "hearth"], icon: "ornament", snow: true,
     vars: {
       bg: "radial-gradient(110% 90% at 50% 100%, #7a1414 0%, #3d0a0f 45%, #0d1f16 100%)",
@@ -89,7 +89,7 @@ export const THEMES = [
     apple: "Frank Sinatra Christmas", playlist: "George – Navidad",
   },
   {
-    id: "magia", name: "Colegio de Magia", tag: "Velas flotantes y pergaminos", glyph: "🪄",
+    id: "magia", layout: "center", label: "Tablón de la sala común", name: "Colegio de Magia", tag: "Velas flotantes y pergaminos", glyph: "🪄",
     fx: ["candles", "stars"], icon: "rune", snow: false,
     vars: {
       bg: "radial-gradient(100% 90% at 50% 0%, #2a2248 0%, #15102a 50%, #07050f 100%)",
@@ -103,7 +103,7 @@ export const THEMES = [
     apple: "Harry Potter soundtrack Hedwig's Theme", playlist: "George – Magia",
   },
   {
-    id: "matrix", name: "Código", tag: "Lluvia digital", glyph: "🟩",
+    id: "matrix", layout: "left", label: "george@mac ~ % fecha", name: "Código", tag: "Lluvia digital", glyph: "🟩",
     fx: ["coderain"], icon: "term", snow: false,
     vars: {
       bg: "#000",
@@ -117,7 +117,7 @@ export const THEMES = [
     apple: "The Matrix soundtrack", playlist: "George – Código",
   },
   {
-    id: "neon", name: "Neón 2049", tag: "Ciudad de lluvia y neón", glyph: "🌃",
+    id: "neon", layout: "center", label: "DISTRITO 9 · ABIERTO 24 H", name: "Neón 2049", tag: "Ciudad de lluvia y neón", glyph: "🌃",
     fx: ["synthgrid", "rain"], icon: "neon", snow: false,
     vars: {
       bg: "linear-gradient(180deg, #0a0220 0%, #2a0845 45%, #ff3d81 100%)",
@@ -131,7 +131,7 @@ export const THEMES = [
     apple: "Blade Runner soundtrack Vangelis", playlist: "George – Neón",
   },
   {
-    id: "jurasico", name: "Isla Jurásica", tag: "Selva, ámbar y huellas", glyph: "🦖",
+    id: "jurasico", layout: "right", label: "Centro de visitantes · Sector 4", name: "Isla Jurásica", tag: "Selva, ámbar y huellas", glyph: "🦖",
     fx: ["jungle", "fireflies"], icon: "amber", snow: false,
     vars: {
       bg: "radial-gradient(120% 90% at 50% 20%, #2f5b2a 0%, #14301a 55%, #050e08 100%)",

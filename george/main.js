@@ -16,7 +16,7 @@ const { pathToFileURL } = require("node:url");
 const isMac = process.platform === "darwin";
 const OLLAMA = process.env.OLLAMA_HOST_URL || "http://127.0.0.1:11434";
 const HOTKEY = "Alt+Space";
-// Para diagnosticar un arranque: GEORGE_SKIP=tray,login,hotkey,fullscreen,ollama omite esas piezas.
+// Para diagnosticar un arranque: GEORGE_SKIP=tray,login,hotkey,fullscreen,ollama,icons omite esas piezas.
 const SKIP = new Set((process.env.GEORGE_SKIP || "").split(",").filter(Boolean));
 
 protocol.registerSchemesAsPrivileged([
@@ -182,11 +182,19 @@ async function listApps() {
     }
   }
   const out = [];
-  await Promise.all([...found].map(async ([name, p]) => {
+  for (const [name, p] of found) {
     let icon = "";
-    try { icon = (await app.getFileIcon(p, { size: "large" })).toDataURL(); } catch { /* sin icono */ }
+    // En macOS el icono grande se saca como miniatura de la propia app (getFileIcon "large"
+    // no existe en macOS y cierra la app). De uno en uno para no saturar el sistema.
+    try {
+      if (SKIP.has("icons")) icon = "";
+      else if (isMac) icon = (await nativeImage.createThumbnailFromPath(p, { width: 128, height: 128 })).toDataURL();
+      else icon = (await app.getFileIcon(p, { size: "normal" })).toDataURL();
+    } catch {
+      try { icon = (await app.getFileIcon(p, { size: "normal" })).toDataURL(); } catch { /* sin icono */ }
+    }
     out.push({ name, path: p, icon });
-  }));
+  }
   out.sort((a, b) => a.name.localeCompare(b.name, "es"));
   if (out.length) appsCache = out;
   return out;

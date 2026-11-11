@@ -6,6 +6,7 @@ import { Music } from "./music.js";
 import { Speaker, Listener } from "./voice.js";
 import { Brain } from "./brain.js";
 import { Face } from "./face.js";
+import { glyphFor, svg } from "./icons.js";
 
 const $ = (id) => document.getElementById(id);
 const PANEL = new URLSearchParams(location.search).get("mode") === "panel";
@@ -13,7 +14,7 @@ document.body.classList.toggle("panel", PANEL);
 
 const settings = new Store("settings", {
   theme: "reactor", themesEnabled: true, snow: {}, favorites: null, volume: 60, autoplay: true,
-  model: "", voices: {}, rate: 185, wake: true, muted: false, photo: "", photoFace: null,
+  iconsOriginal: false, model: "", voices: {}, rate: 185, wake: true, muted: false, photo: "", photoFace: null,
 });
 
 const music = new Music();
@@ -41,7 +42,8 @@ function applyTheme(id, { instant = false, greet = false } = {}) {
   theme = themeById(id);
   const paint = () => {
     const b = document.body;
-    b.dataset.theme = theme.id; b.dataset.icon = theme.icon;
+    b.dataset.theme = theme.id; b.dataset.icon = theme.icon; b.dataset.layout = theme.layout;
+    $("heroLabel").textContent = theme.label;
     for (const [k, v] of Object.entries(theme.vars)) b.style.setProperty("--" + k, v);
     $("themeGlyph").textContent = theme.glyph; $("themeName").textContent = theme.name; $("themeTag").textContent = theme.tag;
     $("motto").textContent = theme.greet; $("plName").textContent = theme.playlist;
@@ -75,6 +77,7 @@ function tick() {
   const now = new Date();
   $("clock").textContent = now.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
   $("date").textContent = now.toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" });
+  if ($("cal").dataset.day !== String(now.getDate())) renderCalendar();
 }
 async function battery() {
   const b = await mac.sys.battery().catch(() => null);
@@ -86,7 +89,9 @@ async function battery() {
 function appButton(a) {
   const b = document.createElement("button"); b.className = "app"; b.title = a.name;
   const ico = document.createElement("span"); ico.className = "ico";
-  if (a.icon) { const img = document.createElement("img"); img.src = a.icon; img.alt = ""; img.draggable = false; ico.append(img); }
+  const gl = settings.data.iconsOriginal && a.icon ? null : glyphFor(a.name);
+  if (gl) ico.innerHTML = svg(gl);
+  else if (a.icon) { const img = document.createElement("img"); img.src = a.icon; img.alt = ""; img.draggable = false; ico.append(img); }
   else { const l = document.createElement("span"); l.className = "ltr"; l.textContent = a.name[0]; ico.append(l); }
   const nm = document.createElement("span"); nm.className = "name"; nm.textContent = a.name;
   b.append(ico, nm);
@@ -94,7 +99,7 @@ function appButton(a) {
   b.oncontextmenu = (e) => { e.preventDefault(); toggleFavorite(a); };
   return b;
 }
-function launch(a) { mac.apps.open(a.path).then((ok) => { if (!ok) toast(`No pude abrir ${a.name}`); }); }
+function launch(a) { closeLauncher(); mac.apps.open(a.path).then((ok) => { if (!ok) toast(`No pude abrir ${a.name}`); }); }
 function renderApps() {
   const q = norm($("search").value.trim());
   const list = q ? apps.filter((a) => norm(a.name).includes(q)) : apps;
@@ -102,6 +107,32 @@ function renderApps() {
   list.forEach((a, i) => { const b = appButton(a); if (q && i === 0) b.classList.add("sel"); box.append(b); });
   const dock = $("dock"); dock.textContent = "";
   for (const name of settings.data.favorites || []) { const a = apps.find((x) => x.name === name); if (a) dock.append(appButton(a)); }
+  // botón de "todas las apps"
+  const sep = document.createElement("span"); sep.className = "sep";
+  const all = document.createElement("button"); all.className = "app"; all.title = "Todas las apps";
+  all.innerHTML = `<span class="ico">${svg("grid")}</span><span class="name">Todas las apps</span>`;
+  all.onclick = () => openLauncher();
+  dock.append(sep, all);
+}
+function openLauncher(text = "") {
+  $("launcher").hidden = false; $("search").value = text; renderApps();
+  setTimeout(() => $("search").focus(), 30);
+}
+function closeLauncher() { $("launcher").hidden = true; $("search").value = ""; }
+
+// ---------------------------------------------------------------- calendario
+function renderCalendar() {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  const first = (new Date(y, m, 1).getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate(), prev = new Date(y, m, 0).getDate();
+  const cal = $("cal"); cal.textContent = "";
+  const h = document.createElement("h3"); const mes = now.toLocaleDateString("es", { month: "long", year: "numeric" }); h.textContent = mes[0].toUpperCase() + mes.slice(1);
+  const g = document.createElement("div"); g.className = "g";
+  const cell = (t, c) => { const sp = document.createElement("span"); sp.textContent = t; if (c) sp.className = c; g.append(sp); };
+  for (const d of "LMXJVSD") cell(d, "h");
+  for (let i = first; i > 0; i--) cell(prev - i + 1, "o");
+  for (let d = 1; d <= days; d++) cell(d, d === now.getDate() ? "t" : "");
+  for (let d = 1; (first + days + d - 1) % 7 !== 0; d++) cell(d, "o");
+  cal.append(h, g); cal.dataset.day = now.getDate();
 }
 function toggleFavorite(a) {
   const f = settings.data.favorites || [], i = f.indexOf(a.name);
@@ -135,6 +166,7 @@ function restState() { setState(listener.on ? "listening" : "idle"); }
 function addMsg(kind, text) {
   const d = document.createElement("div"); d.className = "msg " + kind; d.textContent = text;
   const log = $("gLog"); log.append(d); log.scrollTop = log.scrollHeight;
+  if (kind === "g" && text !== "…") $("lastLine").textContent = text;
   while (log.children.length > 120) log.firstChild.remove();
   return d;
 }
@@ -206,7 +238,7 @@ async function handle(text, viaVoice = false) {
   try {
     const answer = await brain.ask(text, {
       images,
-      onText: (t) => { bubble.textContent = t || "…"; $("gLog").scrollTop = $("gLog").scrollHeight; },
+      onText: (t) => { bubble.textContent = t || "…"; if (t) $("lastLine").textContent = t; $("gLog").scrollTop = $("gLog").scrollHeight; },
       onSentence: (s) => speaker.say(s),
     });
     if (!answer) bubble.remove();
@@ -229,7 +261,7 @@ async function setMic(on) {
     if (!info.whisper && isNative) { toast("Falta instalar el oído de George (Whisper). Ejecuta el instalador: lo explica el LÉEME.", 7000); return; }
     if (!(await listener.start())) { toast("No pude usar el micrófono. Revisa el permiso en Ajustes del Sistema → Privacidad → Micrófono.", 6000); return; }
   } else listener.stop();
-  $("micBtn").classList.toggle("on", listener.on);
+  $("micBtn").classList.toggle("on", listener.on); $("pMic").textContent = listener.on ? "🎙 Escuchando" : "🎙 Hablar";
   restState();
 }
 
@@ -335,16 +367,17 @@ async function main() {
   $("snowBtn").onclick = () => setSnow(!snowOn());
   $("settingsBtn").onclick = () => openSettings();
   $("search").oninput = renderApps;
-  $("search").onkeydown = (e) => { if (e.key === "Enter") { document.querySelector("#apps .app")?.click(); e.target.value = ""; renderApps(); } };
+  $("search").onkeydown = (e) => { if (e.key === "Enter") document.querySelector("#apps .app")?.click(); };
   $("playBtn").onclick = () => music.toggle();
   $("nextBtn").onclick = () => music.next();
   $("vol").oninput = (e) => { music.setVolume(e.target.value / 100); settings.set({ volume: Number(e.target.value) }); };
   $("folderBtn").onclick = $("musicFolder").onclick = () => { mac.music.openFolder(theme.id); toast(`Pon aquí tu música para «${theme.name}» y vuelve a entrar al estilo.`, 5000); };
   $("appleBtn").onclick = async () => { if (!(await music.playApple())) { await music.searchApple(); toast(`No encontré la lista «${theme.playlist}» en tu app Música; te abro la búsqueda de la banda sonora.`, 6000); } };
-  $("orb").onclick = () => { $("george").hidden ? openGeorge() : ($("george").hidden = true); };
+  $("orbFace").onclick = $("pChat").onclick = () => { $("george").hidden ? openGeorge() : ($("george").hidden = true); };
+  $("pMic").onclick = async () => { await setMic(!listener.on); if (listener.on) toast(settings.data.wake ? "Le escucho. Diga «George, …»" : "Le escucho."); };
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { for (const id of ["settings", "picker"]) if (!$(id).hidden) { $(id).hidden = true; return; } if (!PANEL && !$("george").hidden) $("george").hidden = true; }
-    else if (!PANEL && !e.metaKey && !e.ctrlKey && e.key.length === 1 && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && $("settings").hidden && $("picker").hidden) $("search").focus();
+    if (e.key === "Escape") { for (const id of ["settings", "picker", "launcher"]) if (!$(id).hidden) { $(id).hidden = true; return; } if (!PANEL && !$("george").hidden) $("george").hidden = true; }
+    else if (!PANEL && !e.metaKey && !e.ctrlKey && e.key.length === 1 && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && $("settings").hidden && $("picker").hidden && $("launcher").hidden && e.key.trim()) openLauncher();
   });
   document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o || e.target.closest("[data-close]")) o.hidden = true; }));
 
@@ -376,6 +409,9 @@ async function main() {
   $("recheck").onclick = async () => { $("brainStatus").textContent = "Comprobando…"; await brain.refresh(settings.data.model); info = await mac.sys.info().catch(() => info); await speaker.init(); renderBrainStatus(); renderVoices(); };
   $("loginItem").checked = Boolean(info.loginItem); $("loginItem").onchange = (e) => mac.app.loginItem(e.target.checked);
   $("snowAll").onchange = (e) => setSnow(e.target.checked);
+  const paintIcons = () => { document.body.classList.toggle("icons-original", settings.data.iconsOriginal); $("iconsOrig").checked = settings.data.iconsOriginal; renderApps(); };
+  $("iconsOrig").onchange = (e) => { settings.set({ iconsOriginal: e.target.checked }); paintIcons(); };
+  paintIcons();
   $("themesOff").onclick = $("offStyles").onclick = () => mac.app.themes(false);
   $("quit").onclick = () => mac.app.quit();
   $("about").textContent = `George ${info.version || ""} · todo se guarda y se procesa en esta Mac.`;
