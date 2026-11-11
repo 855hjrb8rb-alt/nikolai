@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' app: data: blob:; script-src 'self' app: 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' app: data: blob: https://storage.googleapis.com https://cdn.jsdelivr.net; media-src 'self' app: blob: data:; img-src 'self' app: data: blob:">
+  <title>George</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="reactor" data-icon="hex">
+  <div id="bgfill"></div>
+  <canvas id="bg"></canvas>
+
+  <!-- ===== Escritorio con estilo ===== -->
+  <main id="desk">
+    <header id="bar">
+      <button id="themeBtn" class="chip" title="Cambiar de estilo"><span id="themeGlyph"></span><span id="themeName"></span><small id="themeTag"></small></button>
+      <div class="spacer"></div>
+      <span id="battery" class="chip quiet" hidden></span>
+      <button id="snowBtn" class="chip icon" title="Nieve">❄</button>
+      <button id="settingsBtn" class="chip icon" title="Ajustes">⚙</button>
+    </header>
+
+    <section id="hero">
+      <div id="clock">00:00</div>
+      <div id="date"></div>
+      <div id="motto"></div>
+    </section>
+
+    <section id="launcher">
+      <div id="searchWrap"><input id="search" type="search" placeholder="Buscar una app…" autocomplete="off" spellcheck="false"></div>
+      <div id="apps" tabindex="-1"></div>
+    </section>
+
+    <footer id="foot">
+      <div id="player" class="card">
+        <button id="playBtn" class="round" title="Reproducir / pausar">▶</button>
+        <div class="meta"><b id="trackTitle">Música</b><small id="trackSrc"></small></div>
+        <button id="nextBtn" class="mini" title="Siguiente">⏭</button>
+        <input id="vol" type="range" min="0" max="100" value="60" title="Volumen">
+        <button id="folderBtn" class="mini" title="Abrir la carpeta de música de este estilo">📁</button>
+        <button id="appleBtn" class="mini" title="Tocar mi lista de la app Música / buscar la banda sonora">♫</button>
+      </div>
+      <nav id="dock" class="card"></nav>
+      <button id="orb" class="card" title="Hablar con George">
+        <canvas id="orbFace"></canvas>
+        <span><b>George</b><small id="orbState">en línea</small></span>
+      </button>
+    </footer>
+  </main>
+  <canvas id="snow"></canvas>
+
+  <!-- ===== George ===== -->
+  <aside id="george" class="card" hidden>
+    <div id="gHead">
+      <b>George</b><small id="gStatus"></small>
+      <div class="spacer"></div>
+      <button id="gStyles" class="mini" title="Activar los estilos" hidden>🎬</button>
+      <button id="gSettings" class="mini" title="Ajustes" hidden>⚙</button>
+      <button id="gClose" class="mini" title="Cerrar">✕</button>
+    </div>
+    <div id="gStage">
+      <canvas id="face"></canvas>
+      <video id="cam" autoplay muted playsinline hidden></video>
+    </div>
+    <div id="gLog"></div>
+    <div id="gTools">
+      <button id="micBtn" class="tool" title="Conversación por voz (manos libres)">🎙<span>Voz</span></button>
+      <button id="camBtn" class="tool" title="Que George me vea por la cámara">📷<span>Cámara</span></button>
+      <button id="cineBtn" class="tool" title="Modo cine: George ve la pantalla contigo y comenta">🎞<span>Cine</span></button>
+      <button id="muteBtn" class="tool" title="Silenciar la voz de George">🔊<span>Voz de George</span></button>
+    </div>
+    <form id="gForm">
+      <input id="gInput" placeholder="Escríbele a George…" autocomplete="off">
+      <button class="round" title="Enviar">➤</button>
+    </form>
+  </aside>
+
+  <!-- ===== Selector de estilos ===== -->
+  <div id="picker" class="overlay" hidden>
+    <div class="sheet card">
+      <h2>Estilos</h2>
+      <div id="themeGrid"></div>
+      <div class="row end"><button id="themesOff" class="btn ghost">Quitar los estilos (George se queda)</button><button class="btn" data-close>Listo</button></div>
+    </div>
+  </div>
+
+  <!-- ===== Ajustes ===== -->
+  <div id="settings" class="overlay" hidden>
+    <div class="sheet card wide">
+      <h2>Ajustes</h2>
+      <div class="tabs">
+        <button data-tab="tGeorge" class="on">George</button><button data-tab="tCara">Cara</button>
+        <button data-tab="tMemoria">Memoria</button><button data-tab="tMusica">Música</button><button data-tab="tGeneral">General</button>
+      </div>
+
+      <section id="tGeorge" class="tab">
+        <div id="brainStatus" class="status"></div>
+        <label>Modelo (cerebro local)<select id="modelSel"></select></label>
+        <label>Voz en español<select id="voiceEs"></select></label>
+        <label>Voz en inglés<select id="voiceEn"></select></label>
+        <label>Velocidad al hablar <input id="rate" type="range" min="140" max="230" value="185"></label>
+        <label class="check"><input id="wake" type="checkbox"> En manos libres, responder solo cuando diga «George»</label>
+        <p class="hint">Para una voz más natural: Ajustes del Sistema → Accesibilidad → Contenido hablado → Voz del sistema → Gestionar voces, y descarga una voz <b>Premium</b> o <b>Mejorada</b> (por ejemplo «Jorge» en español o «Daniel» en inglés británico). George usa sola la mejor que encuentre.</p>
+        <div class="row"><button id="testVoice" class="btn ghost">Probar voz</button><button id="recheck" class="btn ghost">Volver a comprobar</button></div>
+      </section>
+
+      <section id="tCara" class="tab" hidden>
+        <p>Sube un retrato de frente y bien iluminado. Debe ser una <b>imagen generada por IA</b> (por ejemplo en Higgsfield), no la foto de una persona real. George la anima: parpadea, mira y mueve la boca al hablar.</p>
+        <div class="row"><label class="btn">Elegir foto…<input id="photoFile" type="file" accept="image/*" hidden></label><button id="photoClear" class="btn ghost">Usar el rostro holográfico</button></div>
+        <p id="photoMsg" class="hint"></p>
+      </section>
+
+      <section id="tMemoria" class="tab" hidden>
+        <p>Lo que George recuerda de ti. Se guarda solo en esta Mac.</p>
+        <form id="memForm" class="row"><input id="memInput" placeholder="Añadir un recuerdo (ej. «Mi película favorita es…»)"><button class="btn">Añadir</button></form>
+        <ul id="memList"></ul>
+        <div class="row end"><button id="histClear" class="btn ghost">Borrar la conversación</button></div>
+      </section>
+
+      <section id="tMusica" class="tab" hidden>
+        <p>Cada estilo suena con una <b>partitura original</b> que George genera en vivo (funciona sin internet).</p>
+        <p>Para escuchar la música de verdad de tus películas —o a Sinatra en Navidad— usa la tuya:</p>
+        <ul class="plain">
+          <li><b>Tus archivos:</b> pon canciones (mp3, m4a, wav…) en la carpeta del estilo y George las toca al entrar en él. <button id="musicFolder" class="btn ghost small">Abrir la carpeta de este estilo</button></li>
+          <li><b>App Música:</b> crea una lista con el nombre <code id="plName"></code> y pulsa ♫ en el reproductor. Si no existe, ♫ busca la banda sonora en Apple Music.</li>
+        </ul>
+        <label class="check"><input id="autoplay" type="checkbox"> Empezar la música al entrar a un estilo</label>
+      </section>
+
+      <section id="tGeneral" class="tab" hidden>
+        <label class="check"><input id="loginItem" type="checkbox"> Abrir George al encender la Mac</label>
+        <label class="check"><input id="snowAll" type="checkbox"> Nieve en este estilo</label>
+        <p class="hint">Atajo para llamar a George desde cualquier app: <kbd id="hotkey">⌥ Espacio</kbd>. También está siempre en la barra de menús, aunque quites los estilos.</p>
+        <div class="row"><button id="offStyles" class="btn ghost">Quitar los estilos</button><button id="quit" class="btn ghost">Salir de George</button></div>
+        <p class="hint" id="about"></p>
+      </section>
+
+      <div class="row end"><button class="btn" data-close>Cerrar</button></div>
+    </div>
+  </div>
+
+  <div id="toast" hidden></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

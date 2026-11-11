@@ -1,0 +1,45 @@
+# Construye George.app en una Mac de verdad para comprobar que el paquete arranca.
+name: George (Mac)
+
+on:
+  push:
+    branches: [claude/mac-interface-themed-ai-george-ee952d]
+    paths: ["george/**", ".github/workflows/george-mac.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: george
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: bash -n instalar.command && bash -n desinstalar.command
+      - name: Construir George.app
+        run: |
+          npx electron-builder --mac dir
+          APP=$(find dist -maxdepth 2 -name "George.app" | head -1)
+          codesign --force --deep --sign - "$APP"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+      - name: Arranca y sigue vivo
+        run: |
+          "$APP/Contents/MacOS/George" > george.log 2>&1 &
+          sleep 15
+          pgrep -x George || { cat george.log; exit 1; }
+          pkill -x George || true
+          /usr/libexec/PlistBuddy -c "Print :NSMicrophoneUsageDescription" "$APP/Contents/Info.plist"
+      - name: Empaquetar
+        run: ditto -c -k --keepParent "$APP" George-mac.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: George-mac
+          path: george/George-mac.zip
